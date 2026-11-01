@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Teashop{% endblock %}
+{% block content %}
+  <h1>Owner dashboard</h1>
+
+  <section class="card">
+    <h2>Needs your attention</h2>
+    <p class="muted">Nothing is waiting for you.</p>
+  </section>
+
+  <section class="card">
+    <h2>Shortcuts</h2>
+    <ul>
+      <li><a href="{{ admin_url }}">Back office (admin)</a></li>
+      <li><a href="{% url 'two_factor:profile' %}">Two-factor settings and backup codes</a></li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Recent activity</h2>
+    {% if recent_events %}
+      <table class="events">
+        <thead><tr><th>When</th><th>Who</th><th>Action</th><th>What</th></tr></thead>
+        <tbody>
+          {% for event in recent_events %}
+            <tr>
+              <td>{{ event.timestamp|date:"Y-m-d H:i" }}</td>
+              <td>{{ event.actor_label|default:event.actor_type }}</td>
+              <td>{{ event.action }}</td>
+              <td>{{ event.object_repr|default:event.message|truncatechars:80 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No activity recorded yet.</p>
+    {% endif %}
+  </section>
+
+  <p class="muted small">Version {{ version }}</p>
+{% endblock %}

@@ -4,6 +4,19 @@
 # Wing project file                                              #
 ##################################################################
 [project attributes]
+debug.named-entry-points = (1,
+                            {'Migrate dev database': ({},
+        {'auto-show': True,
+         'launch-id': ('project',
+                       ('migrate',
+                        '')),
+         'loc': loc('manage.py')}),
+                             'Run dev server': ({},
+        {'auto-show': True,
+         'launch-id': ('project',
+                       ('runserver 127.0.0.1:8000 --noreload',
+                        '')),
+         'loc': loc('manage.py')})})
 proj.directory-list = [{'dirloc': loc('.'),
                         'excludes': (),
                         'filter': '*',
@@ -11,4 +24,6 @@ proj.directory-list = [{'dirloc': loc('.'),
                         'recursive': True,
                         'watch_for_changes': True}]
 proj.file-type = 'shared'
+proj.main-file = 'entry:Run dev server'
 testing.auto-discover = True
+testing.test-framework = {None: ':internal djangotest'}

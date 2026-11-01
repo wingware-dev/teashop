@@ -1,0 +1,31 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}Teashop{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{% url 'core:home' %}">Teashop</a>
+    <nav>
+      {% if user.is_authenticated %}
+        {% if user.is_staff %}<a href="{% url 'core:owner_dashboard' %}">Dashboard</a>{% endif %}
+        <a href="{% url 'two_factor:profile' %}">Account security</a>
+        <form method="post" action="{% url 'core:logout' %}" class="inline">
+          {% csrf_token %}<button type="submit" class="link">Log out</button>
+        </form>
+      {% endif %}
+    </nav>
+  </header>
+  <main class="container {% block main_class %}{% endblock %}">
+    {% if messages %}
+      <ul class="messages">{% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,51 @@
+# Deploy to the server on every push to the release branch, after CI
+# passes.  The server runs deploy/deploy.sh, which backs up the database
+# first and starts the previous version again if the new one is unhealthy.
+#
+# Repository secrets (Settings > Secrets and variables > Actions), see
+# docs/ops/README.md:
+#   DEPLOY_HOST         server address
+#   DEPLOY_SSH_KEY      private key whose public half is in ~deploy/.ssh/authorized_keys
+#                       with the forced command (deploy/server/install-app.sh --ci-key-file)
+#   DEPLOY_KNOWN_HOSTS  output of: ssh-keyscan -t ed25519 <server address>
+name: Deploy
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Deploy ${{ github.sha }}
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # The server's forced command only accepts "deploy <commit>".
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              "deploy@$DEPLOY_HOST" "deploy ${GITHUB_SHA}"
+      - name: Check the site answers
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        if: ${{ vars.SITE_URL != '' }}
+        run: curl -fsS --retry 5 --retry-delay 5 "$SITE_URL/healthz"

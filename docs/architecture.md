@@ -1,0 +1,80 @@
+# Architecture and conventions
+
+## One Django app per feature
+
+Each feature lives in its own app under `apps/`, so different phases can
+be built side by side with few conflicts:
+
+| App | Phase | Holds |
+|---|---|---|
+| `core` | 1 | Home page, health check, owner dashboard shell, shared helpers |
+| `audit` | 1 | The audit log |
+| `inventory` | 2 | Raw materials, lots, stock movements, bills of materials |
+| `catalog` | 2 | Products, size options, categories, regions |
+| `storefront` | 3 | Public pages and the design system |
+| `checkout` | 4 | Cart, Stripe, shipping rates, tax |
+| `fulfillment` | 5 | Order queue, labels, tracking |
+
+Names for later phases are suggestions; pick what fits.  To add an app:
+
+1. `mkdir apps/<name>` and `python manage.py startapp <name> apps/<name>`.
+2. In its `apps.py` set `name = "apps.<name>"` and `label = "<name>"`.
+3. Add `"apps.<name>"` to `LOCAL_APPS` in `config/settings.py`, and its
+   URLs to `config/urls.py` if it has pages.
+4. Tests go in `apps/<name>/tests/`.
+
+Rules between apps:
+
+- `core` and `audit` depend on no feature app.  Feature apps may import
+  them and each other's models, but avoid cycles: prefer signals or a
+  small function in the lower app to reaching up.
+- Back-office pages use `apps.core.decorators.owner_required`, which needs
+  a two-factor sign-in by a staff user.
+- Tests that need a signed-in owner use `apps.core.testing`
+  (`make_owner`, `login_verified`).
+
+## Settings
+
+`config/settings.py` reads everything that differs between laptop and
+server from environment variables (`.env.example` lists them).
+`DJANGO_ENV=production` turns on the production checks: it refuses to
+start without `DJANGO_SECRET_KEY` and `DATABASE_URL`, or with DEBUG on.
+
+## Audit log
+
+Every model change (create, update, delete) is recorded in
+`audit.AuditEvent` automatically, with who did it, from which address, and
+the changed fields.  Fields whose names contain password, secret, token or
+key are masked.  Logins, logouts and failed logins are recorded too.
+`settings.AUDIT_EXCLUDED_MODELS` and `AUDIT_IGNORED_FIELDS` leave out noise.
+
+Who is acting comes from the request (the signed-in user) or from code:
+
+```python
+from apps.audit import acting_as_agent, record
+
+with acting_as_agent("support-agent"):
+    ...                                   # model changes credited to the agent
+    record("support.reply_sent", obj=ticket, message="Order status answered")
+```
+
+Actions that are not model changes (a label bought, an email sent, a
+backup restored) call `record()` with a dotted action name.  The log is
+append-only: the model refuses changes, and on PostgreSQL a database
+trigger does too.  The owner sees it in the dashboard and in the admin
+(read-only).
+
+## Payments: card data never touches the server
+
+Checkout (phase 4) must use Stripe-hosted card fields (Stripe Checkout or
+the Payment Element), so card numbers go from the customer's browser
+straight to Stripe.  Never add a form field, model field or log line that
+could hold a card number or security code.  This keeps the shop to PCI DSS
+SAQ A, the shortest self-assessment.
+
+## Background jobs
+
+Not needed yet.  When a phase needs them (emails, label purchases,
+agents), use a queue stored in PostgreSQL (for example the `django-tasks`
+database backend) so there is no extra service to run, and run it as one
+more service in `compose.yaml`.

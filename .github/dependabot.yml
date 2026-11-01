@@ -1,0 +1,18 @@
+# Weekly pull requests for GitHub Actions and Docker base image updates.
+# Python packages are pinned in requirements.lock (uv pip compile), which
+# Dependabot does not maintain; CI's weekly pip-audit run flags vulnerable
+# versions instead, and docs/ops/README.md says how to upgrade them.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: "/deploy/backup"
+    schedule:
+      interval: weekly

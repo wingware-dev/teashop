@@ -1,0 +1,56 @@
+# Tests and security checks on every push and pull request.  deploy.yml
+# reuses this workflow, so nothing is deployed unless it passes.
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_call:
+  schedule:
+    # Weekly, so newly published vulnerabilities in pinned packages show up
+    # even when nothing is pushed.
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: teashop
+          POSTGRES_USER: teashop
+          POSTGRES_PASSWORD: teashop
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U teashop"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://teashop:teashop@localhost:5432/teashop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements.lock
+      - name: Install dependencies
+        run: |
+          pip install --require-hashes -r requirements.lock
+          pip install pip-audit
+      - name: Django checks
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+      - name: Tests (PostgreSQL)
+        run: python manage.py test apps
+      - name: Known vulnerabilities in dependencies
+        # The lock is fully resolved and hashed, so no throwaway venv is needed.
+        run: pip-audit --strict --no-deps --disable-pip -r requirements.lock
+      - name: Shell scripts
+        run: shellcheck --severity=warning deploy/*.sh deploy/backup/*.sh deploy/server/*.sh
+      - name: Docker image builds
+        run: docker build --build-arg GIT_SHA=${GITHUB_SHA::12} -t teashop-web:ci .

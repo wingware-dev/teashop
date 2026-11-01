@@ -1,0 +1,16 @@
+[Unit]
+Description=Teashop encrypted off-site backup (restic)
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+# Retry once after a transient failure (network, B2 hiccup), then give up
+# and let the healthcheck ping report it.
+StartLimitIntervalSec=2h
+StartLimitBurst=2
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/srv/teashop
+ExecStart=/usr/bin/docker compose --profile ops run --rm -T backup backup.sh
+Restart=on-failure
+RestartSec=15min

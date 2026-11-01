@@ -1,0 +1,12 @@
+{% load i18n %}
+{% comment %}
+  Replaces django-two-factor-auth's buttons: no disabled "Back" on the first
+  step, and the main action first.
+{% endcomment %}
+<div class="wizard-actions">
+  <button type="submit">{% trans "Next" %}</button>
+  {% if wizard.steps.prev %}
+    <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="secondary">{% trans "Back" %}</button>
+  {% endif %}
+  {% if cancel_url %}<a href="{{ cancel_url }}">{% trans "Cancel" %}</a>{% endif %}
+</div>

@@ -1,0 +1,3 @@
+-r requirements.txt
+# Checks run in CI and by the security review
+pip-audit>=2.7

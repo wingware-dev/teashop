@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% comment %}
+  Replaces django-two-factor-auth's own base template (which loads Bootstrap
+  from a CDN) so the login and two-factor pages use the site's look.  Its
+  pages fill base.html's "content" and "title" blocks directly.
+{% endcomment %}
+{% block main_class %}narrow{% endblock %}
+{% block extra_head %}{% block extra_media %}{% endblock %}{% endblock %}

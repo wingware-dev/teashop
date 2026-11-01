@@ -1,0 +1,10 @@
+[Unit]
+Description=Teashop backup restore test (scratch database, live data untouched)
+Wants=network-online.target docker.service
+After=network-online.target docker.service teashop-backup.service
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/srv/teashop
+ExecStart=/usr/bin/docker compose --profile ops run --rm -T backup restore-test.sh

@@ -1,0 +1,12 @@
+# Runtime dependencies.  Django 5.2 is the LTS release (security fixes until
+# April 2028); django-two-factor-auth does not support Django 6 yet.
+Django>=5.2.8,<5.3
+psycopg[binary]>=3.2,<4
+dj-database-url>=3.0,<4
+gunicorn>=26,<27
+whitenoise>=6.9,<7
+django-otp>=1.6,<2
+django-two-factor-auth>=1.17,<2
+qrcode>=7,<9
+django-axes>=8,<10
+sentry-sdk>=2.20,<3
