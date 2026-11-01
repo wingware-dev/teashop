@@ -39,10 +39,10 @@ jobs:
           cache-dependency-path: |
             requirements.lock
             requirements-ui.lock
+            requirements-ci.lock
       - name: Install dependencies
         run: |
-          pip install --require-hashes -r requirements.lock -r requirements-ui.lock
-          pip install pip-audit
+          pip install --require-hashes -r requirements.lock -r requirements-ui.lock -r requirements-ci.lock
           playwright install --with-deps chromium
       - name: Django checks
         run: |
@@ -59,7 +59,7 @@ jobs:
           if-no-files-found: ignore
       - name: Known vulnerabilities in dependencies
         # The locks are fully resolved and hashed, so no throwaway venv is needed.
-        run: pip-audit --strict --no-deps --disable-pip -r requirements.lock -r requirements-ui.lock
+        run: pip-audit --strict --no-deps --disable-pip -r requirements.lock -r requirements-ui.lock -r requirements-ci.lock
       - name: Shell scripts
         run: shellcheck --severity=warning deploy/*.sh deploy/backup/*.sh deploy/server/*.sh
       - name: Docker image builds

@@ -137,15 +137,17 @@ enough.
   their own (about a minute of downtime).
 - **Docker** updates from Docker's repository the same way.
 - **Python packages** are pinned with hashes in `requirements.lock`
-  (runtime) and `requirements-ui.lock` (browser tests, CI only).  CI runs
-  `pip-audit` on both on every push and weekly; when it reports a
-  vulnerability, upgrade on your computer, test, and deploy:
+  (runtime), `requirements-ui.lock` (browser tests) and
+  `requirements-ci.lock` (pip-audit); the last two are for CI only.  CI
+  runs `pip-audit` on all three on every push and weekly; when it reports
+  a vulnerability, upgrade on your computer, test, and deploy:
   ```sh
   uv pip compile requirements.txt --python-version 3.13 --generate-hashes --upgrade -o requirements.lock
   uv pip compile requirements-ui.txt -c requirements.lock --python-version 3.13 --generate-hashes --upgrade -o requirements-ui.lock
+  uv pip compile requirements-ci.txt -c requirements.lock -c requirements-ui.lock --python-version 3.13 --generate-hashes --upgrade -o requirements-ci.lock
   ```
-  Rebuild `requirements-ui.lock` after `requirements.lock` (the `-c` keeps
-  any package the two share at the same version).
+  Rebuild them in that order (the `-c` keeps any package the locks share,
+  such as `certifi`, at the same version).
 - **Base images** (Python, PostgreSQL, Caddy): Dependabot opens weekly
   pull requests.
 - **Ubuntu release upgrades** (24.04 to 26.04) are not automatic: plan one

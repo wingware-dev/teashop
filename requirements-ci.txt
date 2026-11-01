@@ -1,0 +1,4 @@
+# Tools CI runs (and the security review).  Pinned with hashes in
+# requirements-ci.lock, which CI installs; after changing this file,
+# rebuild it (see docs/ops/README.md).
+pip-audit>=2.7,<3
