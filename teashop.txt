@@ -104,10 +104,11 @@ name(s), and I'm sure there are many decisions to make such as which hosting
 provider, the actual site design, and much more.
 
 This is a large from-scratch project, a complete mostly automated company and
-all the software behind it. Can you start by assessing the above for feasibility
-and estimating about how much time would be involved in developing and setting
-this all up? I think that's the first step, probably in context of a somewhat
-fleshed out version of what I wrote above.
+all the software behind it. Ask me about any details I've forgotten, as needed.
+Let's start by assessing the above for feasibility and estimating about how much
+time would be involved in developing and setting this all up. I think that's the
+first step, probably in context of a somewhat fleshed out version of what I
+wrote above.  Then we'll go from there.
 
 I hope to keep a record of the development of this software as it goes through
 the different stages, so please keep screenshots of milestones in doc/shots.
