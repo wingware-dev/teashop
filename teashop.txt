@@ -1,0 +1,113 @@
+I am starting an online tea business which will sell specialty teas through its
+own custom website.  I plan to run this out of my house and don't have a lot 
+of startup capital so I want to try to develop all the necessary software myself.
+I'm thinking I need a website hosted on a fractional server I lease and run myself,
+and this can run the various components in a way that allow me to access what I
+need during purchasing, order fulfillment, etc either from my laptop or phone.
+
+The capabilities needed are:
+
+(1) An inventory system which can track raw materials (tea, packaging, etc).
+Packaging would be tracked by unit. Teas need to be tracked by weight. The
+system needs keep track of reducing stock as orders come into the store (see (2)
+below), notify me for teas getting low, help with ordering replacement supplies
+and tea, and help me track waste or missing inventory over time, and also cost
+of purchases and revenues made from teas or other items sold so I can see how
+well or poorly each does.
+
+(2) A public store website. The site needs to look nice, reflecting natural
+design motifs like leaves, flowers, birds, and pollinator insects, in attractive
+browns, greens, and some primary colors mixed in.  We'll want a site that can be
+either light or dark background and tries to adapt to the user's system if possible. 
+It definitely needs to be a visually pleasing site that people will want to stay
+on and look around.  I think with AI agents designing pages, possibly making 
+variants for each tea or tea type, this can be beautiful and also varied within
+a common theme.  Of course it cannot reuse any existing branding or trademarks
+and has to be unique in design.
+
+The site will split into sections by tea type such as black, oolong, green,
+flavored, etc, and also be geographic region and other sortings that would be
+useful for customers, such as specials, this week's recommendations, and other
+such things. Teas will be available in different sized packages, some just in
+paper and others in tins. The available sizes will vary by tea depending on its
+unit price (smaller packages if more expensive), and will be set in the 
+inventory system.
+
+There should also be a section for branded merch and accessories (tea making
+supplies, tea pots, etc).  I'm not yet sure what we'll have in those and likely
+will be minimal to start with, but these also need to be tracked in the inventory
+system.
+
+Finally I think a section with tea information, history, etc would be useful. 
+We'ld build that up over time using content we develop for marketing (see
+below).
+
+The site needs to have an online cart and checkout process that's streamlined
+and easy to use, accepting as many payment types as possible and accurately
+computing shipping using USPS (because they will pick things up at my home for
+free). I don't know how to set that up and need suggestions for the best system
+to use. I'll be shipping only within the contiguous 48 states initially, and not
+internationally.
+
+(3) Once orders are placed, I need a backend system that notifies me and gives
+me a dashboard for order fulfillment, including ability to purchase and print
+shipping labels. Ideally it will just know the package size/weight based on what
+was ordered, or I can tell it which box size was used first if needed.
+Presumably we also need to keep track of available shipping boxes in the
+inventory and any packaging material and try to also have accurate inventory of
+those so I know when to reorder.
+
+(4) For running the business, I need to be able to get reports for sales in
+different periods, accurate automatic accounting, and all the data I'll need for
+taxes. Initially I won't have staff but will need to pay myself and do the
+payroll taxes somehow. It would grow a fuller payroll system in the future if I 
+can hire people later.
+
+(5) Since the software will be extended over time, I need a simple way to deploy
+updates to the leased server, and automatic or semi-automatic OS updates on the
+server to keep it secure. Security in the self-developed software itself will
+also be important, so the development and maintenance process should include
+regular security reviews. Some of this could be run by an AI agent that can log
+into the server and manage it. I don't have the expertise to do this myself and
+likely won't have money to hire anyone.
+
+(6) I need support for setting up and managing marketing on social media and
+elsewhere that makes sense.  This could also be run by an AI agent that has
+access to the business social media accounts so it can post about new teas,
+tea making tips, tea related history, or other interesting things.  What to
+post would be a combination of my own ideas and the agent's.  When and where
+and exactly what to post (or not) would be something I approve and control.
+If not hopelessly obsolete as an idea, I'd also like to be able to set up
+a marketing email list where we can also send postings.  That should be opt-in
+only (default=no) and done in a way that does not overwhelm recipients.  We
+might even allow them to say up front how often they want an email at most.
+
+General principles: I want the business to run itself as much as possible. I
+want to be involved in any public-facing decision and for anything that costs
+money, so I'm still the approver of many actions taken, but otherwise as much as
+possible the business should just work on its own, similarly to how I described
+using AI agents in (5) and (6) but possibly extending to other things where it
+makes sense to automate. One idea for that is to do customer support which I'm
+envisioning by chat and email. The design for that would be that the agent can
+answer if there's no doubt or judgement call to be made, and otherwise consult
+me first. I would want to train it to respond in my own voice and style, where
+possible, so it might initially watch and later take over. I'm thinking the
+website might have sort of a top-level owner dashboard where I can see things
+that need my attention, and I'd get emails when I don't respond within set time
+periods which vary depending on what it is that is waiting for me. I (or some
+human) will of course need to be the one that unpacks and shelves ordered
+supplies and product and the person that packs up orders and sends them out.
+
+I am not sure if I'm forgetting important aspects of this.  I do still need
+to come up with a name for the company and purchase the appropriate domain
+name(s), and I'm sure there are many decisions to make such as which hosting
+provider, the actual site design, and much more.
+
+This is a large from-scratch project, a complete mostly automated company and
+all the software behind it. Can you start by assessing the above for feasibility
+and estimating about how much time would be involved in developing and setting
+this all up? I think that's the first step, probably in context of a somewhat
+fleshed out version of what I wrote above.
+
+I hope to keep a record of the development of this software as it goes through
+the different stages, so please keep screenshots of milestones in doc/shots.
