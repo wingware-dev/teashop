@@ -136,12 +136,16 @@ enough.
   reboot, the server reboots at 04:30 UTC; the containers come back on
   their own (about a minute of downtime).
 - **Docker** updates from Docker's repository the same way.
-- **Python packages** are pinned in `requirements.lock`.  CI runs
-  `pip-audit` on every push and weekly; when it reports a vulnerability,
-  upgrade on your computer, test, and deploy:
+- **Python packages** are pinned with hashes in `requirements.lock`
+  (runtime) and `requirements-ui.lock` (browser tests, CI only).  CI runs
+  `pip-audit` on both on every push and weekly; when it reports a
+  vulnerability, upgrade on your computer, test, and deploy:
   ```sh
   uv pip compile requirements.txt --python-version 3.13 --generate-hashes --upgrade -o requirements.lock
+  uv pip compile requirements-ui.txt -c requirements.lock --python-version 3.13 --generate-hashes --upgrade -o requirements-ui.lock
   ```
+  Rebuild `requirements-ui.lock` after `requirements.lock` (the `-c` keeps
+  any package the two share at the same version).
 - **Base images** (Python, PostgreSQL, Caddy): Dependabot opens weekly
   pull requests.
 - **Ubuntu release upgrades** (24.04 to 26.04) are not automatic: plan one

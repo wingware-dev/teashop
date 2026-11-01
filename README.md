@@ -41,7 +41,7 @@ WCAG 2.2 AA with axe-core, and save screenshots to `var/shots/`.  They
 need, once:
 
 ```sh
-.venv/bin/pip install -r requirements-ui.txt
+.venv/bin/pip install --require-hashes -r requirements-ui.lock
 .venv/bin/playwright install chromium
 ```
 
