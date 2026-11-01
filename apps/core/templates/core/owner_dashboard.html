@@ -5,7 +5,53 @@
 
   <section class="card">
     <h2>Needs your attention</h2>
-    <p class="muted">Nothing is waiting for you.</p>
+    {% if ops_problems or attention_items %}
+      <ul class="attention">
+        {% for item in attention_items %}
+          <li class="attention-{{ item.level }}">
+            {% if item.level == "urgent" %}<strong>Urgent:</strong> {% endif %}
+            {% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}
+            {% if item.detail %}<br><span class="muted small">{{ item.detail }}</span>{% endif %}
+          </li>
+        {% endfor %}
+        {% for status in ops_problems %}
+          <li class="status-failed">
+            {% if status.failed %}{{ status.kind.title }} failed {{ status.last.timestamp|date:"Y-m-d H:i" }}{% if status.last.message %}: {{ status.last.message|truncatechars:120 }}{% endif %}
+            {% else %}{{ status.kind.title }} is overdue: last succeeded {{ status.last_success.timestamp|date:"Y-m-d H:i"|default:"never" }}{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Nothing is waiting for you.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Operations</h2>
+    <div class="table-scroll" role="region" aria-label="Operations" tabindex="0">
+    <table class="events">
+      <thead><tr><th>Job</th><th>Last run</th><th>Result</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for status in ops %}
+          <tr>
+            <td>{{ status.kind.title }}</td>
+            {% if status.last %}
+              <td>{{ status.last.timestamp|date:"Y-m-d H:i" }}</td>
+              <td{% if status.needs_attention %} class="status-failed"{% endif %}>
+                {% if status.failed %}Failed{% elif status.overdue %}Overdue{% else %}Succeeded{% endif %}
+              </td>
+              <td>
+                {{ status.last.message|truncatechars:100 }}
+                {% if status.failed and status.last_success %}<br><span class="muted small">Last succeeded {{ status.last_success.timestamp|date:"Y-m-d H:i" }}</span>{% endif %}
+              </td>
+            {% else %}
+              <td class="muted">Never</td><td class="muted">None recorded</td><td></td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
   </section>
 
   <section class="card">

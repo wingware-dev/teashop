@@ -4,7 +4,7 @@
 |---|---|---|---|
 | Database + uploaded files, encrypted (restic) | Daily 03:15 UTC | Backblaze B2 | 7 daily, 5 weekly, 12 monthly |
 | Database, before each deploy | Each deploy | Server, `backups/predeploy/` | Last 10 |
-| Restore test | 1st of each month, 05:00 UTC | Scratch database on the server | Result in the journal and healthchecks.io |
+| Restore test | 1st of each month, 05:00 UTC | Scratch database on the server | Result on the owner dashboard, in the journal and healthchecks.io |
 
 The backups are encrypted on the server with `RESTIC_PASSWORD` before they
 leave it; Backblaze cannot read them.  **Keep `RESTIC_PASSWORD` and the B2
@@ -35,8 +35,8 @@ need to restore, and without the password the backups cannot be read.
 On the server as `deploy`, in `/srv/teashop`:
 
 ```sh
-docker compose --profile ops run --rm backup                    # back up now
-docker compose --profile ops run --rm backup restore-test.sh    # test the latest backup
+deploy/backup-job.sh backup                                     # back up now
+deploy/backup-job.sh restore-test                               # test the latest backup
 docker compose --profile ops run --rm backup restic snapshots   # list backups
 systemctl list-timers 'teashop-*'                               # next scheduled runs
 journalctl -u teashop-backup -u teashop-restore-test --since -7d
@@ -45,6 +45,16 @@ journalctl -u teashop-backup -u teashop-restore-test --since -7d
 The restore test downloads the latest backup, loads it into a scratch
 database (`teashop_restore_test`), checks it has the shop's tables and
 data, and drops it.  The live database is never touched.
+
+`deploy/backup-job.sh` runs the job in the backup container and records
+its result in the audit log, so the owner dashboard's "Operations" card
+shows the last backup and restore test, and "Needs your attention" lists
+a failed one, or a backup with no success for two days (a restore test:
+33 days).  The timers run it too.  (Running the container directly,
+`docker compose --profile ops run --rm backup [restore-test.sh]`, works
+but records nothing.)  After changing the unit files in
+`deploy/server/systemd/`, re-run `install-app.sh` or copy them to
+`/etc/systemd/system/` and run `sudo systemctl daemon-reload`.
 
 ## Recovering
 

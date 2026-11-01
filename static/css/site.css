@@ -9,6 +9,7 @@
   --muted: #6b5f4b;
   --accent: #3f6b35;
   --border: #ddd3bf;
+  --danger: #a3261b;
   color-scheme: light dark;
 }
 
@@ -20,6 +21,7 @@
     --muted: #b3a68e;
     --accent: #8fc27c;
     --border: #453d2f;
+    --danger: #ff9b8f;
   }
 }
 
@@ -86,6 +88,8 @@ input[type="text"], input[type="password"], input[type="number"], input[type="em
 }
 
 .table-scroll { overflow-x: auto; }
+.status-failed { color: var(--danger); font-weight: 700; }
+ul.attention { padding-left: 1.25rem; }
 table.events { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 table.events th, table.events td { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border); }
 

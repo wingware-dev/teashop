@@ -20,6 +20,12 @@
 		-Server
 	}
 
+	# Supplier documents live in the same volume but are private: the owner
+	# downloads them through the app, behind the two-factor login.
+	handle /media/private/* {
+		respond 404
+	}
+
 	# Uploaded files (product photos) are served straight from the volume.
 	handle_path /media/* {
 		root * /srv/media

@@ -87,6 +87,8 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.audit",
     "apps.core",
+    "apps.inventory",
+    "apps.catalog",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -177,8 +179,14 @@ STATIC_ROOT = VAR_DIR / "static"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(env_str("DJANGO_MEDIA_ROOT", str(VAR_DIR / "media")))
+# Supplier documents (spec sheets, certificates, packing slips) are kept
+# out of the public media URL: Caddy refuses /media/private/, and the owner
+# downloads them through an owner-only view.
+PRIVATE_MEDIA_ROOT = Path(env_str("DJANGO_PRIVATE_MEDIA_ROOT", str(MEDIA_ROOT / "private")))
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    # Stores under PRIVATE_MEDIA_ROOT.
+    "private": {"BACKEND": "apps.inventory.storage.PrivateFileStorage"},
     "staticfiles": {
         "BACKEND": (
             "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -228,6 +236,18 @@ AUDIT_IGNORED_FIELDS = {
     "otp_totp.totpdevice": {"last_t", "throttling_failure_timestamp", "throttling_failure_count", "last_used_at"},
     "otp_static.staticdevice": {"throttling_failure_timestamp", "throttling_failure_count", "last_used_at"},
 }
+
+# --- Inventory, catalog and labels -----------------------------------------
+# Warn on the dashboard this many days before a lot's best-by date.
+INVENTORY_BEST_BY_WARNING_DAYS = env_int("INVENTORY_BEST_BY_WARNING_DAYS", 60)
+# Selling organic products without certification is allowed up to this
+# much a year; the dashboard warns from ORGANIC_SALES_ALERT on.
+ORGANIC_EXEMPTION_LIMIT = env_int("ORGANIC_EXEMPTION_LIMIT", 5000)
+ORGANIC_SALES_ALERT = env_int("ORGANIC_SALES_ALERT", 4000)
+# The packer's name and address printed on every package label; use "\n"
+# between lines.  A street address is required unless the business is
+# listed in a current phone or city directory.
+LABEL_PACKER_ADDRESS = env_str("LABEL_PACKER_ADDRESS").replace("\\n", "\n")
 
 # --- Logging: everything to stdout, Docker rotates the files ----------------
 LOG_LEVEL = env_str("DJANGO_LOG_LEVEL", "INFO")

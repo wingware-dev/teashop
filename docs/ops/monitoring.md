@@ -44,4 +44,5 @@ journalctl -u unattended-upgrades --since -7d
 
 The audit log (owner dashboard, and the admin under "Audit log") records
 every change to the shop's data, every sign-in and failed sign-in, and the
-actions of AI agents, with time, account and address.
+actions of AI agents, with time, account and address, and each deploy,
+rollback, backup and restore test with its result.

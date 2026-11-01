@@ -13,5 +13,6 @@ admin.site.site_title = "Teashop back office"
 urlpatterns = [
     path("", include(two_factor_urlpatterns)),
     path(settings.ADMIN_URL, admin.site.urls),
+    path("owner/inventory/", include("apps.inventory.urls")),
     path("", include("apps.core.urls")),
 ]

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Trace lot {{ lot.code }} · Teashop{% endblock %}
+{% block content %}
+  <h1>Trace for lot {{ lot.code }}</h1>
+
+  <section class="card">
+    <h2>The lot</h2>
+    <table class="events">
+      <tbody>
+        <tr><th scope="row">Item</th><td>{{ lot.item }}</td></tr>
+        <tr><th scope="row">Status</th><td>{{ lot.get_status_display }}{% if lot.status_note %}: {{ lot.status_note }}{% endif %}</td></tr>
+        <tr><th scope="row">Source</th><td>{{ lot.get_source_display }}{% if lot.supplier %}: {{ lot.supplier }}{% endif %}{% if lot.supplier_lot_code %}, supplier lot {{ lot.supplier_lot_code }}{% endif %}</td></tr>
+        <tr><th scope="row">Received or made</th><td>{{ lot.received_on|date:"Y-m-d" }}</td></tr>
+        <tr><th scope="row">Best by</th><td>{{ lot.best_by|date:"Y-m-d"|default:"—" }}</td></tr>
+        <tr><th scope="row">Grown in</th><td>{{ lot.country_of_origin|default:"—" }}</td></tr>
+        <tr><th scope="row">On hand</th><td>{{ on_hand }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Made from</h2>
+    {% if trace.sources %}
+      <ul>{% for source in trace.sources %}<li><a href="{% url 'inventory:lot_trace' source.pk %}">{{ source.code }}</a> {{ source.item }}{% if source.supplier %} from {{ source.supplier }}{% endif %}{% if source.supplier_lot_code %}, supplier lot {{ source.supplier_lot_code }}{% endif %}</li>{% endfor %}</ul>
+    {% else %}
+      <p class="muted">Not a blend: received from the supplier as is.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Blend lots made with it</h2>
+    {% if trace.derived %}
+      <ul>{% for derived in trace.derived %}<li><a href="{% url 'inventory:lot_trace' derived.pk %}">{{ derived.code }}</a> {{ derived.item }} ({{ derived.get_status_display }})</li>{% endfor %}</ul>
+    {% else %}
+      <p class="muted">None.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Customer orders that received it</h2>
+    {% if trace.orders %}
+      <table class="events">
+        <thead><tr><th>Packed</th><th>Order</th><th>From lot</th><th>Amount</th></tr></thead>
+        <tbody>
+          {% for order in trace.orders %}
+            <tr>
+              <td>{{ order.packed_at|date:"Y-m-d H:i" }}</td>
+              <td>{{ order.reference|default:"—" }}</td>
+              <td>{{ order.lot.code }}</td>
+              <td>{{ order.quantity }} {{ order.lot.item.unit }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p>{{ trace.order_references|length }} order{{ trace.order_references|length|pluralize }}: {{ trace.order_references|join:", " }}</p>
+    {% else %}
+      <p class="muted">No orders have been packed from it.</p>
+    {% endif %}
+  </section>
+
+  <p><a href="{% url 'admin:inventory_lot_change' lot.pk %}">Back to the lot</a></p>
+{% endblock %}

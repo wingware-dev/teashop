@@ -7,4 +7,6 @@ After=network-online.target docker.service teashop-backup.service
 Type=oneshot
 User=deploy
 WorkingDirectory=/srv/teashop
-ExecStart=/usr/bin/docker compose --profile ops run --rm -T backup restore-test.sh
+# Runs restore-test.sh in the backup container and records the result in
+# the audit log (owner dashboard).
+ExecStart=/srv/teashop/deploy/backup-job.sh restore-test

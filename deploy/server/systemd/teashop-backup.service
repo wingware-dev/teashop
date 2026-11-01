@@ -11,6 +11,8 @@ StartLimitBurst=2
 Type=oneshot
 User=deploy
 WorkingDirectory=/srv/teashop
-ExecStart=/usr/bin/docker compose --profile ops run --rm -T backup backup.sh
+# Runs backup.sh in the backup container and records the result in the
+# audit log (owner dashboard).
+ExecStart=/srv/teashop/deploy/backup-job.sh backup
 Restart=on-failure
 RestartSec=15min

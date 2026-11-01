@@ -18,7 +18,23 @@ KEEP_DUMPS=${KEEP_DUMPS:-10}
 KEEP_IMAGES=${KEEP_IMAGES:-5}
 
 log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) deploy: $*"; }
-die() { log "ERROR: $*"; exit 1; }
+die() { log "ERROR: $*"; FAILURE=$*; exit 1; }
+
+# Each deploy's result goes in the audit log (owner dashboard) as well as
+# this log.  A failure is recorded on the way out, whatever stopped us.
+SHA=""
+PREVIOUS=""
+FAILURE=""
+RECORDED=0
+record() { deploy/record-ops-event.sh deploy "$@"; RECORDED=1; }
+on_exit() {
+    local status=$?
+    if [ "$status" -ne 0 ] && [ -n "$SHA" ] && [ "$RECORDED" = 0 ]; then
+        record failed --commit "$SHA" --detail "previous=$PREVIOUS" \
+            --message "Deploy failed: ${FAILURE:-a step failed for $SHA (exit status $status); see the deploy log}"
+    fi
+}
+trap on_exit EXIT
 
 [ -f .env ] || die ".env is missing (copy .env.example)"
 
@@ -72,6 +88,8 @@ if docker compose up -d --wait --wait-timeout 120 web caddy; then
     echo "$SHA" > "$STATE/current"
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $SHA" >> "$STATE/history"
     log "healthy; $SHA is live"
+    record succeeded --commit "$SHA" --detail "previous=$PREVIOUS" \
+        --message "Deployed $SHA (replacing ${PREVIOUS:-nothing})"
 else
     log "$SHA did not become healthy; recent web log:"
     docker compose logs --tail 40 web || true

@@ -47,6 +47,32 @@ Look at the screenshots before calling a page done.  At the end of each
 phase, `python manage.py milestone_shots <phase-name>` records them in
 `doc/shots/`.
 
+## The owner dashboard's "Needs your attention" list
+
+core can't import feature apps, so each app registers a provider in its
+`AppConfig.ready()` with `apps.core.attention.register(fn)`; `fn()` returns
+a list of `Attention(title, detail, url, level)`.  A provider that raises
+is logged and skipped.  inventory (low stock, best-by dates, lots on hold)
+and catalog (organic sales limit, sizes that can't be packed) do this.
+
+## Inventory and catalog (phase 2)
+
+See `docs/inventory.md` for how the owner uses them.  For other phases:
+
+- Stock only changes through `apps.inventory.services` (`post_movement`,
+  `adjust`, `consume`, `pick_lot`, `make_blend`), which lock the lot and
+  record a `StockMovement`.  Movements are append-only.
+- Fulfillment packs each package with `apps.catalog.services.pack(size,
+  order_reference, tea_grams=...)`, which takes the bill of materials from
+  stock, picks the tea lot (oldest best-by first, one lot per package)
+  and returns a `SoldPackage`; `label_for(package)` gives the label facts.
+  The order reference on its movements is what recall tracing
+  (`apps.inventory.tracing`) reports.
+- Storefront can show `SizeOption.packages_available()` for stock.
+- Supplier documents use the `private` storage (`PRIVATE_MEDIA_ROOT`),
+  which Caddy refuses to serve; the owner downloads them through
+  `inventory:private_file`.  Product photos stay in public media.
+
 ## Settings
 
 `config/settings.py` reads everything that differs between laptop and

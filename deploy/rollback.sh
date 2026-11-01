@@ -15,7 +15,21 @@ cd "$(dirname "$0")/.."
 STATE=.deploy
 
 log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) rollback: $*"; }
-die() { log "ERROR: $*"; exit 1; }
+die() { log "ERROR: $*"; FAILURE=$*; exit 1; }
+
+# Each rollback's result goes in the audit log (owner dashboard) as well
+# as this log, once it has started (not when refused or cancelled).
+STARTED=0
+FAILURE=""
+on_exit() {
+    local status=$?
+    if [ "$status" -ne 0 ] && [ "$STARTED" = 1 ]; then
+        deploy/record-ops-event.sh rollback failed --commit "$TARGET" --detail "from=$CURRENT" \
+            --detail "database_restored=$RESTORE_DB" \
+            --message "Rollback to $TARGET failed: ${FAILURE:-a step failed (exit status $status); see the rollback log}"
+    fi
+}
+trap on_exit EXIT
 
 RESTORE_DB=0
 DUMP=""
@@ -60,6 +74,7 @@ if [ "$RESTORE_DB" = 1 ]; then
 fi
 
 log "rolling back from ${CURRENT:-unknown} to $TARGET"
+STARTED=1
 # Only the app image changes.  The checkout (these scripts, compose.yaml,
 # the Caddyfile) stays as it is, so a rollback never brings back older
 # deploy tools; the next deploy checks out what it deploys.
@@ -82,3 +97,12 @@ docker compose up -d --wait --wait-timeout 120 web caddy || die "$TARGET did not
 echo "$TARGET" > "$STATE/current"
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $TARGET rollback" >> "$STATE/history"
 log "healthy; $TARGET is live"
+STARTED=0
+if [ "$RESTORE_DB" = 1 ]; then
+    restored=" and restored the database from $DUMP"
+else
+    restored=""
+fi
+deploy/record-ops-event.sh rollback succeeded --commit "$TARGET" --detail "from=$CURRENT" \
+    --detail "database_restored=$RESTORE_DB" \
+    --message "Rolled back from ${CURRENT:-unknown} to $TARGET$restored"

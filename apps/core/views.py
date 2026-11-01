@@ -7,7 +7,9 @@ from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
 from apps.audit.models import AuditEvent
+from apps.audit.ops import ops_status
 
+from . import attention
 from .decorators import owner_required
 
 log = logging.getLogger(__name__)
@@ -38,10 +40,20 @@ def healthz(request):
 @owner_required
 def owner_dashboard(request):
     """The owner's home page.  Later phases add the "needs your attention"
-    queue here; for now it shows recent audit events."""
+    queue here; for now it shows the latest deploy, backup and restore-test
+    results and recent audit events."""
     recent_events = AuditEvent.objects.all()[:25]
+    ops = ops_status()
     return render(
         request,
         "core/owner_dashboard.html",
-        {"recent_events": recent_events, "admin_url": "/" + settings.ADMIN_URL, "version": settings.GIT_SHA},
+        {
+            "ops": ops,
+            "ops_problems": [status for status in ops if status.needs_attention],
+            # From the feature apps' providers (attention.py): stock, organic sales...
+            "attention_items": attention.collect(),
+            "recent_events": recent_events,
+            "admin_url": "/" + settings.ADMIN_URL,
+            "version": settings.GIT_SHA,
+        },
     )

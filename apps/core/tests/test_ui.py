@@ -4,6 +4,7 @@ WCAG 2.2 AA checks, screenshots (see apps.core.uitesting)."""
 from django.urls import reverse
 
 from apps.audit import record
+from apps.audit.ops import record_ops_event
 from apps.core.testing import OWNER_PASSWORD, make_owner
 from apps.core.uitesting import BrowserTestCase
 
@@ -41,6 +42,12 @@ class OwnerLoginUITests(BrowserTestCase):
 class OwnerPagesUITests(BrowserTestCase):
     def test_dashboard(self):
         record("ui.sample_event", message="Sample event so the audit table has a row")
+        record_ops_event("deploy", "succeeded", commit="0123abcd4567", message="Deployed 0123abcd4567 (replacing 89abcdef0123)")
+        record_ops_event("backup", "succeeded", message="Backup succeeded: snapshot 1a2b3c4d saved")
+        record_ops_event(
+            "backup", "failed",
+            message="Backup failed (exit status 1): Fatal: unable to open repository at b2:teashop-backups:teashop",
+        )
         self.check_page(reverse("core:owner_dashboard"), "owner-dashboard", signed_in=True)
 
     def test_account_security(self):

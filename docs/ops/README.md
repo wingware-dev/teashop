@@ -90,6 +90,10 @@ and runs `deploy/deploy.sh <commit>`, which:
 6. if it doesn't, **starts the previous version again** and fails the
    deploy (you get GitHub's failure email).
 
+Each deploy and rollback, succeeded or failed, is recorded in the audit
+log and shows under "Operations" on the owner dashboard
+(`deploy/record-ops-event.sh`, which runs `manage.py record_ops_event`).
+
 You can run the same script by hand on the server as the `deploy` user.
 
 ### Setting up automatic deploys
