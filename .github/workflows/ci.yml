@@ -41,12 +41,21 @@ jobs:
         run: |
           pip install --require-hashes -r requirements.lock
           pip install pip-audit
+          pip install -r requirements-ui.txt
+          playwright install --with-deps chromium
       - name: Django checks
         run: |
           python manage.py check
           python manage.py makemigrations --check --dry-run
       - name: Tests (PostgreSQL)
         run: python manage.py test apps
+      - name: Keep the browser tests' screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: var/shots/
+          if-no-files-found: ignore
       - name: Known vulnerabilities in dependencies
         # The lock is fully resolved and hashed, so no throwaway venv is needed.
         run: pip-audit --strict --no-deps --disable-pip -r requirements.lock

@@ -33,6 +33,20 @@ Rules between apps:
 - Tests that need a signed-in owner use `apps.core.testing`
   (`make_owner`, `login_verified`).
 
+## Browser tests
+
+Every page gets a browser test in its app's `tests/test_ui.py`, built on
+`apps.core.uitesting.BrowserTestCase`: `self.check_page(path, name)` (add
+`signed_in=True` for back-office pages) opens it at phone and desktop
+widths in the light and dark themes and fails on WCAG 2.2 AA violations
+found by axe-core, JavaScript or HTTP errors, and sideways scrolling at
+320 pixels; it saves screenshots to `var/shots/`.  For flows, drive the
+page with Playwright (`self.new_page(...)`, `page.get_by_role(...)`) and
+call `self.check_current(page, name)` at each step worth recording.
+Look at the screenshots before calling a page done.  At the end of each
+phase, `python manage.py milestone_shots <phase-name>` records them in
+`doc/shots/`.
+
 ## Settings
 
 `config/settings.py` reads everything that differs between laptop and

@@ -1,0 +1,5 @@
+# Browser tests (apps/core/uitesting.py).  After installing, fetch the
+# browser once with:  playwright install chromium
+playwright>=1.55,<2
+# Bundles axe-core, which checks pages against WCAG 2.2 A/AA.
+axe-playwright-python>=0.1.8,<0.2

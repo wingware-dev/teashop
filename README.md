@@ -35,6 +35,20 @@ Development uses SQLite in `var/`; set `DATABASE_URL` to use PostgreSQL.
 
 Run the tests with Wing's Testing tool or `python manage.py test apps`.
 
+The browser tests (tagged `ui`) open each page in headless Chromium at
+phone and desktop widths, in the light and dark themes, check it against
+WCAG 2.2 AA with axe-core, and save screenshots to `var/shots/`.  They
+need, once:
+
+```sh
+.venv/bin/pip install -r requirements-ui.txt
+.venv/bin/playwright install chromium
+```
+
+Without them those tests are skipped.  `--exclude-tag ui` leaves them
+out; `python manage.py milestone_shots <name>` records a milestone's
+screenshots in `doc/shots/` (see `doc/shots/README.md`).
+
 ## Run the whole stack locally (as on the server)
 
 Needs Docker.  Copy `.env.example` to `.env` and set, for a local trial:

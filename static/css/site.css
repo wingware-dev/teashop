@@ -85,6 +85,7 @@ input[type="text"], input[type="password"], input[type="number"], input[type="em
   color: var(--text);
 }
 
+.table-scroll { overflow-x: auto; }
 table.events { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 table.events th, table.events td { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border); }
 

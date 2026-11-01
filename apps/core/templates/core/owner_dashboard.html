@@ -19,6 +19,8 @@
   <section class="card">
     <h2>Recent activity</h2>
     {% if recent_events %}
+      {# Scrolls by itself on narrow screens, so the page does not. #}
+      <div class="table-scroll" role="region" aria-label="Recent activity" tabindex="0">
       <table class="events">
         <thead><tr><th>When</th><th>Who</th><th>Action</th><th>What</th></tr></thead>
         <tbody>
@@ -32,6 +34,7 @@
           {% endfor %}
         </tbody>
       </table>
+      </div>
     {% else %}
       <p class="muted">No activity recorded yet.</p>
     {% endif %}
