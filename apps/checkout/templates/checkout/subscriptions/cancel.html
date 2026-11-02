@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Cancel your subscription · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  {% if subscription.is_live %}
+    <h1>Cancel your subscription</h1>
+    <p><strong>{{ subscription.plan.name }}</strong>, {{ subscription.price|money }} {{ subscription.plan.interval_text }}, for {{ subscription.email }}.</p>
+    <form method="post">
+      {% csrf_token %}
+      <p>Cancelling stops all future charges.{% if subscription.current_period_end %}  Nothing more is charged after today; the delivery you have paid for still ships.{% endif %}</p>
+      <div class="actions"><button type="submit">Cancel my subscription</button></div>
+    </form>
+  {% elif subscription.status == "cancelled" or subscription.status == "ended" %}
+    <h1>Your subscription is cancelled</h1>
+    <p class="notice">{% motif "bird" %}<span>{{ subscription.plan.name }} for {{ subscription.email }}: cancelled{% if subscription.cancelled_at %} on {{ subscription.cancelled_at|date:"F j, Y" }}{% endif %}.  You will not be charged again.  We emailed you a confirmation.</span></p>
+    <p><a href="{% url 'checkout:plans' %}">Subscribe again</a> any time.</p>
+  {% else %}
+    <h1>Subscription {{ subscription.get_status_display|lower }}</h1>
+    <p>There is nothing to cancel: it was never paid for, so nothing will be charged.</p>
+  {% endif %}
+</div>
+{% endblock %}

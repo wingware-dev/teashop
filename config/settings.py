@@ -84,6 +84,7 @@ THIRD_PARTY_APPS = [
     "django_otp.plugins.otp_totp",
     "two_factor",
     "axes",
+    "csp",
 ]
 LOCAL_APPS = [
     "apps.audit",
@@ -92,11 +93,13 @@ LOCAL_APPS = [
     "apps.catalog",
     "apps.storefront",
     "apps.purchasing",
+    "apps.checkout",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "csp.middleware.CSPMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -124,6 +127,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.storefront.context_processors.storefront",
+                "apps.checkout.context_processors.checkout",
             ],
         },
     },
@@ -220,6 +224,35 @@ if PRODUCTION:
     # they are deliberate later decisions (docs/ops/README.md, "HTTPS").
     SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
 
+# Content Security Policy (django-csp): the browser runs only our own
+# scripts and styles, plus Stripe's card fields (Stripe.js and its frames)
+# and, when it is turned on, Cloudflare Turnstile's bot check.  Pages have
+# no inline scripts or styles; the JSON-LD product data is not a script the
+# browser runs, so it needs no exception.  CSP_REPORT_URI (optional) is
+# where browsers report what the policy blocked.
+from csp.constants import NONE, SELF  # noqa: E402
+
+STRIPE_SCRIPT_SOURCES = ["https://js.stripe.com", "https://*.js.stripe.com"]
+TURNSTILE_SOURCE = "https://challenges.cloudflare.com"
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": [SELF],
+        "script-src": [SELF, *STRIPE_SCRIPT_SOURCES, TURNSTILE_SOURCE],
+        "style-src": [SELF],
+        "img-src": [SELF, "https://*.stripe.com"],
+        "font-src": [SELF],
+        "connect-src": [SELF, "https://api.stripe.com", "https://m.stripe.network", TURNSTILE_SOURCE],
+        "frame-src": [*STRIPE_SCRIPT_SOURCES, "https://hooks.stripe.com", TURNSTILE_SOURCE],
+        "frame-ancestors": [NONE],
+        "form-action": [SELF],
+        "base-uri": [SELF],
+        "object-src": [NONE],
+    },
+}
+# (Not kept as a CSP_* setting: django-csp 4 takes those for its old format.)
+if env_str("CSP_REPORT_URI"):
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["report-uri"] = [env_str("CSP_REPORT_URI")]
+
 # --- Audit log --------------------------------------------------------------
 # Models whose changes are not recorded: the log itself, and bookkeeping
 # that would only add noise or is recorded another way.
@@ -282,6 +315,113 @@ CATALOG_PROTECTED_ORIGINS = env_list(
 STOREFRONT_OPEN = env_bool("STOREFRONT_OPEN", default=not PRODUCTION)
 # The shop's name, until the real one is chosen and its trademark searched.
 SHOP_NAME = env_str("SHOP_NAME", "Teashop")
+# Where customers write to, and the postal address (a registered PO box is
+# fine) that order emails and the policy pages show.  Use "\n" between
+# lines.
+SHOP_CONTACT_EMAIL = env_str("SHOP_CONTACT_EMAIL", "hello@example.com")
+SHOP_POSTAL_ADDRESS = env_str("SHOP_POSTAL_ADDRESS").replace("\\n", "\n")
+# The shop's address on the web, for links in emails.
+SITE_URL = env_str("SITE_URL", "http://localhost:8000")
+# The state whose law governs the terms of sale.
+SHOP_STATE = "New York"
+
+# --- Email ------------------------------------------------------------------
+# Order emails, sign-in links and subscription notices.  Without
+# EMAIL_HOST they are printed to the console (a laptop) instead of sent.
+DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", f"{SHOP_NAME} <orders@example.com>")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_HOST = env_str("EMAIL_HOST")
+if EMAIL_HOST:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_PORT = env_int("EMAIL_PORT", 587)
+    EMAIL_HOST_USER = env_str("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = env_str("EMAIL_HOST_PASSWORD")
+    EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+    EMAIL_TIMEOUT = 20
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Where new-order and problem notices for the owner go (empty: none).
+OWNER_NOTIFY_EMAIL = env_str("OWNER_NOTIFY_EMAIL")
+
+# --- Checkout (apps/checkout, docs/checkout.md) -----------------------------
+# Payments: Stripe's Payment Element (cards, Apple Pay, Google Pay, Link and
+# more), card data never on this server.  Without STRIPE_SECRET_KEY a
+# stand-in ("fake") takes the place of Stripe on a laptop and in tests; it
+# never takes payments in production, where checkout stays closed until
+# the Stripe keys are set.  Live keys (sk_live_...) are refused unless
+# STRIPE_ALLOW_LIVE=true, so going live is a deliberate step.
+STRIPE_SECRET_KEY = env_str("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY = env_str("STRIPE_PUBLISHABLE_KEY")
+STRIPE_WEBHOOK_SECRET = env_str("STRIPE_WEBHOOK_SECRET")
+STRIPE_ALLOW_LIVE = env_bool("STRIPE_ALLOW_LIVE", False)
+# Point at stripe-mock (http://localhost:12111) to try the Stripe code
+# without an account.
+STRIPE_API_BASE = env_str("STRIPE_API_BASE")
+PAYMENT_PROVIDER = env_str("PAYMENT_PROVIDER", "stripe" if STRIPE_SECRET_KEY else "fake")
+if PAYMENT_PROVIDER not in ("stripe", "fake"):
+    raise ImproperlyConfigured("PAYMENT_PROVIDER must be 'stripe' or 'fake'")
+if STRIPE_SECRET_KEY.startswith(("sk_live_", "rk_live_")) and not STRIPE_ALLOW_LIVE:
+    raise ImproperlyConfigured("A live Stripe key is set: set STRIPE_ALLOW_LIVE=true to take real payments")
+
+# Shipping: live USPS rates and address checking through EasyPost.  Without
+# EASYPOST_API_KEY a stand-in with a fixed rate table is used (not in
+# production).  Orders ship to the 48 contiguous states and DC only.
+EASYPOST_API_KEY = env_str("EASYPOST_API_KEY")
+SHIPPING_PROVIDER = env_str("SHIPPING_PROVIDER", "easypost" if EASYPOST_API_KEY else "fake")
+if SHIPPING_PROVIDER not in ("easypost", "fake"):
+    raise ImproperlyConfigured("SHIPPING_PROVIDER must be 'easypost' or 'fake'")
+if EASYPOST_API_KEY and not EASYPOST_API_KEY.startswith("EZTK") and not env_bool("EASYPOST_ALLOW_LIVE", False):
+    raise ImproperlyConfigured("A production EasyPost key is set: set EASYPOST_ALLOW_LIVE=true to buy real postage")
+# Where parcels ship from (the rates depend on it).
+SHIP_FROM = {
+    "name": env_str("SHIP_FROM_NAME", SHOP_NAME),
+    "street1": env_str("SHIP_FROM_STREET1"),
+    "street2": env_str("SHIP_FROM_STREET2"),
+    "city": env_str("SHIP_FROM_CITY"),
+    "state": env_str("SHIP_FROM_STATE", "NY"),
+    "zip": env_str("SHIP_FROM_ZIP"),
+    "phone": env_str("SHIP_FROM_PHONE"),
+}
+# USPS services offered at checkout (EasyPost's names).
+SHIPPING_SERVICES = env_list("SHIPPING_SERVICES", ["GroundAdvantage", "Priority", "Express"])
+# The box and filler around an order, added to the packages' weight.
+SHIPPING_BOX_GRAMS = env_int("SHIPPING_BOX_GRAMS", 150)
+# Weight of a packed size whose own shipping weight is not set: the tea
+# plus this much for its package (teas), or this much (merchandise).
+SHIPPING_PACKAGE_GRAMS = {"tin": 110, "pouch": 15, "box": 60, "": 30}
+SHIPPING_DEFAULT_ITEM_GRAMS = env_int("SHIPPING_DEFAULT_ITEM_GRAMS", 450)
+
+# Sales tax.  Collected only in the states listed here (where the shop is
+# registered): New York to start.  Tea is exempt as food; merchandise and
+# accessories are taxed at the destination's rate, and on a mixed order the
+# shipping is split in proportion and only the taxable share is taxed.
+# TAX_PROVIDER "table" uses the rates entered in the admin (Checkout → Tax
+# rates); "stripe" asks Stripe Tax for the destination's rate.  A ZIP code
+# with no rate in the table is charged SALES_TAX_FALLBACK_RATES and flagged
+# on the dashboard, so the rate can be added.
+SALES_TAX_STATES = env_list("SALES_TAX_STATES", ["NY"])
+TAX_PROVIDER = env_str("TAX_PROVIDER", "table")
+if TAX_PROVIDER not in ("table", "stripe"):
+    raise ImproperlyConfigured("TAX_PROVIDER must be 'table' or 'stripe'")
+SALES_TAX_FALLBACK_RATES = {"NY": "0.08875"}
+# Warn on the dashboard when sales into a state reach this share of its
+# economic-nexus threshold.
+NEXUS_ALERT_SHARE = 0.8
+
+# Bot protection: Cloudflare Turnstile on the checkout and sign-in forms
+# when both keys are set (free; https://dash.cloudflare.com/?to=/:account/turnstile).
+TURNSTILE_SITE_KEY = env_str("TURNSTILE_SITE_KEY")
+TURNSTILE_SECRET_KEY = env_str("TURNSTILE_SECRET_KEY")
+# Form submissions allowed per visitor address per hour (checkout steps,
+# sign-in links, discount codes).
+CHECKOUT_RATE_LIMIT = env_int("CHECKOUT_RATE_LIMIT", 30)
+SIGN_IN_RATE_LIMIT = env_int("SIGN_IN_RATE_LIMIT", 5)
+# A form sent back sooner than this after the page was shown is refused
+# (a person takes longer).
+CHECKOUT_MIN_FORM_SECONDS = 2
+# Most of one size in a cart, and most lines.
+CART_MAX_QUANTITY = 12
+CART_MAX_LINES = 30
 
 # --- Logging: everything to stdout, Docker rotates the files ----------------
 LOG_LEVEL = env_str("DJANGO_LOG_LEVEL", "INFO")

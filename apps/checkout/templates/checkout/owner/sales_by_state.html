@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load storefront checkout %}
+{% block title %}Sales by state · {{ shop_name }}{% endblock %}
+{% block content %}
+<h1>Sales by state and sales tax</h1>
+<p><a href="{% url 'core:owner_dashboard' %}">Dashboard</a></p>
+
+<section aria-labelledby="ny-title">
+  <h2 id="ny-title">New York sales tax collected, {{ year }}</h2>
+  <p class="small muted">Tea is exempt; merch and accessories, with their share of shipping, are taxed.  File from these figures (quarterly or yearly, as NYS assigns).</p>
+  <div class="table-scroll" role="region" aria-label="New York sales tax by quarter" tabindex="0">
+    <table class="events">
+      <thead><tr><th scope="col">Quarter</th><th scope="col" class="num">Orders</th><th scope="col" class="num">Sales (with tax)</th><th scope="col" class="num">Taxable</th><th scope="col" class="num">Tax collected</th></tr></thead>
+      <tbody>
+        {% for label, figures in tax_rows %}
+          <tr><th scope="row">{{ label }}</th><td class="num">{{ figures.orders }}</td><td class="num">{{ figures.sales|default:0|money }}</td><td class="num">{{ figures.taxable|default:0|money }}</td><td class="num">{{ figures.tax|default:0|money }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="nexus-title">
+  <h2 id="nexus-title">Sales into each state against its threshold</h2>
+  <p class="small muted">Once sales into a state pass its economic-nexus threshold you must register there and collect its sales tax.  The thresholds are a starting summary (Checkout → Nexus thresholds in the admin): check a state's own rule when it is flagged.</p>
+  <div class="table-scroll" role="region" aria-label="Sales by state" tabindex="0">
+    <table class="events">
+      <thead><tr><th scope="col">State</th><th scope="col" class="num">Sales {{ year }}</th><th scope="col" class="num">Orders {{ year }}</th><th scope="col" class="num">Sales {{ year|add:"-1" }}</th><th scope="col" class="num">Orders {{ year|add:"-1" }}</th><th scope="col">Threshold</th><th scope="col" class="num">Reached</th><th scope="col">Status</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <th scope="row">{{ row.name }}</th>
+            <td class="num">{{ row.sales|money }}</td><td class="num">{{ row.orders }}</td>
+            <td class="num">{{ row.last_sales|money }}</td><td class="num">{{ row.last_orders }}</td>
+            <td>{% if row.threshold and row.threshold.has_sales_tax %}{% if row.threshold.sales %}{{ row.threshold.sales|money }}{% endif %}{% if row.threshold.transactions %} {% if row.threshold.needs_both %}and{% else %}or{% endif %} {{ row.threshold.transactions }} orders{% endif %}{% else %}—{% endif %}</td>
+            <td class="num">{% if row.percent is not None %}{{ row.percent }}%{% else %}—{% endif %}</td>
+            <td{% if row.needs_action %} class="status-failed"{% endif %}>{{ row.status }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8">No sales yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

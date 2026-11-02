@@ -1,0 +1,18 @@
+{% load storefront checkout %}
+<ul class="line-list compact">
+  {% for line in lines %}
+    <li class="cart-line">
+      <div class="what"><span class="name">{{ line.product_name }}</span> <span class="muted">{{ line.size_name }}{% if line.quantity > 1 %} × {{ line.quantity }}{% endif %}</span></div>
+      <p class="line-total price">{{ line.line_total|money }}</p>
+    </li>
+  {% endfor %}
+</ul>
+<dl class="figures">
+  <dt>Items</dt><dd>{{ order.subtotal|money }}</dd>
+  {% if order.discount_amount %}<dt>Discount{% if order.discount_code %} ({{ order.discount_code }}){% endif %}</dt><dd>−{{ order.discount_amount|money }}</dd>{% endif %}
+  {% if not order.subscription_id %}
+    <dt>Shipping{% if order.shipping_service %} ({{ order.shipping_service }}){% endif %}</dt><dd>{% if order.shipping_amount %}{{ order.shipping_amount|money }}{% else %}Free{% endif %}</dd>
+    <dt>Sales tax{% if order.tax_amount %} ({{ order.tax_rate|percent }} on {{ order.taxable_amount|money }}){% endif %}</dt><dd>{{ order.tax_amount|money }}</dd>
+  {% endif %}
+  <dt class="total">Total</dt><dd class="total">{{ order.total|money }}</dd>
+</dl>

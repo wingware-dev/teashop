@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Tea subscriptions · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout">
+  <section class="banner palette-plum">
+    {% motif "teapot" "banner-art" %}
+    <p class="kicker">Subscriptions</p>
+    <h1>Tea by post, on a schedule</h1>
+    <p class="intro">Freshly weighed and packed, sent as often as you like.  Shipping included.  Cancel any time online, in one step.</p>
+  </section>
+  {% if closed %}<p class="notice">{% motif "bee" %}<span>{{ closed }}</span></p>{% endif %}
+  {% if plans %}
+    <ul class="plan-list">
+      {% for plan in plans %}
+        <li class="card plan">
+          <h2>{{ plan.name }}</h2>
+          <p class="price">{{ plan.price|money }} <span class="muted">{{ plan.interval_text }}</span></p>
+          {{ plan.description|paragraphs }}
+          {% if not closed %}<p><a class="button" href="{{ plan.get_absolute_url }}">Subscribe<span class="visually-hidden"> to {{ plan.name }}</span></a></p>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">Subscriptions are coming soon.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% autoescape off %}{% load storefront %}Hello {{ subscription.ship_name|default:"there" }},
+
+Thank you for subscribing to {{ subscription.plan.name }}.  Please keep this email: it has your subscription's terms and how to cancel.
+
+What you get: {{ subscription.plan.description }}
+
+The terms you agreed to on {{ subscription.consented_at|date:"F j, Y" }}:
+{{ subscription.terms_text }}
+
+Price: {{ subscription.price|money }} {{ subscription.plan.interval_text }}, charged automatically until you cancel.{% if subscription.current_period_end %}  Next renewal: {{ subscription.current_period_end|date:"F j, Y" }}.{% endif %}
+
+How to cancel: open this link and press "Cancel my subscription".  No sign-in, no phone call:
+{{ cancel_url }}
+Cancelling stops all future charges; a delivery you have already paid for still ships.  You can also cancel from your account on our site, or by writing to {{ contact_email }}.
+
+Deliveries go to:
+{% for line in subscription.address_lines %}  {{ line }}
+{% endfor %}{% include "checkout/email/_footer.txt" %}{% endautoescape %}

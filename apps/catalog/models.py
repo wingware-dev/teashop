@@ -376,6 +376,13 @@ class SizeOption(models.Model):
     package = models.CharField(
         max_length=8, choices=Package.choices, blank=True, help_text="For the shop's package filter (teas)"
     )
+    shipping_grams = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        help_text="Weight of one packed package, for shipping rates.  Empty: the tea plus a usual weight for its "
+        "package (teas), or a usual weight for merchandise.  Weigh one to set it exactly.",
+    )
     sort_order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -392,6 +399,18 @@ class SizeOption(models.Model):
             raise ValidationError({"net_grams": "Say how many grams of tea go in each package."})
         if self.product.kind == Product.Kind.GOODS and self.net_grams:
             raise ValidationError({"net_grams": "Only teas have a net weight here; leave this empty."})
+
+    def shipping_weight(self):
+        """Grams one packed package weighs, for shipping rates: as set, or
+        estimated from the tea and its package (settings.SHIPPING_PACKAGE_GRAMS,
+        SHIPPING_DEFAULT_ITEM_GRAMS)."""
+        from django.conf import settings
+
+        if self.shipping_grams:
+            return self.shipping_grams
+        if self.net_grams:
+            return self.net_grams + settings.SHIPPING_PACKAGE_GRAMS.get(self.package, 30)
+        return settings.SHIPPING_DEFAULT_ITEM_GRAMS
 
     def bill_of_materials(self):
         """[(item, quantity)] that one package uses: the tea first (grams),

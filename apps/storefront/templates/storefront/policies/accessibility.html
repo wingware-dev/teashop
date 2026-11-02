@@ -1,0 +1,19 @@
+{% extends "storefront/policies/_policy.html" %}
+{% block policy %}
+<p>We want everyone to be able to use {{ shop_name }}, including people who use screen readers, keyboards, magnification, voice control or other assistive technology.</p>
+
+<h2>What we aim for</h2>
+<p>Our goal is the Web Content Accessibility Guidelines (WCAG) 2.2 at level AA.  We build to it from the start rather than adding an overlay, and every page is checked automatically at phone and desktop sizes, in the light and dark themes, before each release.  Automatic checks catch only some problems, so please tell us about anything they miss.</p>
+
+<h2>What we have done</h2>
+<ul>
+  <li>Colours with enough contrast in both themes, and a theme switch.</li>
+  <li>Everything works with a keyboard, with a visible focus outline and a "skip to main content" link.</li>
+  <li>Descriptions for every product photo, labelled form fields, and errors that say what to fix.</li>
+  <li>Pages that fit a narrow screen and enlarge to 400% without sideways scrolling.</li>
+  <li>Payment fields from Stripe, which are designed to work with assistive technology.</li>
+</ul>
+
+<h2>If something gets in your way</h2>
+<p>Please tell us: write to <a href="mailto:{{ checkout.contact_email }}">{{ checkout.contact_email }}</a> with the page and what happened.  We will help you place your order another way (by email, for instance) at the same prices, and fix the problem.  We aim to reply within two working days.</p>
+{% endblock %}

@@ -1,0 +1,5 @@
+
+--
+{{ shop_name }} · {{ site_url }}
+Questions? Write to {{ contact_email }}.
+{% if postal_address %}{{ postal_address }}{% endif %}

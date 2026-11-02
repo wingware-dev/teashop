@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Checkout · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  <h1>Checkout is closed for now</h1>
+  <p class="notice">{% motif "bee" %}<span>{{ reason }}</span></p>
+  <p>Your cart is kept.  <a href="{% url 'checkout:cart' %}">Back to your cart</a></p>
+</div>
+{% endblock %}

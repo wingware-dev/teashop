@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load storefront checkout %}
+{% block title %}Your cart · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout">
+  <h1>Your cart</h1>
+  {% include "checkout/_progress.html" %}
+
+  {% if rows %}
+    <div class="checkout-grid">
+      <form method="post" action="{% url 'checkout:cart_update' %}" class="cart-lines">
+        {% csrf_token %}
+        <ul class="line-list">
+          {% for row in rows %}
+            <li class="cart-line">
+              <div class="what">
+                <a href="{{ row.size.product.get_absolute_url }}" class="name">{{ row.size.product.name }}</a>
+                <span class="muted">{{ row.size.name }} · {{ row.size.price|money }} each</span>
+                {% if row.problem %}<p class="error">{{ row.problem }}</p>{% endif %}
+              </div>
+              <div class="qty">
+                <label for="qty-{{ row.line.pk }}">Quantity<span class="visually-hidden"> of {{ row.size.product.name }}, {{ row.size.name }}</span></label>
+                <select id="qty-{{ row.line.pk }}" name="quantity-{{ row.line.pk }}">
+                  {% for n in quantity_choices %}<option value="{{ n }}"{% if n == row.line.quantity %} selected{% endif %}>{{ n }}</option>{% endfor %}
+                </select>
+              </div>
+              <p class="line-total price">{{ row.total|money }}</p>
+              <button type="submit" name="remove" value="{{ row.line.pk }}" class="link">Remove<span class="visually-hidden"> {{ row.size.product.name }}, {{ row.size.name }}</span></button>
+            </li>
+          {% endfor %}
+        </ul>
+        <button type="submit" class="secondary">Update quantities</button>
+      </form>
+
+      <aside class="summary" aria-labelledby="summary-title">
+        <h2 id="summary-title">Summary</h2>
+        <dl class="figures">
+          <dt>Items</dt><dd>{{ figures.subtotal|money }}</dd>
+          {% if figures.discount %}<dt>Discount ({{ figures.discount.code }})</dt><dd>−{{ figures.discount_amount|money }}</dd>{% endif %}
+          <dt>Shipping and tax</dt><dd class="muted">Next steps</dd>
+        </dl>
+        {% if figures.free_shipping %}
+          <p class="notice">{% motif "bee" %}<span>Your order ships free by USPS Ground Advantage.</span></p>
+        {% elif figures.free_shipping_gap %}
+          <p class="notice">{% motif "bee" %}<span>Add {{ figures.free_shipping_gap|money }} more for free shipping.</span></p>
+        {% endif %}
+
+        {% if figures.discount %}
+          <form method="post" action="{% url 'checkout:cart_discount' %}" class="discount">
+            {% csrf_token %}
+            <p>Code <strong>{{ figures.discount.code }}</strong> applied. <button type="submit" name="remove" value="1" class="link">Remove code</button></p>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'checkout:cart_discount' %}" class="discount">
+            {% csrf_token %}
+            {% include "checkout/_protection.html" %}
+            <label for="id_code">Discount code</label>
+            <div class="inline-field">
+              <input type="text" name="code" id="id_code" maxlength="30" autocomplete="off">
+              <button type="submit" class="secondary">Apply</button>
+            </div>
+          </form>
+        {% endif %}
+
+        {% if closed %}
+          <p class="notice">{% motif "bee" %}<span>{{ closed }}</span></p>
+        {% elif problems %}
+          <p class="error">Please fix the items marked above before checking out.</p>
+        {% else %}
+          <a class="button wide" href="{% url 'checkout:address' %}">Check out</a>
+        {% endif %}
+        <p class="small muted">Prices are the same for everyone.  Tea has no sales tax in New York; merch and accessories do.</p>
+      </aside>
+    </div>
+  {% else %}
+    <div class="empty">
+      {% motif "teapot" %}
+      <p>Your cart is empty.</p>
+      <p><a class="button" href="{% url 'storefront:all_teas' %}">Browse our teas</a></p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

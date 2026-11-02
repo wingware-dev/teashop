@@ -1,0 +1,7 @@
+<nav class="checkout-progress" aria-label="Checkout steps">
+  <ol>
+    {% for key, label, current in progress %}
+      <li{% if current %} aria-current="step"{% endif %}><span class="step-number">{{ forloop.counter }}</span> {{ label }}</li>
+    {% endfor %}
+  </ol>
+</nav>

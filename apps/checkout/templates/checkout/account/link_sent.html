@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Check your email · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  <h1>Check your email</h1>
+  <p class="notice">{% motif "bird" %}<span>We sent a sign-in link to <strong>{{ email }}</strong>.  It works once, for 30 minutes.</span></p>
+  <p>Nothing there after a few minutes?  Look in spam, or <a href="{% url 'checkout:sign_in' %}">ask for another link</a>.</p>
+</div>
+{% endblock %}

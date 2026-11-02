@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Order {{ order.number }} · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout">
+  {% if just_ordered %}
+    <section class="banner palette-moss" aria-labelledby="order-title">
+      <p class="kicker">Thank you</p>
+      <h1 id="order-title">Your order is in</h1>
+      <p class="intro">Order {{ order.number }}.  A confirmation is on its way to {{ order.email }}.  Keep it: its link brings you back to this page.</p>
+    </section>
+  {% else %}
+    <h1>Order {{ order.number }}</h1>
+  {% endif %}
+
+  <div class="checkout-grid">
+    <section aria-labelledby="status-title">
+      <h2 id="status-title">Where it is</h2>
+      <p class="order-status status-{{ order.status }}"><strong>{{ order.get_status_display }}</strong></p>
+      {% if order.status == "pending" %}
+        <p>We are waiting for the payment to be confirmed.  This page shows it once it is.</p>
+      {% elif order.status == "paid" %}
+        <p>We weigh, pack and send it by {{ order.ship_by|date:"l, F j" }}, and email you the tracking number.</p>
+      {% elif order.status == "shipped" %}
+        <p>Sent {{ order.shipped_at|date:"F j" }} by {{ order.carrier }}.
+          {% if order.tracking_url %}<a href="{{ order.tracking_url }}">Track it ({{ order.tracking_number }})</a>{% else %}Tracking number: {{ order.tracking_number }}{% endif %}</p>
+      {% endif %}
+      <h3>Shipping to</h3>
+      <address>{% for line in order.address_lines %}{{ line }}<br>{% endfor %}</address>
+      <p class="small">Questions, or need to change something?  Write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> with your order number.  See also <a href="{% url 'storefront:policy' 'returns' %}">returns</a> and <a href="{% url 'storefront:policy' 'shipping' %}">shipping</a>.</p>
+    </section>
+    <aside class="summary" aria-labelledby="summary-title">
+      <h2 id="summary-title">What you ordered</h2>
+      {% include "checkout/_order_figures.html" %}
+      <p class="small muted">Placed {{ order.created_at|date:"F j, Y" }}.</p>
+    </aside>
+  </div>
+</div>
+{% endblock %}

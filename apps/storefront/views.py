@@ -181,6 +181,8 @@ def product_context(request, product, variant=None):
         "motif_name": variant.motif if variant else (product.category.motif if product.category_id else "leaf"),
         "layout": variant.layout if variant else "classic",
         "sizes": sizes,
+        "in_stock_sizes": [size for size, available in sizes if available],
+        "cart_max_quantity": settings.CART_MAX_QUANTITY,
         "photos": photos,
         "facts": facts,
         "related": list(related.order_by("name")[:4]),
@@ -221,12 +223,45 @@ def article(request, slug):
 
 
 @require_GET
+def policy(request, slug):
+    """A policy page.  Shown even while the shop is closed: the terms and
+    the privacy policy must be reachable whenever anyone can be a
+    customer (including a subscriber cancelling)."""
+    from . import policies
+
+    if slug not in policies.POLICIES:
+        raise Http404("No such policy")
+    crumbs = [HOME_CRUMB, (policies.POLICIES[slug], reverse("storefront:policy", args=[slug]))]
+    return render(request, f"storefront/policies/{slug}.html", {
+        "title": policies.POLICIES[slug], "updated": policies.UPDATED, "processors": policies.PROCESSORS,
+        "policies": policies.POLICIES, "crumbs": crumbs, "checkout": _checkout_facts(),
+    })
+
+
+def _checkout_facts():
+    """What the policies quote from the checkout settings."""
+    from apps.checkout.models import CheckoutSettings
+
+    shop = CheckoutSettings.current()
+    return {"ship_within_days": shop.ship_within_days, "free_shipping_over": shop.free_shipping_over,
+            "postal_address": settings.SHOP_POSTAL_ADDRESS, "contact_email": settings.SHOP_CONTACT_EMAIL,
+            "state": settings.SHOP_STATE}
+
+
+@require_GET
 def robots_txt(request):
     if settings.STOREFRONT_OPEN:
         lines = [
             "User-agent: *",
             "Disallow: /owner/",
             "Disallow: /account/",
+            "Disallow: /your-account/",
+            "Disallow: /cart/",
+            "Disallow: /checkout/",
+            "Disallow: /orders/",
+            "Disallow: /subscriptions/pay/",
+            "Disallow: /subscriptions/cancel/",
+            "Disallow: /subscriptions/welcome/",
             # Not the admin's path: it is kept out of sight on purpose.
             "Disallow: /search/",
             "",

@@ -1,0 +1,31 @@
+{% extends "storefront/policies/_policy.html" %}
+{% load storefront %}
+{% block policy %}
+<p>These terms cover buying from {{ shop_name }}.  Placing an order means you accept them.</p>
+
+<h2>Prices and payment</h2>
+<ul>
+  <li>Prices are in US dollars and the same for every customer.  Discount codes we publish are open to anyone who meets their conditions.</li>
+  <li>Payment is taken by Stripe when you place the order.  Sales tax is added where we are required to collect it (New York: on merchandise and accessories and their share of shipping; tea is exempt).</li>
+  <li>If we made an obvious pricing mistake, we will tell you and let you choose to pay the right price or cancel for a full refund.</li>
+</ul>
+
+<h2>Your order</h2>
+<ul>
+  <li>Your order is accepted when we email the confirmation.  If an item turns out to be unavailable, we tell you straight away and refund it.</li>
+  <li>We ship within {{ checkout.ship_within_days }} working day{{ checkout.ship_within_days|pluralize }} of payment unless the checkout says otherwise (for example while we are away).  If we cannot ship by the date we gave, we tell you the new date and you may cancel for a full refund instead, as the FTC's Mail Order Rule requires.</li>
+  <li>We ship to the 48 contiguous states and DC.  See the <a href="{% url 'storefront:policy' 'shipping' %}">shipping policy</a>.</li>
+</ul>
+
+<h2>About our products</h2>
+<p>We describe our teas by taste, aroma, origin and how to brew them.  We make no health claims, and nothing on this site is medical advice.  Each package's label lists its ingredients and any allergens; please read it.  Tea is a natural product, so its look and taste vary a little from harvest to harvest.</p>
+
+<h2>Returns and subscriptions</h2>
+<p>See <a href="{% url 'storefront:policy' 'returns' %}">returns and refunds</a> and the <a href="{% url 'storefront:policy' 'subscriptions' %}">subscription terms</a>.</p>
+
+<h2>Our responsibility</h2>
+<p>If something goes wrong with an order, we will replace it or refund what you paid for it.  Nothing in these terms limits rights you have under the law.</p>
+
+<h2>Law</h2>
+<p>These terms are governed by the laws of the State of {{ checkout.state }}.</p>
+{% endblock %}

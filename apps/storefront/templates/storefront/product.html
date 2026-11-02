@@ -91,7 +91,30 @@
       {% else %}
         <p>Not available right now.</p>
       {% endif %}
-      <p class="notice">{% motif "bee" %}<span>Online ordering opens soon.</span></p>
+      {% if ordering_closed %}
+        <p class="notice">{% motif "bee" %}<span>{{ ordering_closed }}</span></p>
+      {% elif in_stock_sizes %}
+        <form method="post" action="{% url 'checkout:cart_add' %}" class="add-to-cart">
+          {% csrf_token %}
+          {% if in_stock_sizes|length == 1 %}
+            <input type="hidden" name="size" value="{{ in_stock_sizes.0.pk }}">
+          {% else %}
+            <div class="field">
+              <label for="add-size">Size</label>
+              <select id="add-size" name="size">
+                {% for size in in_stock_sizes %}<option value="{{ size.pk }}">{{ size.name }}, {{ size.price|money }}</option>{% endfor %}
+              </select>
+            </div>
+          {% endif %}
+          <div class="field quantity">
+            <label for="add-quantity">Quantity</label>
+            <input type="number" id="add-quantity" name="quantity" value="1" min="1" max="{{ cart_max_quantity }}" inputmode="numeric">
+          </div>
+          <button type="submit">Add to cart{% if in_stock_sizes|length == 1 %}<span class="visually-hidden">: {{ in_stock_sizes.0.name }}</span>{% endif %}</button>
+        </form>
+      {% elif sizes %}
+        <p class="notice">{% motif "bee" %}<span>Sold out for now.  Check back soon.</span></p>
+      {% endif %}
     </section>
   </div>
 

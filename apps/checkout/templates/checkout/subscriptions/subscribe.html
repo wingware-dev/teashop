@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load storefront checkout %}
+{% block title %}Subscribe: {{ plan.name }} · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  <p class="kicker">Subscription</p>
+  <h1>{{ plan.name }}</h1>
+  <p class="price">{{ plan.price|money }} <span class="muted">{{ plan.interval_text }}, shipping included</span></p>
+  {{ plan.description|paragraphs }}
+
+  {% if closed %}
+    <p class="notice">{% motif "bee" %}<span>{{ closed }}</span></p>
+  {% else %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "checkout/_protection.html" %}
+      {% if form.non_field_errors %}
+        <div class="form-errors" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+      {% endif %}
+      <fieldset>
+        <legend>Contact</legend>
+        {% field form.email %}
+      </fieldset>
+      <fieldset>
+        <legend>Where to send each delivery</legend>
+        {% field form.name %}
+        {% field form.street1 %}
+        {% field form.street2 %}
+        {% field form.city %}
+        <div class="field-row">
+          {% field form.state %}
+          {% field form.zip %}
+        </div>
+        {% field form.phone %}
+      </fieldset>
+      <section class="renewal-terms" aria-labelledby="terms-title">
+        <h2 id="terms-title">Automatic renewal terms</h2>
+        <p id="renewal-terms">{{ plan.renewal_terms }}</p>
+        {% field form.consent %}
+        <div class="actions">
+          <button type="submit" aria-describedby="renewal-terms">Subscribe and continue to payment</button>
+        </div>
+        <p class="small">See the <a href="{% url 'storefront:policy' 'subscriptions' %}">subscription terms</a> in full.</p>
+      </section>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_head %}{% if turnstile_site_key %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}{% endblock %}

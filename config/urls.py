@@ -16,6 +16,8 @@ urlpatterns = [
     path("owner/inventory/", include("apps.inventory.urls")),
     path("owner/purchasing/", include("apps.purchasing.urls")),
     path("", include("apps.core.urls")),
+    # Cart, checkout, orders, subscriptions and customer accounts.
+    path("", include("apps.checkout.urls")),
     # The shop: the home page, catalog pages, robots.txt and sitemap.xml.
     path("", include("apps.storefront.urls")),
 ]

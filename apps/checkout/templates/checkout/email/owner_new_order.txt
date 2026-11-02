@@ -1,0 +1,10 @@
+{% autoescape off %}New order {{ order.number }} from {{ order.email }}{% if order.subscription_id %} (subscription delivery){% endif %}.
+
+Ship by: {{ order.ship_by|date:"l, F j" }}
+{% include "checkout/email/_order_lines.txt" %}
+Ship to:
+{% for line in order.address_lines %}  {{ line }}
+{% endfor %}{% if not order.address_verified %}  (The address checker could not confirm this address.)
+{% endif %}
+{{ admin_url }}
+{% endautoescape %}

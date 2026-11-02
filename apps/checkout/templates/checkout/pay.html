@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Payment · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout">
+  <h1>Payment</h1>
+  {% include "checkout/_progress.html" %}
+  <div class="checkout-grid">
+    <section aria-labelledby="pay-title">
+      <h2 id="pay-title">Pay {{ order.total|money }}</h2>
+      {% include "checkout/_payment_form.html" %}
+      <p class="small">By paying you agree to our <a href="{% url 'storefront:policy' 'terms' %}">terms of sale</a>; see the <a href="{% url 'storefront:policy' 'returns' %}">returns policy</a> and <a href="{% url 'storefront:policy' 'privacy' %}">privacy policy</a>.</p>
+    </section>
+    <aside class="summary" aria-labelledby="summary-title">
+      <h2 id="summary-title">Order {{ order.number }}</h2>
+      {% include "checkout/_order_figures.html" %}
+      <h3>Shipping to</h3>
+      <address>{% for line in order.address_lines %}{{ line }}<br>{% endfor %}</address>
+      <p class="small"><a href="{% url 'checkout:shipping' %}">Change shipping</a> · <a href="{% url 'checkout:cart' %}">Change the cart</a></p>
+    </aside>
+  </div>
+</div>
+{% endblock %}

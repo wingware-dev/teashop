@@ -1,0 +1,52 @@
+{% extends "storefront/policies/_policy.html" %}
+{% block policy %}
+<p>This explains what {{ shop_name }} learns about you, why, who else receives it, and your choices.  In short: we keep what we need to send your tea and run the shop, we never sell it, and we share it only with the services listed below that help us do that.</p>
+
+<h2>What we collect</h2>
+<ul>
+  <li><strong>When you order or subscribe:</strong> your name, email, shipping address, phone (if you give it), what you bought and what you paid.  Your card or wallet details go straight to Stripe; we never see or keep them.</li>
+  <li><strong>When you sign in:</strong> your email address and when you last signed in.  There is no password to keep.</li>
+  <li><strong>When you write to us</strong> by email or chat: what you write, and our answers.</li>
+  <li><strong>When you browse:</strong> the server's logs record your IP address and the pages requested, for security; we keep them for a short time.  The site sets a cookie for your session and cart, and one that protects forms; it remembers your light or dark theme choice in your browser.  We do not use advertising or tracking cookies.</li>
+</ul>
+
+<h2>What we use it for</h2>
+<ul>
+  <li>To take payment, pack and ship your order, and email you about it.</li>
+  <li>To run your subscription and remind you of renewals, as the law requires.</li>
+  <li>To answer your questions, and to keep the records tax law requires (sales records are kept for at least three years).</li>
+  <li>To keep the shop secure and turn away fraud and bots.</li>
+</ul>
+<p>We send marketing email only if you sign up for it, and every one has a one-click unsubscribe.  Prices are the same for everyone: we never use your information to set what you pay.</p>
+
+<h2>Who else receives it</h2>
+<p>These services receive customer information to do work for us, and only for that work:</p>
+<div class="table-scroll" role="region" aria-label="Services that receive customer information" tabindex="0">
+  <table class="events processors">
+    <thead><tr><th scope="col">Service</th><th scope="col">What it receives</th><th scope="col">Why</th></tr></thead>
+    <tbody>
+      {% for name, what, why in processors %}<tr><th scope="row">{{ name }}</th><td>{{ what }}</td><td>{{ why }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<p>We may also disclose information when the law requires it.  We do not sell or rent your information, or share it for advertising.</p>
+
+<h2>AI assistant</h2>
+<p>Some answers to questions may be written by an AI assistant.  Those messages say so, and you can always ask for a person.</p>
+
+<h2>How we protect it</h2>
+<p>The shop is served only over encrypted connections.  Our back office needs a password and a second factor, every change is logged, and backups are encrypted.  If a breach ever affected your information, we would tell you as New York law requires.</p>
+
+<h2>Your choices</h2>
+<ul>
+  <li>Ask us for a copy of what we hold about you, to correct it, or to delete it (we must keep sales records for tax purposes, but delete the rest).</li>
+  <li>Order as a guest: an account is optional.</li>
+  <li>Browsers' "Do Not Track" signals: we do not track you across sites, so there is nothing for them to turn off.</li>
+</ul>
+
+<h2>Children</h2>
+<p>The shop is not meant for children under 13, and we do not knowingly collect their information.</p>
+
+<h2>Changes</h2>
+<p>If we change this policy, we update the date above, and tell customers by email if the change matters to them.</p>
+{% endblock %}

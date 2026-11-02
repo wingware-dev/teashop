@@ -12,7 +12,7 @@ be built side by side with few conflicts:
 | `inventory` | 2 | Raw materials, lots, stock movements, bills of materials |
 | `catalog` | 2, 3 | Products, size options, categories, regions, collections, photos, copy rules |
 | `storefront` | 3 | Public pages (including the home page), page designs, tea notes, sitemap; see `docs/storefront.md` |
-| `checkout` | 4 | Cart, Stripe, shipping rates, tax |
+| `checkout` | 4 | Cart, orders, Stripe, shipping rates, tax, accounts, subscriptions; see `docs/checkout.md` |
 | `fulfillment` | 5 | Order queue, labels, tracking |
 
 Names for later phases are suggestions; pick what fits.  To add an app:

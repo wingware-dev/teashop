@@ -1,0 +1,15 @@
+{% autoescape off %}Hello {{ order.ship_name|default:"there" }},
+
+Your order {{ order.number }} is on its way with {{ order.carrier }}.
+
+Tracking number: {{ order.tracking_number }}
+{% if tracking_url %}Track it: {{ tracking_url }}
+{% endif %}
+{% include "checkout/email/_order_lines.txt" %}
+Shipping to:
+{% for line in order.address_lines %}  {{ line }}
+{% endfor %}
+Your order: {{ status_url }}
+
+Something wrong when it arrives?  Write to {{ contact_email }} and we will put it right.
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

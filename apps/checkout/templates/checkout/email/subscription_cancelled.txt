@@ -1,0 +1,6 @@
+{% autoescape off %}Hello {{ subscription.ship_name|default:"there" }},
+
+Your {{ subscription.plan.name }} subscription is cancelled{% if subscription.cancelled_at %} as of {{ subscription.cancelled_at|date:"F j, Y" }}{% endif %}.  You will not be charged again.  A delivery you have already paid for still ships.
+
+Thank you for drinking our tea.  You are welcome back any time.
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

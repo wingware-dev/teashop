@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Subscription · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  {% if subscription.status == "pending" %}
+    <h1>Almost there</h1>
+    <p>We are waiting for your payment to be confirmed.  You will get an email with your subscription's terms and how to cancel as soon as it is.</p>
+  {% elif subscription.is_live %}
+    <section class="banner palette-plum" aria-labelledby="welcome-title">
+      <p class="kicker">Thank you</p>
+      <h1 id="welcome-title">You're subscribed</h1>
+      <p class="intro">{{ subscription.plan.name }}: {{ subscription.price|money }} {{ subscription.plan.interval_text }}.  We sent the terms and how to cancel to {{ subscription.email }}.</p>
+    </section>
+    <p>Your first delivery ships within a few working days.  Cancel any time: <a href="{{ subscription.cancel_url }}">cancel this subscription</a>.</p>
+  {% else %}
+    <h1>Subscription {{ subscription.get_status_display|lower }}</h1>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load checkout %}
+{% block title %}Sign in · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  <h1>Your account</h1>
+  <p>No password: enter your email and we send you a link that signs you in.  Your account shows every order placed with that email, lets you order the same again, and manage a subscription.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "checkout/_protection.html" %}
+    {% field form.email %}
+    <div class="actions"><button type="submit">Email me a sign-in link</button></div>
+  </form>
+  <p class="small muted">You don't need an account to order.</p>
+</div>
+{% endblock %}
+{% block extra_head %}{% if turnstile_site_key %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}{% endblock %}

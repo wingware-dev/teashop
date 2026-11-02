@@ -107,7 +107,7 @@ class ShopPagesTests(TestCase):
         self.assertContains(response, "3 g for a 250 ml (8 oz) cup")
         self.assertContains(response, "$10.00")
         self.assertContains(response, "In stock")
-        self.assertContains(response, "Online ordering opens soon")
+        self.assertContains(response, "Add to cart")
 
     def test_product_structured_data(self):
         data = structured_data(self.client.get("/products/assam-second-flush/"))

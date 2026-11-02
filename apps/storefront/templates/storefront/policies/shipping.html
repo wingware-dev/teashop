@@ -1,0 +1,18 @@
+{% extends "storefront/policies/_policy.html" %}
+{% load storefront %}
+{% block policy %}
+<h2>Where we ship</h2>
+<p>The 48 contiguous states and the District of Columbia, by USPS.  We don't yet ship to Alaska, Hawaii, US territories, military (APO/FPO/DPO) addresses or abroad.</p>
+
+<h2>When</h2>
+<p>We weigh and pack each order by hand when it comes in, and ship within {{ checkout.ship_within_days }} working day{{ checkout.ship_within_days|pluralize }} of payment.  The checkout shows the date we promise; if we are away, it says so and gives the date we ship.  If we can't make the date we gave, we email you a new one and you may cancel for a full refund.  Then the post office's own times apply: the checkout shows each service's usual time in transit.</p>
+
+<h2>What it costs</h2>
+<p>The checkout shows the live USPS price for your parcel's weight and address{% if checkout.free_shipping_over is not None %}, and orders of {{ checkout.free_shipping_over|money }} or more (after discounts) ship free by USPS Ground Advantage{% endif %}.  We don't add a handling charge.</p>
+
+<h2>Addresses</h2>
+<p>We check addresses with the post office's records when you order, and may suggest a corrected spelling.  If you need to change the address, write to us before we ship.</p>
+
+<h2>Tracking, lost and damaged parcels</h2>
+<p>We email you the tracking number when the parcel leaves.  If it is lost or arrives damaged, write to us: see <a href="{% url 'storefront:policy' 'returns' %}">returns and refunds</a>.</p>
+{% endblock %}

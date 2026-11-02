@@ -1,0 +1,9 @@
+{# Bot checks for forms that apps/checkout/protection.py checks. #}
+<div class="hp">
+  <label for="id_{{ honeypot_field }}">Leave this empty</label>
+  <input type="text" id="id_{{ honeypot_field }}" name="{{ honeypot_field }}" tabindex="-1" autocomplete="off">
+</div>
+<input type="hidden" name="form_stamp" value="{{ form_stamp }}">
+{% if turnstile_site_key %}
+  <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
+{% endif %}

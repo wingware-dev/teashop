@@ -7,8 +7,11 @@ the catalog (`apps/catalog`) for products, sizes, categories, regions,
 collections, flavour notes and photos, and on inventory for stock,
 origin, ingredients and allergens.
 
-Ordering arrives in phase 4: until then product pages say "Online
-ordering opens soon".
+Product pages have the add-to-cart form; the cart, checkout, accounts and
+subscriptions are `apps/checkout` (see `docs/checkout.md`).  Until
+payments and shipping are set up, product pages say "Online ordering
+opens soon" instead.  The policy pages (`/policies/...`,
+`apps/storefront/policies.py`) are shown even while the shop is closed.
 
 ## Opening the shop
 

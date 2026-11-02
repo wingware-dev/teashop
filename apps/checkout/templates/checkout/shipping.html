@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load storefront checkout %}
+{% block title %}Shipping · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout">
+  <h1>How should it travel?</h1>
+  {% include "checkout/_progress.html" %}
+
+  <div class="checkout-grid">
+    <form method="post" class="rates">
+      {% csrf_token %}
+      <section class="card">
+        <h2>Shipping to</h2>
+        <address>{% for line in state.ship_to.lines %}{{ line }}<br>{% endfor %}</address>
+        <p class="small"><a href="{% url 'checkout:address' %}">Change the address</a></p>
+      </section>
+      <fieldset class="rate-list">
+        <legend>USPS service</legend>
+        {% for rate, option in options %}
+          <div class="rate">
+            <input type="radio" name="rate" id="rate-{{ forloop.counter }}" value="{{ rate.id }}"{% if rate.id == state.rate_id %} checked{% endif %}>
+            <label for="rate-{{ forloop.counter }}">
+              <span class="name">{{ rate.label }}</span>
+              <span class="price">{% if option.shipping_amount %}{{ option.shipping_amount|money }}{% else %}Free{% endif %}</span>
+              {% if rate.days_text %}<span class="muted small">{{ rate.days_text }}</span>{% endif %}
+            </label>
+          </div>
+        {% endfor %}
+      </fieldset>
+      <p class="small">
+        {% if settings_obj.on_vacation %}We are away: your order ships by {{ ship_by|date:"l, F j" }}.
+        {% else %}We pack every order by hand and ship it within {{ settings_obj.ship_within_days }} working day{{ settings_obj.ship_within_days|pluralize }} (by {{ ship_by|date:"l, F j" }}), then it's in the post office's hands.{% endif %}
+      </p>
+      <div class="actions">
+        <button type="submit">Continue to payment</button>
+        <a href="{% url 'checkout:cart' %}">Back to cart</a>
+      </div>
+    </form>
+
+    <aside class="summary" aria-labelledby="summary-title">
+      <h2 id="summary-title">Summary</h2>
+      <dl class="figures">
+        <dt>Items</dt><dd>{{ figures.subtotal|money }}</dd>
+        {% if figures.discount %}<dt>Discount ({{ figures.discount.code }})</dt><dd>−{{ figures.discount_amount|money }}</dd>{% endif %}
+        <dt>Shipping ({{ figures.rate.label }})</dt><dd>{% if figures.shipping_amount %}{{ figures.shipping_amount|money }}{% else %}Free{% endif %}</dd>
+        <dt>Sales tax{% if figures.tax.tax %} ({{ figures.tax.rate|percent }} on {{ figures.tax.taxable_amount|money }}){% endif %}</dt><dd>{{ figures.tax_amount|money }}</dd>
+        <dt class="total">Total</dt><dd class="total">{{ figures.total|money }}</dd>
+      </dl>
+      <p class="small muted">{% if figures.has_taxable %}Merch and accessories are taxed, with their share of the shipping.  Tea is not taxed in New York.{% else %}Tea has no sales tax in New York.{% endif %}{% if figures.tax.jurisdiction %}  {{ figures.tax.jurisdiction }}.{% endif %}  The total updates when you continue with another service.</p>
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% autoescape off %}Hello,
+
+Someone (we hope you) asked to sign in to {{ shop_name }} as {{ email }}.  Open this link to sign in; it works once, for 30 minutes:
+
+{{ url }}
+
+If it wasn't you, ignore this email: nothing happens without the link.
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

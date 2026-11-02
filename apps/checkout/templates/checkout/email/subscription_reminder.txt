@@ -1,0 +1,12 @@
+{% autoescape off %}{% load storefront %}Hello {{ subscription.ship_name|default:"there" }},
+
+A reminder: your {{ subscription.plan.name }} subscription renews automatically on {{ subscription.current_period_end|date:"F j, Y" }}, and we will charge {{ subscription.price|money }} to your payment method then.
+
+Your terms:
+{{ subscription.terms_text }}
+
+To stop it renewing, cancel before then in one step (no sign-in needed):
+{{ cancel_url }}
+
+To keep it, do nothing.
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

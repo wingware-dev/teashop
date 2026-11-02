@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Payment: {{ subscription.plan.name }} · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  <h1>Pay for your subscription</h1>
+  <section class="renewal-terms" aria-labelledby="terms-title">
+    <h2 id="terms-title">What you agreed to</h2>
+    <p>{{ subscription.terms_text }}</p>
+  </section>
+  <h2>First payment: {{ subscription.price|money }}</h2>
+  {% include "checkout/_payment_form.html" %}
+</div>
+{% endblock %}

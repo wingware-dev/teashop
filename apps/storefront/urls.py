@@ -22,6 +22,7 @@ urlpatterns = [
     path("search/", views.search, name="search"),
     path("tea-notes/", views.article_list, name="articles"),
     path("tea-notes/<slug:slug>/", views.article, name="article"),
+    path("policies/<slug:slug>/", views.policy, name="policy"),
     path("robots.txt", views.robots_txt, name="robots"),
     path("sitemap.xml", sitemap, {"sitemaps": SITEMAPS}, name="sitemap"),
     path("owner/page-designs/", owner_views.variant_list, name="variant_list"),

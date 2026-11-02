@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Your account · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout">
+  <div class="section-head">
+    <h1>Your account</h1>
+    <form method="post" action="{% url 'checkout:sign_out' %}">{% csrf_token %}<button type="submit" class="secondary">Sign out</button></form>
+  </div>
+  <p>Signed in as <strong>{{ customer.email }}</strong>.</p>
+
+  <section aria-labelledby="subs-title">
+    <h2 id="subs-title">Subscriptions</h2>
+    {% if subscriptions %}
+      <ul class="plain-list">
+        {% for subscription in subscriptions %}
+          <li class="card">
+            <h3>{{ subscription.plan.name }}</h3>
+            <p>{{ subscription.get_status_display }}.  {{ subscription.price|money }} {{ subscription.plan.interval_text }}{% if subscription.is_live and subscription.current_period_end %}; next renewal {{ subscription.current_period_end|date:"F j, Y" }}{% endif %}.</p>
+            {% if subscription.is_live %}<p><a class="button secondary" href="{{ subscription.cancel_url }}">Cancel this subscription<span class="visually-hidden"> ({{ subscription.plan.name }})</span></a></p>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">None.  <a href="{% url 'checkout:plans' %}">See our tea subscriptions</a>.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="orders-title">
+    <h2 id="orders-title">Orders</h2>
+    {% if orders %}
+      <ul class="plain-list">
+        {% for order in orders %}
+          <li class="card order-card">
+            <h3><a href="{{ order.get_absolute_url }}">Order {{ order.number }}</a></h3>
+            <p class="muted">{{ order.created_at|date:"F j, Y" }} · {{ order.get_status_display }} · {{ order.total|money }}</p>
+            <ul class="small">{% for line in order.lines.all %}<li>{{ line }}</li>{% endfor %}</ul>
+            {% if not order.subscription_id %}
+              <form method="post" action="{% url 'checkout:buy_again' order.number %}">
+                {% csrf_token %}
+                <button type="submit" class="secondary">Buy again<span class="visually-hidden"> (order {{ order.number }})</span></button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No orders yet.</p>
+    {% endif %}
+  </section>
+
+  {% if customer.has_address %}
+    <section aria-labelledby="address-title">
+      <h2 id="address-title">Saved address</h2>
+      <address>{% for line in customer.address_lines %}{{ line }}<br>{% endfor %}</address>
+      <p class="small muted">Used to fill in the checkout; change it there.</p>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "storefront/policies/_policy.html" %}
+{% block policy %}
+<p>These terms apply to {{ shop_name }}'s tea subscriptions, along with the <a href="{% url 'storefront:policy' 'terms' %}">terms of sale</a>.</p>
+
+<h2>Automatic renewal</h2>
+<ul>
+  <li>A subscription renews automatically, at the interval and price shown next to the sign-up button, until you cancel.  The price includes shipping; tea has no sales tax in New York.</li>
+  <li>We charge your payment method when you sign up and at each renewal.  You agree to this by ticking the consent box before subscribing, and we email you the terms and how to cancel right after.</li>
+  <li>For subscriptions that renew yearly, we email you a reminder 15 to 45 days before each renewal, with the date, the amount and how to cancel.</li>
+  <li>There are no free trials.  If we ever change a subscription's price, we tell you in advance by email, and the new price applies only if you keep the subscription after that.</li>
+</ul>
+
+<h2>Cancelling</h2>
+<ul>
+  <li>Cancel any time online, in one step: use the "cancel" link in any subscription email, or the button on your account page.  No sign-in, call or chat is needed.  You may also write to us.</li>
+  <li>Cancelling stops all future charges straight away.  A delivery you have already paid for still ships.</li>
+  <li>We email you a confirmation of the cancellation.</li>
+</ul>
+
+<h2>Payments that fail</h2>
+<p>If a renewal payment fails, our payment processor tries again over the following days and we tell you by email.  We ship the delivery once it is paid.</p>
+
+<h2>Deliveries</h2>
+<p>Each delivery ships within a few working days of its payment, to the address you gave.  To change the address, write to us.</p>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ shop_name }}{% endblock %}
+{% block meta %}<meta name="description" content="{{ shop_name }}: {{ title|lower }}.">{% endblock %}
+{% block content %}
+{% include "storefront/_breadcrumbs.html" %}
+<div class="policy-page">
+  <article class="prose policy">
+    <h1>{{ title }}</h1>
+    <p class="muted small">Last updated {{ updated|date:"F j, Y" }}.</p>
+    {% block policy %}{% endblock %}
+    <h2>Contact us</h2>
+    <p>{{ shop_name }}, email <a href="mailto:{{ checkout.contact_email }}">{{ checkout.contact_email }}</a>{% if checkout.postal_address %}, or write to:</p>
+    <address>{{ checkout.postal_address|linebreaksbr }}</address>{% else %}.</p>{% endif %}
+  </article>
+  <nav class="policy-nav" aria-label="Other policies">
+    <h2>Policies</h2>
+    <ul>
+      {% for slug, name in policies.items %}
+        <li><a href="{% url 'storefront:policy' slug %}"{% if name == title %} aria-current="page"{% endif %}>{{ name }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+</div>
+{% endblock %}

@@ -30,6 +30,10 @@
       {% endif %}
       <div class="header-tools">
         <button type="button" class="theme-toggle" data-theme-toggle hidden>{% motif "blossom" %}Theme: <span data-theme-name>Automatic</span></button>
+        {% if shop_visible %}
+          <a href="{% url 'checkout:account' %}">{% if customer %}Your account{% else %}Sign in{% endif %}</a>
+          <a href="{% url 'checkout:cart' %}" class="cart-link"{% if request.resolver_match.url_name == "cart" %} aria-current="page"{% endif %}>{% motif "teapot" %}Cart{% if cart_count %} <span class="count">{{ cart_count }}<span class="visually-hidden"> item{{ cart_count|pluralize }}</span></span>{% endif %}</a>
+        {% endif %}
         {% if user.is_authenticated %}
           {% if user.is_staff %}<a href="{% url 'core:owner_dashboard' %}">Dashboard</a>{% endif %}
           <a href="{% url 'two_factor:profile' %}">Account security</a>
@@ -64,6 +68,7 @@
     {% endif %}
     <div class="vine"></div>
   </header>
+  {% if shop_visible and vacation_notice %}<p class="vacation-notice">{% motif "bird" %}<span>{{ vacation_notice }}</span></p>{% endif %}
   <main id="main" class="container {% block main_class %}{% endblock %}" tabindex="-1">
     {% if messages %}
       <ul class="messages">{% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>
@@ -90,11 +95,24 @@
             <li><a href="{% url 'storefront:regions' %}">Regions</a></li>
             {% for collection in nav_collections %}<li><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></li>{% endfor %}
             <li><a href="{% url 'storefront:goods' %}">Merch and accessories</a></li>
+            <li><a href="{% url 'checkout:plans' %}">Tea subscriptions</a></li>
             <li><a href="{% url 'storefront:articles' %}">Tea notes</a></li>
           </ul>
         </nav>
       {% endif %}
-      <p class="small muted">Prices in US dollars.<br>© {% now "Y" %} {{ shop_name }}</p>
+      <nav aria-label="Policies">
+        <h2>Help</h2>
+        <ul>
+          <li><a href="{% url 'storefront:policy' 'shipping' %}">Shipping</a></li>
+          <li><a href="{% url 'storefront:policy' 'returns' %}">Returns and refunds</a></li>
+          <li><a href="{% url 'storefront:policy' 'subscriptions' %}">Subscription terms</a></li>
+          <li><a href="{% url 'storefront:policy' 'terms' %}">Terms of sale</a></li>
+          <li><a href="{% url 'storefront:policy' 'privacy' %}">Privacy</a></li>
+          <li><a href="{% url 'storefront:policy' 'accessibility' %}">Accessibility</a></li>
+          <li><a href="mailto:{{ contact_email }}">{{ contact_email }}</a></li>
+        </ul>
+      </nav>
+      <p class="small muted">Prices in US dollars, the same for everyone.<br>© {% now "Y" %} {{ shop_name }}</p>
     </div>
   </footer>
 </body>

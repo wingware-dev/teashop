@@ -10,7 +10,7 @@ from .models import BomLine, Category, Collection, FlavourNote, Product, Product
 class SizeOptionInline(admin.TabularInline):
     model = SizeOption
     extra = 1
-    fields = ["name", "sku", "net_grams", "package", "price", "sort_order", "is_active", "available"]
+    fields = ["name", "sku", "net_grams", "package", "price", "shipping_grams", "sort_order", "is_active", "available"]
     readonly_fields = ["available"]
     show_change_link = True
 

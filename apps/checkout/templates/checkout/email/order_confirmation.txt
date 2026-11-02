@@ -1,0 +1,13 @@
+{% autoescape off %}Hello {{ order.ship_name|default:"there" }},
+
+Thank you for your order {{ order.number }}.  We weigh and pack it by hand and send it by {{ order.ship_by|date:"l, F j" }}; you will get another email with the tracking number then.
+
+{% include "checkout/email/_order_lines.txt" %}
+Shipping to:
+{% for line in order.address_lines %}  {{ line }}
+{% endfor %}
+See your order at any time:
+{{ status_url }}
+
+Need to change something?  Reply to this email or write to {{ contact_email }} soon, before we pack it.
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

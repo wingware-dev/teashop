@@ -86,11 +86,11 @@ if [ -n "$CI_KEYFILE" ]; then
     chmod 600 /home/deploy/.ssh/authorized_keys
 fi
 
-step "Backup and restore-test timers"
+step "Backup, restore-test and subscription-reminder timers"
 install -m 644 "$APP_DIR"/deploy/server/systemd/teashop-*.service "$APP_DIR"/deploy/server/systemd/teashop-*.timer \
     /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now teashop-backup.timer teashop-restore-test.timer
+systemctl enable --now teashop-backup.timer teashop-restore-test.timer teashop-subscription-reminders.timer
 systemctl list-timers 'teashop-*' --no-pager
 
 step "Done"

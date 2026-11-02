@@ -1,0 +1,7 @@
+{% load storefront checkout %}{% for line in lines %}  {{ line.quantity }} × {{ line.product_name }}{% if line.size_name %}, {{ line.size_name }}{% endif %}: {{ line.line_total|money }}
+{% endfor %}
+  Items: {{ order.subtotal|money }}
+{% if order.discount_amount %}  Discount{% if order.discount_code %} ({{ order.discount_code }}){% endif %}: −{{ order.discount_amount|money }}
+{% endif %}{% if not order.subscription_id %}  Shipping ({{ order.shipping_service }}): {% if order.shipping_amount %}{{ order.shipping_amount|money }}{% else %}free{% endif %}
+  Sales tax{% if order.tax_amount %} ({{ order.tax_rate|percent }} on {{ order.taxable_amount|money }}){% endif %}: {{ order.tax_amount|money }}
+{% endif %}  Total: {{ order.total|money }}
