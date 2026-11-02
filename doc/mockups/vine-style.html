@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="spring" data-density="medium">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup: vine and leaf style · Teashop</title>
+<!-- Mockup only: not wired to the live templates.  All ornament is hand-built inline SVG drawn by the script at the end. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Federant&family=Alegreya:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --display:"Federant","Optima","Palatino",serif; --body:"Alegreya","Palatino","Georgia",serif;
+  --gutter:92px;
+}
+[data-theme=spring]{--paper:#e9dfc4;--panel:#fbf6e9;--panel-2:#fffdf6;--ink:#2a2a1c;--muted:#5d5a44;--rule:#7d8a56;
+  --accent:#3f5a2e;--accent-ink:#fffdf3;--accent-2:#9b4f3a;--gold:#c8962e;--vine:#5b4a2c;--vine-2:#7b8f4a;
+  --leaf-1:#557a3a;--leaf-2:#7f9f52;--leaf-3:#3d5c30;--vein:#d9e3b8;--petal:#f6e6e0;--petal-edge:#c98d86;--berry:#8c2f3c;
+  --bird-back:#6b5a3a;--bird-breast:#c56a3c;--bird-wing:#4f4430;--bfly-1:#e0a63a;--bfly-2:#3f5d8a;--tint:#eef0dc}
+[data-theme=autumn]{--paper:#e3cfae;--panel:#fbf3e4;--panel-2:#fffaf1;--ink:#2e2216;--muted:#6a5642;--rule:#a86a3a;
+  --accent:#7a3b22;--accent-ink:#fff8ee;--accent-2:#5d6b2a;--gold:#c48a22;--vine:#4e3522;--vine-2:#9a6a34;
+  --leaf-1:#b5652b;--leaf-2:#d39a3a;--leaf-3:#7d4a24;--vein:#f3dcae;--petal:#f3d9b0;--petal-edge:#b5652b;--berry:#7a1f2a;
+  --bird-back:#5a4632;--bird-breast:#c25a2c;--bird-wing:#3e3022;--bfly-1:#c8502e;--bfly-2:#2e3e5a;--tint:#f4e4cc}
+[data-theme=dusk]{--paper:#2d3a3a;--panel:#f6f1e3;--panel-2:#fffcf4;--ink:#24261f;--muted:#55574a;--rule:#4d6b68;
+  --accent:#3c4f6e;--accent-ink:#fbf8ee;--accent-2:#7a3d5c;--gold:#c9a54a;--vine:#c9bfa0;--vine-2:#8fb0a3;
+  --leaf-1:#6f9a88;--leaf-2:#a7c4a0;--leaf-3:#4f7a70;--vein:#e8efd6;--petal:#e9d6ec;--petal-edge:#8a5c8e;--berry:#6a3a7a;
+  --bird-back:#6a6a7a;--bird-breast:#d0885a;--bird-wing:#4a4a5a;--bfly-1:#d8b24a;--bfly-2:#7a4a8a;--tint:#e6ecdf}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:18px/1.6 var(--body)}
+a{color:var(--accent)} a:hover{color:var(--accent-2)}
+h1,h2,h3,.wordmark{font-family:var(--display);font-weight:400;line-height:1.2;color:var(--accent)}
+.mockbar{position:sticky;top:0;z-index:10;background:#1f2418;color:#efe8d0;font:14px/1.4 system-ui,sans-serif;
+  padding:8px 14px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+.mockbar a{color:#f3d68a}.mockbar button{font:inherit;background:#3a4230;color:#efe8d0;border:1px solid #6b7550;border-radius:4px;padding:2px 8px;cursor:pointer}
+.mockbar button[aria-pressed=true]{background:#c8962e;color:#1f2418;border-color:#c8962e}
+.mockbar .grp{display:flex;gap:4px;align-items:center}
+.sheet{position:relative;max-width:1200px;margin:36px auto;padding:var(--gutter);background:var(--panel);border-radius:22px;
+  box-shadow:0 2px 0 rgba(0,0,0,.08),0 18px 40px rgba(40,30,10,.18)}
+.sheet>svg.frame{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.inner{position:relative;background:var(--panel-2);border:2px solid var(--rule);border-radius:14px;padding:28px 40px 20px}
+.inner::before{content:"";position:absolute;inset:5px;border:1px solid var(--rule);border-radius:10px;opacity:.5;pointer-events:none}
+.mock-label{font:13px system-ui,sans-serif;color:var(--muted);text-align:center;margin:0 0 6px;letter-spacing:.05em;text-transform:uppercase}
+.site-head{text-align:center;position:relative}
+.util{position:absolute;right:0;top:0;font-size:15px}
+.wordmark{display:inline-block;font-size:clamp(44px,8vw,76px);margin:6px 0 0;text-decoration:none;letter-spacing:.04em}
+.tagline{font-style:italic;color:var(--muted);margin:0 0 10px}
+nav.main ul{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 0}
+nav.main li+li::before{content:"❧";color:var(--rule);margin:0 .55em;font-size:.9em}
+nav.main a{text-decoration:none;font-family:var(--display);font-size:17px}
+.divider{height:64px;margin:14px -12px}.divider svg{display:block;width:100%;height:100%;overflow:visible}
+.kicker{font-variant:small-caps;letter-spacing:.12em;color:var(--accent-2);margin:0}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:32px;align-items:center}
+.hero h1{font-size:clamp(32px,4.4vw,50px);margin:.15em 0 .3em}
+.lede{font-size:20px}
+.button{display:inline-block;background:var(--accent);color:var(--accent-ink);text-decoration:none;padding:.5em 1.2em;border-radius:999px;
+  font-family:var(--display);border:2px solid var(--accent);margin:4px 6px 4px 0}
+.button.secondary{background:transparent;color:var(--accent)}
+.button:hover{color:var(--accent-ink);background:var(--accent-2);border-color:var(--accent-2)}
+.art{width:100%;height:auto;display:block}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 16px}
+.section-head h2{font-size:30px;margin:.2em 0 .5em}
+.grid{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.card{background:var(--tint);border:1.5px solid var(--rule);border-radius:120px 120px 14px 14px;padding:14px 18px 16px;text-align:center;height:100%}
+.card svg{width:120px;height:100px}
+.card h3{font-size:22px;margin:.2em 0}.card p{margin:.3em 0}.price{font-weight:600}
+.chips{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.chips a,.chips span{display:inline-block;border:1.5px solid var(--rule);border-radius:999px;padding:.15em .9em;background:var(--tint);text-decoration:none}
+.ground{height:70px;margin:16px -40px 0}.ground svg{display:block;width:100%;height:100%}
+.foot{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:20px;font-size:16px;border-top:1.5px solid var(--rule);padding-top:14px}
+.foot ul{list-style:none;padding:0;margin:0}.foot h3{font-size:18px;margin:0 0 4px}
+.small{font-size:15px;color:var(--muted)}
+.crumbs{font-size:15px;color:var(--muted)}
+.story{font-style:italic;font-size:20px;text-align:center;max-width:44em;margin:0 auto 10px;color:var(--muted)}
+.product{display:grid;grid-template-columns:1fr 1.1fr;gap:10px 36px;grid-template-areas:"head art" "buy art"}
+.product .head{grid-area:head}.product .gallery{grid-area:art;margin:0}.product .buy{grid-area:buy}
+.product h1{font-size:clamp(34px,4.4vw,52px);margin:.1em 0}
+.headline{font-family:var(--display);font-size:22px;color:var(--accent-2);margin:0}
+.caffeine{display:inline-flex;gap:8px;align-items:center;font-size:16px}
+figcaption{text-align:center;font-size:15px;color:var(--muted)}
+.buy{background:var(--tint);border:1.5px solid var(--rule);border-radius:14px;padding:12px 20px 18px}
+.buy h2{font-size:22px;margin:.2em 0}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:5px 6px;border-bottom:1px solid color-mix(in srgb,var(--rule) 40%,transparent)}
+.num{text-align:right}
+.cart{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:12px}
+.cart label{display:block;font-size:14px;color:var(--muted)}
+.cart select,.cart input{font:inherit;padding:4px 8px;border:1.5px solid var(--rule);border-radius:8px;background:var(--panel-2)}
+.cart input{width:4.5em}.cart .button{margin:0}
+.prose{max-width:40em;margin:0 auto;font-size:19px}
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+.fact{border:1.5px solid var(--rule);border-radius:60px 60px 14px 14px;padding:14px 24px;background:var(--panel)}
+.fact h2{font-size:24px;text-align:center;margin:.2em 0 .4em}
+dl{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:0}dt{font-weight:600}dd{margin:0}
+@media (max-width:860px){.grid{grid-template-columns:repeat(2,1fr)}.foot{grid-template-columns:1fr 1fr}}
+@media (max-width:700px){
+  :root{--gutter:30px}
+  .mockbar{position:static}
+  body{font-size:17px}
+  .sheet{margin:12px 6px;border-radius:14px}
+  .inner{padding:16px 14px 12px}
+  .util{position:static;text-align:right}
+  .hero,.product{grid-template-columns:1fr;grid-template-areas:"head" "art" "buy"}
+  .facts{grid-template-columns:1fr}
+  .divider{height:48px;margin:8px -6px}
+  .ground{margin:12px -14px 0}
+}
+@media (max-width:520px){.grid{grid-template-columns:1fr}.foot{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- Shared drawings: leaves, flowers and creatures.  Each is drawn at the origin, pointing right (leaves) or upright (creatures). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <style>
+    .vine-main{fill:none;stroke:var(--vine);stroke-linecap:round}.vine-twin{fill:none;stroke:var(--vine-2);stroke-linecap:round}
+    .tendril{fill:none;stroke:var(--vine-2);stroke-linecap:round}
+    .c1{fill:var(--leaf-1)}.c2{fill:var(--leaf-2)}.c3{fill:var(--leaf-3)}
+    .vein{fill:none;stroke:var(--vein);stroke-width:.8;opacity:.8}
+    .petal{fill:var(--petal);stroke:var(--petal-edge);stroke-width:.7}.pistil{fill:var(--gold)}
+    .berry{fill:var(--berry)}.hi{fill:#fff;opacity:.55}
+    .bb{fill:var(--bird-back)}.br{fill:var(--bird-breast)}.bw{fill:var(--bird-wing)}.ink{fill:#231d14}.gold{fill:var(--gold)}
+    .lnk{fill:none;stroke:#231d14;stroke-width:.9;stroke-linecap:round}
+    .w1{fill:var(--bfly-1);stroke:#231d14;stroke-width:.7}.w2{fill:var(--bfly-2)}
+    .glass{fill:#fff;fill-opacity:.55;stroke:#231d14;stroke-width:.5}
+    .lady{fill:#b8382c;stroke:#231d14;stroke-width:.5}.shell{fill:var(--gold);stroke:var(--vine);stroke-width:.8}
+    .snail{fill:#b8a27a;stroke:var(--vine);stroke-width:.6}.cap{fill:var(--accent-2)}.stalk{fill:var(--petal)}
+    .grass{fill:none;stroke:var(--leaf-1);stroke-width:1.4;stroke-linecap:round}
+  </style>
+  <g id="leaf-a"><path d="M0 0C7-7 19-8 30 0C19 8 7 7 0 0Z"/><path class="vein" d="M2 0Q15-1 27 0"/></g>
+  <g id="leaf-b"><path d="M0 0C3-9 13-13 19-8C23-12 31-7 28 0C31 7 23 12 19 8C13 13 3 9 0 0Z"/><path class="vein" d="M2 0H26M14 0L20-6M14 0L20 6"/></g>
+  <g id="leaf-c"><path d="M0 0C5-11 21-12 26 0C21 12 5 11 0 0Z"/><path class="vein" d="M2 0Q13 0 23 0M9 0L14-5M9 0L14 5M15 0L19-4M15 0L19 4"/></g>
+  <g id="blossom">
+    <path class="petal" d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z"/>
+    <path class="petal" d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z" transform="rotate(72)"/>
+    <path class="petal" d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z" transform="rotate(144)"/>
+    <path class="petal" d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z" transform="rotate(216)"/>
+    <path class="petal" d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z" transform="rotate(288)"/>
+    <circle class="pistil" r="3.4"/><circle class="ink" cx="-1" cy="-1" r=".7"/><circle class="ink" cx="1.3" cy=".6" r=".7"/>
+  </g>
+  <g id="berries"><circle class="berry" r="3.2"/><circle class="berry" cx="5.5" cy="2" r="3"/><circle class="berry" cx="1.5" cy="6" r="3.1"/>
+    <circle class="hi" cx="-1" cy="-1" r=".9"/><circle class="hi" cx="4.6" cy="1" r=".8"/><circle class="hi" cx=".7" cy="5" r=".8"/></g>
+  <!-- songbird perched, facing right; feet at the origin -->
+  <g id="bird">
+    <path class="bb" d="M-13-11L-31-4L-29-9L-14-16Z"/>
+    <path class="bb" d="M-15-12C-12-22 0-27 9-25C15-24 18-19 17-15C14-7 3-3-6-4C-11-5-14-8-15-12Z"/>
+    <path class="br" d="M17-15C14-7 3-3-6-4C0-8 9-10 13-17Z"/>
+    <circle class="bb" cx="11" cy="-26" r="6.5"/>
+    <path class="gold" d="M16.5-28L23.5-26.3L16.5-24.6Z"/>
+    <circle class="ink" cx="13" cy="-27.5" r="1.4"/><circle class="hi" cx="13.4" cy="-28" r=".5"/>
+    <path class="bw" d="M-12-13C-6-21 4-22 8-16C2-11-6-9-12-13Z"/>
+    <path class="lnk" d="M-7-15.5C-3-16 1-17 4-16.5M-9-13C-5-13.5-1-14 2-13.5"/>
+    <path class="lnk" d="M1-4L0 0M5-4.5L5 0M-2 0H3M3 0H8"/>
+  </g>
+  <!-- butterfly from above, centred -->
+  <g id="bfly-half"><path class="w1" d="M0-1C-5-15-19-21-19-9C-19-3-9 0 0-1Z"/><path class="w1" d="M0 0C-9 2-16 10-11 15C-6 17-2 9 0 0Z"/>
+    <circle class="w2" cx="-12" cy="-10" r="3"/><circle class="w2" cx="-8" cy="9" r="2"/><path class="lnk" d="M-3-3Q-9-8-15-9"/></g>
+  <g id="butterfly"><use href="#bfly-half"/><use href="#bfly-half" transform="scale(-1 1)"/>
+    <ellipse class="ink" rx="1.7" ry="9" cy="1"/><path class="lnk" d="M-1-8C-3-14-6-16-8-14M1-8C3-14 6-16 8-14"/></g>
+  <!-- bee from the side, facing right -->
+  <g id="bee"><ellipse class="glass" cx="-2" cy="-7" rx="5" ry="7.5" transform="rotate(-20 -2 -7)"/><ellipse class="glass" cx="3" cy="-6" rx="4" ry="6" transform="rotate(15 3 -6)"/>
+    <ellipse class="gold" rx="8.5" ry="5.6"/><path class="ink" d="M-3-5.3C-1.5-2-1.5 2-3 5.3L-5.4 4.6C-4 1.5-4-1.5-5.4-4.6ZM2-5.5C3.5-2 3.5 2 2 5.5L-.3 5.6C1.2 2 1.2-2-.3-5.6Z"/>
+    <circle class="ink" cx="9.5" cy="-.5" r="3.6"/><path class="lnk" d="M11-3Q13-8 16-8M-8.5 0L-11 .5"/></g>
+  <!-- dragonfly from above, pointing right -->
+  <g id="dragonfly"><ellipse class="glass" cx="2" cy="-9" rx="4" ry="12" transform="rotate(12 2 -9)"/><ellipse class="glass" cx="2" cy="9" rx="4" ry="12" transform="rotate(-12 2 9)"/>
+    <ellipse class="glass" cx="-4" cy="-8" rx="3.4" ry="10" transform="rotate(-14 -4 -8)"/><ellipse class="glass" cx="-4" cy="8" rx="3.4" ry="10" transform="rotate(14 -4 8)"/>
+    <path class="w2" d="M6 0C6-2 -2-1.6-26-.8C-27 0-27 0-26 .8C-2 1.6 6 2 6 0Z"/><circle class="w2" cx="8" r="3"/></g>
+  <g id="ladybird"><ellipse class="ink" cx="5" rx="3" ry="3.2"/><ellipse class="lady" rx="6" ry="5.4"/><path class="lnk" d="M5 0H-6"/>
+    <circle class="ink" cx="-2" cy="-2.4" r="1.2"/><circle class="ink" cx="-2" cy="2.4" r="1.2"/><circle class="ink" cx="2" cy="-3" r=".9"/><circle class="ink" cx="2" cy="3" r=".9"/></g>
+  <!-- snail facing right, sitting on the origin -->
+  <g id="snail"><path class="snail" d="M-16 0C-16-3-6-4 8-4C12-9 15-12 16-10C17-8 14-4 14 0Z"/><path class="lnk" d="M14-9L17-16M15-9L20-14"/>
+    <circle class="shell" cx="-2" cy="-11" r="9"/><path class="lnk" d="M-2-11m0 0a2 2 0 0 1 3 1a4 4 0 0 1-5 4a6 6 0 0 1-5-7a8 8 0 0 1 9-7"/></g>
+  <g id="mushroom"><path class="stalk" d="M-2.5 0L-2-9H2L2.5 0Z"/><path class="cap" d="M-10-8C-10-17 10-17 10-8Z"/><circle class="hi" cx="-4" cy="-12" r="1.4"/><circle class="hi" cx="3" cy="-13" r="1"/></g>
+  <g id="fern"><path class="vine-twin" stroke-width="1.6" d="M0 18C-2 6 0-6 6-16"/>
+    <use href="#leaf-a" class="c2" transform="translate(-1 12) rotate(200) scale(.45)"/><use href="#leaf-a" class="c2" transform="translate(-1 12) rotate(-20) scale(.45)"/>
+    <use href="#leaf-a" class="c1" transform="translate(0 4) rotate(205) scale(.42)"/><use href="#leaf-a" class="c1" transform="translate(0 4) rotate(-25) scale(.42)"/>
+    <use href="#leaf-a" class="c2" transform="translate(2-4) rotate(210) scale(.36)"/><use href="#leaf-a" class="c2" transform="translate(2-4) rotate(-30) scale(.36)"/>
+    <use href="#leaf-a" class="c1" transform="translate(4-10) rotate(220) scale(.3)"/><use href="#leaf-a" class="c1" transform="translate(4-10) rotate(-40) scale(.3)"/></g>
+  <!-- two leaves and a bud -->
+  <g id="sprig"><path class="vine-main" stroke-width="2" d="M0 18C0 8 1 0 0-14"/>
+    <use href="#leaf-a" class="c1" transform="translate(0 8) rotate(-150) scale(.75)"/><use href="#leaf-a" class="c3" transform="translate(0 2) rotate(-35) scale(.7)"/>
+    <use href="#leaf-a" class="c2" transform="translate(0-12) rotate(-95) scale(.42)"/></g>
+  <g id="teapot"><path class="w2" d="M-12-2C-14-14-4-18 0-18C4-18 14-14 12-2C10 4-10 4-12-2Z"/><path class="lnk" stroke-width="2.2" style="stroke:var(--accent)" d="M12-12C19-14 19-2 11-2M-12-8C-18-10-22-16-24-18"/>
+    <path class="gold" d="M-6-18C-6-22 6-22 6-18Z"/><circle class="gold" cy="-23" r="2"/><use href="#blossom" transform="translate(0-8) scale(.32)"/></g>
+  <linearGradient id="sky-spring" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--panel-2)"/><stop offset="1" stop-color="var(--tint)"/></linearGradient>
+  <clipPath id="arch"><path d="M20 460V200A190 190 0 0 1 400 200V460Z"/></clipPath>
+</defs>
+</svg>
+
+<div class="mockbar">
+  <strong>Mockup: vine and leaf style</strong>
+  <a href="#home">Home page</a><a href="#product">Product page</a>
+  <span class="grp">Palette: <button data-k="theme" data-v="spring">Spring moss</button><button data-k="theme" data-v="autumn">Autumn russet</button><button data-k="theme" data-v="dusk">Dusk</button></span>
+  <span class="grp">Ornament: <button data-k="density" data-v="sparse">Sparse</button><button data-k="density" data-v="medium">Medium</button><button data-k="density" data-v="lush">Lush</button></span>
+</div>
+
+<!-- ================= HOME ================= -->
+<article class="sheet" id="home">
+<svg class="frame" aria-hidden="true"></svg>
+<div class="inner">
+  <p class="mock-label">Home page</p>
+  <header class="site-head">
+    <div class="util"><a href="#">Sign in</a> · <a href="#">Cart (0)</a></div>
+    <a class="wordmark" href="#home">Teashop</a>
+    <p class="tagline">Specialty teas, weighed and packed by hand when you order.</p>
+    <nav class="main" aria-label="Shop sections"><ul>
+      <li><a href="#">Teas</a></li><li><a href="#">Regions</a></li><li><a href="#">Specials</a></li><li><a href="#">This week's picks</a></li>
+      <li><a href="#">New arrivals</a></li><li><a href="#">Merch and accessories</a></li><li><a href="#">Tea notes</a></li></ul></nav>
+  </header>
+  <div class="divider" data-creature="bird"></div>
+
+  <section class="hero">
+    <div>
+      <p class="kicker">Leaf, flower and field</p>
+      <h1>Specialty teas, packed fresh for you</h1>
+      <p class="lede">Black, green, oolong, white and herbal teas from growers we know, kept in bulk and weighed out by hand when you order.</p>
+      <a class="button" href="#">Browse all teas</a><a class="button secondary" href="#">Explore by region</a>
+    </div>
+    <svg class="art" viewBox="0 0 420 470" role="img" aria-label="A tea branch in flower arching over terraced hills, with a songbird and a steaming cup">
+      <g clip-path="url(#arch)">
+        <rect width="420" height="470" fill="url(#sky-spring)"/>
+        <circle cx="210" cy="220" r="92" style="fill:var(--gold)" opacity=".28"/><circle cx="210" cy="220" r="64" style="fill:var(--gold)" opacity=".3"/>
+        <path class="c2" d="M0 330C80 290 160 300 230 320C300 340 360 300 420 290V470H0Z" opacity=".8"/>
+        <path class="vein" style="stroke:var(--leaf-3)" d="M0 352C90 318 170 326 240 344C310 362 370 330 420 320M0 380C90 350 180 356 250 372C320 388 380 360 420 352"/>
+        <path class="c1" d="M0 400C100 370 200 390 280 400C340 408 390 390 420 384V470H0Z"/>
+        <!-- steaming cup -->
+        <path class="vine-main" stroke-width="2.5" style="stroke:var(--accent-2)" d="M246 412C238 392 262 380 252 360C244 344 262 334 258 318M272 412C266 396 286 386 278 368C272 354 286 346 284 334"/>
+        <ellipse cx="262" cy="448" rx="54" ry="9" style="fill:var(--accent)"/>
+        <path style="fill:var(--panel-2);stroke:var(--accent);stroke-width:3" d="M222 414H302C302 438 286 446 262 446C238 446 222 438 222 414Z"/>
+        <path style="fill:none;stroke:var(--accent);stroke-width:3" d="M302 420C318 420 318 436 298 436"/>
+        <use href="#blossom" transform="translate(262 430) scale(.6)"/>
+        <!-- branch -->
+        <path class="vine-main" stroke-width="7" d="M20 300C70 230 120 180 200 158C270 140 330 150 400 120"/>
+        <path class="vine-main" stroke-width="3" d="M150 176C150 150 160 130 176 116M300 146C318 166 328 186 324 210"/>
+        <use href="#leaf-a" class="c1" transform="translate(60 250) rotate(-80) scale(1.6)"/><use href="#leaf-a" class="c3" transform="translate(84 222) rotate(30) scale(1.7)"/>
+        <use href="#leaf-c" class="c2" transform="translate(120 192) rotate(-110) scale(1.5)"/><use href="#leaf-a" class="c1" transform="translate(176 116) rotate(-60) scale(1.3)"/>
+        <use href="#leaf-a" class="c3" transform="translate(176 116) rotate(-130) scale(1.2)"/><use href="#leaf-a" class="c2" transform="translate(230 152) rotate(70) scale(1.6)"/>
+        <use href="#leaf-c" class="c1" transform="translate(280 146) rotate(-100) scale(1.4)"/><use href="#leaf-a" class="c3" transform="translate(324 210) rotate(80) scale(1.3)"/>
+        <use href="#leaf-a" class="c2" transform="translate(360 136) rotate(40) scale(1.5)"/><use href="#leaf-a" class="c1" transform="translate(390 124) rotate(-70) scale(1.2)"/>
+        <use href="#blossom" transform="translate(150 196) scale(1.5)"/><use href="#blossom" transform="translate(316 160) scale(1.3)"/><use href="#blossom" transform="translate(40 282) scale(1.2)"/>
+        <use href="#bird" transform="translate(234 158) scale(1.8)"/>
+        <use href="#butterfly" transform="translate(110 100) rotate(-18) scale(1.2)"/>
+        <use href="#bee" transform="translate(370 230) rotate(-10) scale(1.1)"/>
+      </g>
+      <path d="M20 460V200A190 190 0 0 1 400 200V460Z" style="fill:none;stroke:var(--rule);stroke-width:3"/>
+      <path d="M30 452V200A180 180 0 0 1 390 200V452Z" style="fill:none;stroke:var(--rule);stroke-width:1" opacity=".6"/>
+    </svg>
+  </section>
+  <div class="divider" data-creature="butterfly"></div>
+
+  <section>
+    <div class="section-head"><h2>This week's picks</h2><a href="#">See all this week's picks</a></div>
+    <ul class="grid">
+      <li><div class="card"><svg viewBox="-60 -50 120 100" data-motif="sprig"></svg><h3><a href="#product">Assam Second Flush</a></h3><p>A full, malty black tea with a honeyed finish; takes milk well.</p><p class="price">From $9.00</p></div></li>
+      <li><div class="card"><svg viewBox="-60 -50 120 100" data-motif="fern"></svg><h3><a href="#">Sencha Morning Mist</a></h3><p>A bright, steamed green tea: fresh-cut grass and a savoury sea-breeze note.</p><p class="price">From $12.00</p></div></li>
+      <li><div class="card"><svg viewBox="-60 -50 120 100" data-motif="blossom"></svg><h3><a href="#">Earl Grey with Cornflower</a></h3><p>Black tea with bergamot and blue cornflower petals.</p><p class="price">From $9.50</p></div></li>
+    </ul>
+  </section>
+  <div class="divider" data-creature="bee"></div>
+
+  <section>
+    <div class="section-head"><h2>New arrivals</h2><a href="#">See all new arrivals</a></div>
+    <ul class="grid">
+      <li><div class="card"><svg viewBox="-60 -50 120 100" data-motif="bird"></svg><h3><a href="#">Darjeeling First Flush</a></h3><p>Light, bright and flowery: the first picking of the spring.</p><p class="price">From $11.00</p></div></li>
+      <li><div class="card"><svg viewBox="-60 -50 120 100" data-motif="butterfly"></svg><h3><a href="#">Yunnan Golden Buds</a></h3><p>Downy golden buds that brew smooth and sweet, with a note of cocoa.</p><p class="price">From $8.00</p></div></li>
+      <li><div class="card"><svg viewBox="-60 -50 120 100" data-motif="berries"></svg><h3><a href="#">Hibiscus Berry Tisane</a></h3><p>Ruby-red, tart and fruity; lovely iced.</p><p class="price">From $8.50</p></div></li>
+    </ul>
+  </section>
+  <div class="divider" data-creature="dragonfly"></div>
+
+  <section>
+    <div class="section-head"><h2>Where our teas grow</h2><a href="#">All regions</a></div>
+    <ul class="chips"><li><a href="#">Assam, India</a></li><li><a href="#">Darjeeling, India</a></li><li><a href="#">Yunnan, China</a></li>
+      <li><a href="#">Fujian, China</a></li><li><a href="#">Shizuoka, Japan</a></li><li><a href="#">Nantou, Taiwan</a></li></ul>
+  </section>
+
+  <div class="ground" data-ground></div>
+  <footer class="foot">
+    <div><h3>Teashop</h3><p>Specialty teas, weighed and packed by hand when you order.</p><p class="small">Prices in US dollars, the same for everyone.<br>© 2026 Teashop</p></div>
+    <div><h3>Teas</h3><ul><li><a href="#">All teas</a></li><li><a href="#">Black tea</a></li><li><a href="#">Green tea</a></li><li><a href="#">Oolong</a></li><li><a href="#">White tea</a></li><li><a href="#">Herbal teas and tisanes</a></li></ul></div>
+    <div><h3>More</h3><ul><li><a href="#">Regions</a></li><li><a href="#">Tea notes</a></li><li><a href="#">Tea subscriptions</a></li><li><a href="#">Email news</a></li><li><a href="#">Chat with us</a></li></ul></div>
+    <div><h3>Help</h3><ul><li><a href="#">Shipping</a></li><li><a href="#">Returns and refunds</a></li><li><a href="#">Terms of sale</a></li><li><a href="#">Privacy</a></li><li><a href="#">Accessibility</a></li></ul></div>
+  </footer>
+</div>
+</article>
+
+<!-- ================= PRODUCT ================= -->
+<article class="sheet" id="product">
+<svg class="frame" aria-hidden="true"></svg>
+<div class="inner">
+  <p class="mock-label">Product page</p>
+  <header class="site-head">
+    <div class="util"><a href="#">Sign in</a> · <a href="#">Cart (0)</a></div>
+    <a class="wordmark" href="#home">Teashop</a>
+    <nav class="main" aria-label="Shop sections"><ul>
+      <li><a href="#">Teas</a></li><li><a href="#">Regions</a></li><li><a href="#">Specials</a></li><li><a href="#">This week's picks</a></li>
+      <li><a href="#">New arrivals</a></li><li><a href="#">Merch and accessories</a></li><li><a href="#">Tea notes</a></li></ul></nav>
+  </header>
+  <div class="divider" data-creature="ladybird"></div>
+  <p class="crumbs"><a href="#home">Home</a> › <a href="#">Black tea</a> › Assam Second Flush</p>
+  <p class="story">Summer in the Brahmaputra valley is hot and wet, and the tea bushes grow fast. Leaves picked now make the boldest, maltiest teas of the year.</p>
+
+  <div class="product">
+    <div class="head">
+      <p class="kicker">Black tea · Assam</p>
+      <h1>Assam Second Flush</h1>
+      <p class="headline">Malty, brisk and generous with milk</p>
+      <p>A full, malty black tea with a honeyed finish; takes milk well.</p>
+      <span class="caffeine"><svg width="66" height="18" viewBox="0 -9 66 18" aria-hidden="true">
+        <use href="#leaf-a" class="c1" transform="translate(0 0) scale(.6)"/><use href="#leaf-a" class="c1" transform="translate(22 0) scale(.6)"/><use href="#leaf-a" class="c1" transform="translate(44 0) scale(.6)"/></svg>Caffeine: high</span>
+    </div>
+    <figure class="gallery">
+      <svg class="art" viewBox="0 0 420 470" role="img" aria-label="Two leaves and a bud on a tea branch, with a songbird, over the Brahmaputra river">
+        <g clip-path="url(#arch)">
+          <rect width="420" height="470" style="fill:var(--tint)"/>
+          <circle cx="210" cy="250" r="110" style="fill:var(--gold)" opacity=".25"/>
+          <path class="c2" d="M0 340C100 310 220 330 420 300V470H0Z" opacity=".7"/>
+          <path style="fill:none;stroke:var(--bfly-2);stroke-width:14;stroke-linecap:round" opacity=".45" d="M-10 420C80 380 160 440 250 410C330 384 380 400 430 380"/>
+          <path class="c1" d="M0 440C120 420 260 450 420 430V470H0Z"/>
+          <path class="vine-main" stroke-width="8" d="M60 470C80 400 120 330 190 280C250 236 300 180 320 100"/>
+          <use href="#leaf-a" class="c3" transform="translate(120 360) rotate(-160) scale(2.6)"/><use href="#leaf-c" class="c1" transform="translate(150 316) rotate(-20) scale(2.6)"/>
+          <use href="#leaf-a" class="c2" transform="translate(240 240) rotate(-150) scale(2.4)"/><use href="#leaf-a" class="c1" transform="translate(270 210) rotate(-30) scale(2.3)"/>
+          <use href="#leaf-a" class="c2" transform="translate(320 100) rotate(-85) scale(1.4)"/>
+          <use href="#leaf-a" class="c3" transform="translate(305 150) rotate(-140) scale(1.8)"/><use href="#leaf-c" class="c1" transform="translate(312 130) rotate(-30) scale(1.6)"/>
+          <use href="#bird" transform="translate(234 252) scale(2.2)"/>
+          <use href="#bee" transform="translate(90 150) rotate(-12) scale(1.3)"/>
+        </g>
+        <path d="M20 460V200A190 190 0 0 1 400 200V460Z" style="fill:none;stroke:var(--rule);stroke-width:3"/>
+        <path d="M30 452V200A180 180 0 0 1 390 200V452Z" style="fill:none;stroke:var(--rule);stroke-width:1" opacity=".6"/>
+      </svg>
+      <figcaption>Photos of this tea are coming soon.</figcaption>
+    </figure>
+    <section class="buy">
+      <h2>Sizes and prices</h2>
+      <table><thead><tr><th>Size</th><th class="num">Price</th><th>Availability</th></tr></thead>
+        <tbody><tr><th>50 g pouch</th><td class="num">$9.00</td><td>In stock</td></tr><tr><th>100 g tin</th><td class="num">$16.00</td><td>In stock</td></tr></tbody></table>
+      <form class="cart" onsubmit="return false">
+        <div><label for="sz">Size</label><select id="sz"><option>50 g pouch, $9.00</option><option>100 g tin, $16.00</option></select></div>
+        <div><label for="qty">Quantity</label><input id="qty" type="number" value="1" min="1"></div>
+        <button class="button" type="submit">Add to cart</button>
+      </form>
+    </section>
+  </div>
+  <div class="divider" data-creature="bird"></div>
+  <div class="prose"><p>Second-flush Assam is picked in early summer, when the leaves are at their richest. This one brews a bold cup that stands up to milk and sugar, and is just as good plain.</p></div>
+  <div class="divider" data-creature="butterfly"></div>
+
+  <div class="facts">
+    <section class="fact"><h2>Origin</h2><dl><dt>Grown in</dt><dd>India</dd><dt>Region</dt><dd><a href="#">Assam</a></dd><dt>Garden</dt><dd>Summer (second flush) picking, upper Assam</dd></dl></section>
+    <section class="fact"><h2>Tasting notes</h2><p>Deep copper cup with a malty body, a hint of dried fruit and a long, honeyed finish.</p>
+      <ul class="chips"><li><span>Malty</span></li><li><span>Honey</span></li><li><span>Brisk</span></li></ul></section>
+    <section class="fact"><h2>Brewing guide</h2><dl><dt>Water</dt><dd>203 °F (95 °C)</dd><dt>Steep</dt><dd>3-4 minutes</dd><dt>Tea</dt><dd>2.5 g for a 250 ml (8 oz) cup</dd><dt>Infusions</dt><dd>2</dd></dl>
+      <p>For a stronger breakfast cup, use 3 g and steep the full 4 minutes.</p></section>
+    <section class="fact"><h2>Ingredients and allergens</h2><dl><dt>Ingredients</dt><dd>Black tea</dd></dl><p class="small">The label on your package lists exactly what is in it.</p></section>
+  </div>
+  <div class="ground" data-ground></div>
+  <footer class="foot">
+    <div><h3>Teashop</h3><p>Specialty teas, weighed and packed by hand when you order.</p><p class="small">© 2026 Teashop</p></div>
+    <div><h3>Teas</h3><ul><li><a href="#">All teas</a></li><li><a href="#">Black tea</a></li><li><a href="#">Green tea</a></li></ul></div>
+    <div><h3>More</h3><ul><li><a href="#">Regions</a></li><li><a href="#">Tea notes</a></li></ul></div>
+    <div><h3>Help</h3><ul><li><a href="#">Shipping</a></li><li><a href="#">Returns and refunds</a></li></ul></div>
+  </footer>
+</div>
+</article>
+
+<script>
+(() => {
+const NS = "http://www.w3.org/2000/svg";
+const SPACING = {sparse: 46, medium: 26, lush: 15};      // px between leaves along a vine
+const CREATURE_EVERY = {sparse: 1300, medium: 650, lush: 380};
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function rng(seed) {   // small seeded random, so the ornament looks the same on each load
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+const use = (g, id, x, y, rot, s, cls) =>
+  el("use", {href: "#" + id, transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(1)}) scale(${s.toFixed(2)})`, class: cls || ""}, g);
+
+function line(start, dir, len, amp, wave, phase) {
+  const n = [-dir[1], dir[0]], pts = [];
+  for (let u = 0; u <= len; u += 3) {
+    const k = Math.min(1, u / 50, (len - u) / 50);
+    const off = amp * k * (Math.sin(2 * Math.PI * u / wave + phase) + .35 * Math.sin(2 * Math.PI * u / (wave * 2.3) + 2 * phase));
+    pts.push([start[0] + dir[0] * u + n[0] * off, start[1] + dir[1] * u + n[1] * off]);
+  }
+  return pts;
+}
+const pathD = pts => "M" + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
+function angleAt(pts, i) {
+  const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+  return Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
+}
+function spiral(g, x, y, ang, R, side, w) {
+  const a0 = ang * Math.PI / 180, cx = x - Math.sin(a0) * R * side, cy = y + Math.cos(a0) * R * side;
+  const t0 = Math.atan2(y - cy, x - cx), pts = [];
+  for (let t = 0; t <= 1; t += .04) { const th = t0 + side * t * 1.6 * 2 * Math.PI, r = R * (1 - .8 * t); pts.push([cx + r * Math.cos(th), cy + r * Math.sin(th)]); }
+  el("path", {d: pathD(pts), class: "tendril", "stroke-width": w}, g);
+}
+
+// One twining vine: a main stem, a thinner twin crossing it, leaves, tendrils, flowers and berries.
+function vine(g, start, dir, len, s, rand, density, skip) {
+  const amp = 9 * s, wave = 150 * s;
+  const main = line(start, dir, len, amp, wave, rand() * 6), twin = line(start, dir, len, amp * .9, wave, Math.PI + rand() * .6);
+  el("path", {d: pathD(twin), class: "vine-twin", "stroke-width": 1.8 * Math.max(s, .6)}, g);
+  el("path", {d: pathD(main), class: "vine-main", "stroke-width": 3 * Math.max(s, .6)}, g);
+  const step = Math.max(2, Math.round(SPACING[density] * Math.max(s, .55) / 3));
+  let side = 1;
+  for (let i = 4; i < main.length - 4; i += step + Math.floor(rand() * 3)) {
+    const [x, y] = main[i];
+    if (skip && skip(x, y)) continue;
+    const a = angleAt(main, i), shape = rand() < .6 ? "leaf-a" : rand() < .5 ? "leaf-b" : "leaf-c";
+    use(g, shape, x, y, a + side * (35 + rand() * 35), s * (.65 + rand() * .45), "c" + (1 + Math.floor(rand() * 3)));
+    side = -side;
+    const r = rand();
+    if (r < .09) use(g, "blossom", x + side * 9 * s, y - 9 * s, rand() * 60, s * .85);
+    else if (r < .15) use(g, "berries", x - side * 6 * s, y + 7 * s, 0, s * .8);
+    else if (r < .26) { const j = Math.min(twin.length - 1, i + 2); spiral(g, twin[j][0], twin[j][1], angleAt(twin, j), 7 * s, side, 1.1); }
+  }
+  return main;
+}
+function corner(g, x, y, s, rand) {
+  for (let k = 0; k < 7; k++) use(g, k % 2 ? "leaf-a" : "leaf-c", x, y, k * 51 + rand() * 20, s * 1.1, "c" + (1 + k % 3));
+  use(g, "blossom", x, y, rand() * 70, s * 1.4);
+}
+
+const UPRIGHT = ["bird", "snail"];
+function creature(g, name, pts, i, s) {
+  const [x, y] = pts[i];
+  if (UPRIGHT.includes(name)) use(g, name, x, y + 2 * s, 0, s);
+  else use(g, name, x, y, angleAt(pts, i) + (name === "butterfly" ? 90 : 0) - 15, s);
+}
+
+function drawFrame(sheet, density) {
+  const svg = sheet.querySelector("svg.frame"); svg.innerHTML = "";
+  const W = sheet.offsetWidth, H = sheet.offsetHeight;
+  const gut = parseFloat(getComputedStyle(sheet).paddingLeft), s = gut / 92, c = gut / 2;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const rand = rng(sheet.id.length * 9973 + 7), g = el("g", {}, svg);
+  const top = vine(g, [c, c], [1, 0], W - 2 * c, s, rand, density);
+  const bottom = vine(g, [c, H - c], [1, 0], W - 2 * c, s, rand, density);
+  const left = vine(g, [c, c], [0, 1], H - 2 * c, s, rand, density);
+  const right = vine(g, [W - c, c], [0, 1], H - 2 * c, s, rand, density);
+  for (const [x, y] of [[c, c], [W - c, c], [c, H - c], [W - c, H - c]]) corner(g, x, y, s, rand);
+  const cs = Math.max(s, .55), at = (pts, f) => Math.floor(pts.length * f);
+  creature(g, "bird", top, at(top, .28), cs * 1.05);
+  creature(g, "butterfly", top, at(top, .7), cs);
+  creature(g, "snail", bottom, at(bottom, .2), cs);
+  creature(g, "bird", bottom, at(bottom, .78), cs);
+  const insects = ["butterfly", "bee", "ladybird", "dragonfly", "bee", "butterfly"];
+  [left, right].forEach((pts, side) => {
+    const every = CREATURE_EVERY[density] / 3;
+    for (let i = Math.floor(every * (.4 + side * .5)), k = side * 2; i < pts.length - 20; i += Math.floor(every), k++)
+      creature(g, insects[k % insects.length], pts, i, cs);
+  });
+}
+
+function drawDivider(div, density, idx) {
+  div.innerHTML = "";
+  const W = div.offsetWidth, H = div.offsetHeight, s = H / 64;
+  const svg = el("svg", {viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true"}, div);
+  const rand = rng(idx * 131 + 5), mid = W / 2, g = el("g", {}, svg);
+  const pts = vine(g, [24, H / 2 + 6 * s], [1, 0], W - 48, s * .9, rand, density, x => Math.abs(x - mid) < 34 * s);
+  spiral(g, 24, H / 2 + 6 * s, 180, 9 * s, 1, 2.2); spiral(g, W - 24, H / 2 + 6 * s, 0, 9 * s, -1, 2.2);
+  const name = div.dataset.creature, i = Math.floor(pts.length / 2), [x, y] = pts[i];
+  if (name === "bird") use(g, "bird", x, y + 1, 0, s * .95);
+  else { use(g, "blossom", x, y, 0, s * 1.1); use(g, name, x + 4, y - 20 * s, name === "dragonfly" ? -10 : 0, s * .9); }
+}
+
+function drawGround(div, density, idx) {
+  div.innerHTML = "";
+  const W = div.offsetWidth, H = div.offsetHeight, rand = rng(idx * 71 + 3);
+  const svg = el("svg", {viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true", preserveAspectRatio: "none"}, div);
+  const step = {sparse: 14, medium: 8, lush: 5}[density];
+  let d = "";
+  for (let x = 4; x < W; x += step * (.6 + rand())) { const h = 10 + rand() * 22, lean = (rand() - .5) * 14; d += `M${x.toFixed(1)} ${H}Q${(x + lean / 2).toFixed(1)} ${H - h / 2} ${(x + lean).toFixed(1)} ${(H - h).toFixed(1)}`; }
+  el("path", {d, class: "grass"}, svg);
+  for (let x = 40 + rand() * 60; x < W - 30; x += 110 + rand() * 160) {
+    const r = rand();
+    if (r < .35) use(svg, "fern", x, H - 18, (rand() - .5) * 20, 1.1);
+    else if (r < .6) use(svg, "mushroom", x, H, 0, .9 + rand() * .5);
+    else if (r < .75) use(svg, "blossom", x, H - 14 - rand() * 10, 0, .8);
+  }
+  use(svg, "snail", W * .62, H, 0, 1);
+}
+
+function drawMotifs() {
+  document.querySelectorAll("svg[data-motif]").forEach(svg => {
+    svg.innerHTML = ""; svg.setAttribute("aria-hidden", "true");
+    el("circle", {r: 40, style: "fill:var(--panel-2);stroke:var(--rule);stroke-width:1.5"}, svg);
+    el("circle", {r: 35, style: "fill:none;stroke:var(--rule);stroke-width:.7;opacity:.6"}, svg);
+    use(svg, "leaf-a", -40, 6, 200, .9, "c1"); use(svg, "leaf-a", 40, 6, -20, .9, "c3");
+    const m = svg.dataset.motif;
+    if (m === "bird") use(svg, "bird", -2, 14, 0, 1.15);
+    else if (m === "sprig") use(svg, "sprig", 0, 0, 0, 1.5);
+    else if (m === "fern") use(svg, "fern", 0, 0, 0, 1.5);
+    else if (m === "berries") { use(svg, "leaf-b", -2, 4, -60, .9, "c2"); use(svg, "berries", -6, -4, 0, 2.2); }
+    else use(svg, m, 0, 0, 0, m === "blossom" ? 2.2 : 1.6);
+  });
+}
+
+function drawAll() {
+  const density = document.documentElement.dataset.density;
+  document.querySelectorAll(".sheet").forEach(sh => drawFrame(sh, density));
+  document.querySelectorAll(".divider").forEach((d, i) => drawDivider(d, density, i));
+  document.querySelectorAll("[data-ground]").forEach((d, i) => drawGround(d, density, i));
+}
+function syncButtons() {
+  document.querySelectorAll(".mockbar button").forEach(b =>
+    b.setAttribute("aria-pressed", document.documentElement.dataset[b.dataset.k] === b.dataset.v));
+}
+document.querySelectorAll(".mockbar button").forEach(b => b.addEventListener("click", () => {
+  document.documentElement.dataset[b.dataset.k] = b.dataset.v; syncButtons(); drawAll();
+}));
+drawMotifs(); syncButtons(); drawAll();
+let t; new ResizeObserver(() => { clearTimeout(t); t = setTimeout(drawAll, 80); }).observe(document.body);
+document.fonts && document.fonts.ready.then(drawAll);
+})();
+</script>
+</body>
+</html>
