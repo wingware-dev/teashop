@@ -36,6 +36,18 @@ on_exit() {
 }
 trap on_exit EXIT
 
+# The job worker (docs/jobs.md) runs the same build as web.  Builds from
+# before the job queue have none (they send emails themselves), so it is
+# stopped when going back to one.
+start_worker() {
+    if docker run --rm --no-healthcheck --entrypoint test "teashop-web:$1" -f apps/jobs/worker.py; then
+        docker compose up -d --wait --wait-timeout 120 worker
+    else
+        log "teashop-web:$1 has no job worker; stopping the worker"
+        docker compose stop worker
+    fi
+}
+
 [ -f .env ] || die ".env is missing (copy .env.example)"
 
 if [ $# -gt 1 ]; then
@@ -81,7 +93,7 @@ in_new_build python manage.py migrate --noinput \
 
 log "starting $SHA"
 docker tag "teashop-web:$SHA" teashop-web:current
-if docker compose up -d --wait --wait-timeout 120 web caddy; then
+if docker compose up -d --wait --wait-timeout 120 web worker caddy; then
     if [ -n "$PREVIOUS" ] && [ "$PREVIOUS" != "$SHA" ]; then
         echo "$PREVIOUS" > "$STATE/previous"
     fi
@@ -98,6 +110,7 @@ else
         docker tag "teashop-web:$PREVIOUS" teashop-web:current
         docker compose up -d --wait --wait-timeout 120 web caddy \
             || log "the previous version is not healthy either"
+        start_worker "$PREVIOUS" || log "the previous version's job worker is not healthy"
     fi
     die "deploy of $SHA failed.  If its migrations broke the old version: deploy/rollback.sh --restore-db"
 fi

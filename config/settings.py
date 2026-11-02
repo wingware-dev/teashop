@@ -10,6 +10,7 @@ environment variables (see .env.example).  DJANGO_ENV selects the mode:
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
@@ -89,6 +90,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.audit",
     "apps.core",
+    "apps.jobs",
     "apps.inventory",
     "apps.catalog",
     "apps.storefront",
@@ -280,6 +282,9 @@ AUDIT_EXCLUDED_MODELS = {
     "axes.accessattempt",
     "axes.accesslog",
     "axes.accessfailurelog",
+    # The job queue's bookkeeping; what jobs do is recorded as usual.
+    "jobs.job",
+    "jobs.schedule",
 }
 # Fields whose changes alone don't make an event ("*" applies to every model).
 AUDIT_IGNORED_FIELDS = {
@@ -361,6 +366,22 @@ OWNER_NOTIFY_EMAIL = env_str("OWNER_NOTIFY_EMAIL")
 OWNER_NEW_ORDER_EMAILS = env_str("OWNER_NEW_ORDER_EMAILS", "daily")
 if OWNER_NEW_ORDER_EMAILS not in ("daily", "each"):
     raise ImproperlyConfigured("OWNER_NEW_ORDER_EMAILS must be 'daily' or 'each'")
+
+# --- Background jobs (apps/jobs, docs/jobs.md) -------------------------------
+# Emails and daily jobs are queued in the database and run by the worker
+# (manage.py run_jobs; the worker service in compose.yaml).  JOBS_EAGER
+# runs a job as soon as it is queued, in the same process, so a laptop or a
+# test needs no worker; it is off in production.
+JOBS_EAGER = env_bool("JOBS_EAGER", default=not PRODUCTION)
+# How often an idle worker looks for jobs.
+JOBS_POLL_SECONDS = 3
+# A job still "running" after this is taken to be lost with its worker and
+# run again.
+JOBS_STALE_AFTER = timedelta(minutes=30)
+JOBS_KEEP_DONE = timedelta(days=14)
+JOBS_KEEP_FAILED = timedelta(days=90)
+# The worker touches this file each round; its healthcheck reads it.
+JOBS_HEARTBEAT_FILE = env_str("JOBS_HEARTBEAT_FILE", "/tmp/teashop-worker.heartbeat")
 
 # --- Checkout (apps/checkout, docs/checkout.md) -----------------------------
 # Payments: Stripe's Payment Element (cards, Apple Pay, Google Pay, Link and

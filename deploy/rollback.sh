@@ -81,7 +81,7 @@ STARTED=1
 
 if [ "$RESTORE_DB" = 1 ]; then
     log "stopping the app and restoring $DUMP"
-    docker compose stop web
+    docker compose stop web worker
     docker compose up -d --wait db
     # A safety copy of the database as it is now, in case the restore was a mistake.
     mkdir -p backups/predeploy
@@ -92,6 +92,14 @@ fi
 
 docker tag "teashop-web:$TARGET" teashop-web:current
 docker compose up -d --wait --wait-timeout 120 web caddy || die "$TARGET did not become healthy"
+# The job worker runs the same build; builds from before the job queue
+# (docs/jobs.md) have none and send their emails themselves.
+if docker run --rm --no-healthcheck --entrypoint test "teashop-web:$TARGET" -f apps/jobs/worker.py; then
+    docker compose up -d --wait --wait-timeout 120 worker || die "the job worker of $TARGET did not become healthy"
+else
+    log "teashop-web:$TARGET has no job worker; stopping the worker"
+    docker compose stop worker
+fi
 
 [ -n "$CURRENT" ] && echo "$CURRENT" > "$STATE/previous"
 echo "$TARGET" > "$STATE/current"

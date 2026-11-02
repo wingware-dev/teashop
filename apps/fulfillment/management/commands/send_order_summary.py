@@ -6,7 +6,8 @@ from apps.fulfillment import summary
 
 class Command(BaseCommand):
     help = ("Email the owner the day's new orders, orders near or past their promised ship date (FTC Mail Order "
-            "Rule) and delay notices waiting for an answer.  Run daily at 6pm.")
+            "Rule) and delay notices waiting for an answer, now.  The job worker sends it daily at 6pm "
+            "(apps/fulfillment/jobs.py).")
 
     def handle(self, *args, **options):
         if not settings.OWNER_NOTIFY_EMAIL:

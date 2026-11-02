@@ -58,17 +58,15 @@ class OrderAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         tracking = obj.tracking_number.strip()
         if "tracking_number" in form.changed_data and tracking and obj.status == Order.Status.PAID:
-            if orders.mark_shipped(obj, tracking, obj.carrier or "USPS"):
-                messages.success(request, f"Order {obj.number} marked shipped; the customer has the tracking number.")
-            else:
-                messages.error(request, f"Order {obj.number} marked shipped, but the email failed.")
+            orders.mark_shipped(obj, tracking, obj.carrier or "USPS")
+            messages.success(request, f"Order {obj.number} marked shipped; the tracking email is on its way.")
             return
         super().save_model(request, obj, form, change)
 
     @admin.action(description="Send the confirmation email again")
     def resend_confirmation(self, request, queryset):
         sent = sum(1 for order in queryset.filter(status__in=Order.PAID_STATUSES) if emails.order_confirmation(order))
-        self.message_user(request, f"Sent {sent} confirmation email{'s' if sent != 1 else ''}.")
+        self.message_user(request, f"Queued {sent} confirmation email{'s' if sent != 1 else ''} to send again.")
 
 
 @admin.register(DiscountCode)

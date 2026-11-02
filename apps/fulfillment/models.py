@@ -303,6 +303,11 @@ class Refund(models.Model):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="refunds")
     kind = models.CharField(max_length=12, choices=Kind.choices)
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    taxable_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00"),
+        help_text="The part of the order's taxable amount refunded (taxable items and their share of shipping)")
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"),
+                                     help_text="The sales tax given back, included in the amount")
     reason = models.CharField(max_length=300)
     provider = models.CharField(max_length=20, blank=True)
     provider_id = models.CharField(max_length=80, blank=True)

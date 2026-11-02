@@ -2,6 +2,8 @@
 (Orders near or past their promised ship date are checkout's items; they
 link to the queue here.)"""
 
+from datetime import timedelta
+
 from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
@@ -28,10 +30,14 @@ def attention_items():
         items.append(Attention(f"Delay notices waiting for the customer's answer: {waiting}",
                                "Ship as soon as you can; if no answer comes by the date given, cancel and refund.",
                                queue, "warning"))
-    unsent = DelayNotice.objects.filter(sent_at=None, order__status=Order.Status.PAID).count()
+    # Queued notices go out within seconds; one unsent after 10 minutes is
+    # failing (the job queue keeps retrying it).
+    unsent = DelayNotice.objects.filter(sent_at=None, order__status=Order.Status.PAID,
+                                        created_at__lt=timezone.now() - timedelta(minutes=10)).count()
     if unsent:
-        items.append(Attention(f"Delay notices that failed to send: {unsent}",
-                               "Check the email settings, then send the notice again from the order's page.",
+        items.append(Attention(f"Delay notices not sent yet: {unsent}",
+                               "The email is failing and is tried again automatically.  Check the email settings; "
+                               "if its job has failed for good, use \"Run again\" on it (Background jobs).",
                                queue, "urgent"))
     late_backorders = Parcel.objects.filter(status=Parcel.Status.BACKORDERED, expected_on__lt=today).count()
     if late_backorders:

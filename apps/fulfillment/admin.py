@@ -104,7 +104,7 @@ class PickupAdmin(ReadOnlyAdmin):
 
 @admin.register(Refund)
 class RefundAdmin(ReadOnlyAdmin):
-    list_display = ["created_at", order_link, "kind", "amount", "reason", "provider_id", "email_sent_at"]
+    list_display = ["created_at", order_link, "kind", "amount", "tax_amount", "reason", "provider_id", "email_sent_at"]
     list_filter = ["kind"]
     search_fields = ["order__number", "order__email", "provider_id"]
     date_hierarchy = "created_at"

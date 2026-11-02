@@ -117,8 +117,8 @@ your lawyer.
 ## Notifications
 
 By email only.  New orders are not emailed one by one: the
-`send_order_summary` job (systemd timer `teashop-order-summary`, 6pm New
-York time, installed by `install-app.sh`) sends one summary of the day's
+`order_summary` job (`apps/fulfillment/jobs.py`, 6pm New York time, run
+by the job worker; see `docs/jobs.md`) sends one summary of the day's
 new orders, orders late or due tomorrow, and delay notices waiting for an
 answer.  Set `OWNER_NEW_ORDER_EMAILS=each` for an email per order instead.
 

@@ -12,7 +12,7 @@ from apps.checkout.models import Order
 from apps.core.testing import login_verified, make_owner
 from apps.fulfillment import services
 from apps.fulfillment.models import BoxSize, PackedPackage
-from apps.fulfillment.testing import paid_order
+from apps.fulfillment.testing import paid_order, size
 
 from .test_services import FulfillmentTestCase
 
@@ -111,6 +111,32 @@ class OwnerPagesTests(FulfillmentTestCase):
         order.refresh_from_db()
         self.assertEqual(order.status, Order.Status.CANCELLED)
         self.assertEqual(services.refunded(order), order.total)
+
+    def test_refund_form_says_what_the_refund_is_for(self):
+        order = paid_order([(self.assam, 1), (size("glass-teapot"), 1)])
+        Order.objects.filter(pk=order.pk).update(taxable_amount=Decimal("28.00"), tax_amount=Decimal("2.24"),
+                                                 total=order.total + Decimal("2.24"))
+        order.refresh_from_db()
+        tea = order.lines.get(taxable=False)
+        url = reverse("fulfillment:order", args=[order.number])
+        page = self.client.get(url)
+        self.assertContains(page, "What it is for")
+        self.assertContains(page, f'name="refund-line_{tea.pk}"')
+        self.assertContains(page, 'name="refund-shipping"')
+        response = self.client.post(reverse("fulfillment:refund", args=[order.number]), {
+            "refund-amount": str(tea.net_amount), "refund-reason": "Stale", f"refund-line_{tea.pk}": "1"},
+            follow=True)
+        refund = order.refunds.get()
+        self.assertEqual((refund.amount, refund.tax_amount), (tea.net_amount, Decimal("0.00")))
+        response = self.client.post(reverse("fulfillment:refund", args=[order.number]), {
+            "refund-amount": "30.25", "refund-reason": "Broken", f"refund-line_{order.lines.get(taxable=True).pk}": "1"},
+            follow=True)
+        self.assertContains(response, "more than what you ticked")
+        self.assertEqual(order.refunds.count(), 1)
+        response = self.client.post(reverse("fulfillment:refund", args=[order.number]), {
+            "refund-amount": "30.24", "refund-reason": "Broken", f"refund-line_{order.lines.get(taxable=True).pk}": "1"},
+            follow=True)
+        self.assertContains(response, "(with $2.24 tax)")
 
     def test_address_reship_and_pickup_pages(self):
         order = paid_order([(self.assam, 1)])

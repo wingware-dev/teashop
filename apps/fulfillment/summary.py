@@ -1,5 +1,6 @@
-"""The owner's daily new-order summary (at 6pm, by the send_order_summary
-job): new orders since the last one, and what the Mail Order Rule needs."""
+"""The owner's daily new-order summary (at 6pm, by the order_summary job in
+jobs.py): new orders since the last one, and what the Mail Order Rule
+needs."""
 
 from dataclasses import dataclass, field
 from datetime import timedelta

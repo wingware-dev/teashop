@@ -11,22 +11,22 @@ Sales here are what customers paid, without the sales tax collected, less
 what was refunded.  A refund counts against the period it was issued in,
 not the one the order was paid in (as New York's returns require), so an
 order paid in one year and refunded in the next counts in full in the first
-and comes off the second.  Refunds give back sales tax with them: a refund
-is split between sales, taxable sales and tax in the proportions of its
-order's total (refund_shares).
+and comes off the second.  Refunds give back sales tax with them: each
+records the taxable amount and tax it gave back, from what it was for (none
+for tea), when it was issued (refund_shares).
 """
 
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 
-from .models import CENT, ZERO, NexusThreshold, Order
+from .models import ZERO, NexusThreshold, Order
 from .places import SHIPPING_STATES
 
 
@@ -54,20 +54,15 @@ class RefundShare:
     tax: Decimal
 
 
-def _part(value, numerator, denominator):
-    if not denominator:
-        return ZERO
-    return (value * numerator / denominator).quantize(CENT, rounding=ROUND_HALF_UP)
-
 
 def refund_shares(**refund_filters):
     """A RefundShare for each refund matching refund_filters (on
     fulfillment's Refund, e.g. created_at__gte=...), oldest first.
 
-    The tax given back with a partial refund is its share of the order's
-    total, worked out on the order's refunds to date so that, however an
-    order is refunded, its refunds' tax adds up to exactly the tax collected
-    once all of it is refunded."""
+    The taxable amount and tax given back are those recorded on the refund
+    when it was issued, from what it was for (checkout.tax.refund_tax).
+    The amount is capped at what is left of the order's total, worked out
+    on the order's refunds to date: refunding an overpayment is no sale."""
     Refund = apps.get_model("fulfillment", "Refund")
     wanted = list(Refund.objects.filter(**refund_filters).select_related("order").order_by("created_at", "pk"))
     if not wanted:
@@ -86,10 +81,7 @@ def refund_shares(**refund_filters):
             before += earlier.amount
         upto = min(before + refund.amount, order.total)
         before = min(before, order.total)
-        shares.append(RefundShare(
-            refund, order.ship_state, upto - before,
-            _part(upto, order.taxable_amount, order.total) - _part(before, order.taxable_amount, order.total),
-            _part(upto, order.tax_amount, order.total) - _part(before, order.tax_amount, order.total)))
+        shares.append(RefundShare(refund, order.ship_state, upto - before, refund.taxable_amount, refund.tax_amount))
     return shares
 
 

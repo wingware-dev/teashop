@@ -44,7 +44,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    environment:
+    # The worker service below uses the same settings.
+    environment: &app-environment
       DJANGO_ENV: production
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}
       DATABASE_URL: postgres://teashop:${POSTGRES_PASSWORD}@db:5432/teashop
@@ -99,6 +100,30 @@ services:
       PACKAGE_LABEL_SIZE: ${PACKAGE_LABEL_SIZE:-4x2}
     volumes:
       - media:/app/var/media
+    logging: *logging
+
+  # Background jobs (docs/jobs.md): queued emails, retries and the daily
+  # jobs (order summary, renewal reminders).  The web image, run with
+  # manage.py run_jobs; the queue is in the database.
+  worker:
+    image: teashop-web:${TEASHOP_TAG:-current}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["python", "manage.py", "run_jobs"]
+    environment: *app-environment
+    volumes:
+      - media:/app/var/media
+    # The worker touches this file every few seconds while it runs.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, sys, time; sys.exit(0 if time.time() - os.path.getmtime('/tmp/teashop-worker.heartbeat') < 300 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    # Time to finish the job it is running.
+    stop_grace_period: 60s
     logging: *logging
 
   caddy:

@@ -10,7 +10,8 @@
 # 2. Clones the repository into /srv/teashop, release branch.
 # 3. Writes /srv/teashop/.env with fresh random secrets (only if missing).
 # 4. Lets GitHub Actions deploy with its key, limited to "deploy <commit>".
-# 5. Installs the daily backup and monthly restore-test timers.
+# 5. Installs the backup and restore-test timers (other daily jobs run in
+#    the worker service of compose.yaml, which deploy.sh starts).
 set -euo pipefail
 
 APP_DIR=/srv/teashop
@@ -28,7 +29,7 @@ while [ $# -gt 0 ]; do
         --repo) shift; REPO=${1:-} ;;
         --domain) shift; DOMAIN=${1:-} ;;
         --ci-key-file) shift; CI_KEYFILE=${1:-} ;;
-        -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
         *) die "unknown argument: $1" ;;
     esac
     shift
@@ -86,12 +87,20 @@ if [ -n "$CI_KEYFILE" ]; then
     chmod 600 /home/deploy/.ssh/authorized_keys
 fi
 
-step "Backup, restore-test and subscription-reminder timers"
+step "Backup and restore-test timers"
+# The order summary and renewal reminders moved to the job worker
+# (docs/jobs.md); remove their timers from servers set up before.
+for retired in teashop-order-summary teashop-subscription-reminders; do
+    if [ -f "/etc/systemd/system/$retired.timer" ]; then
+        systemctl disable --now "$retired.timer"
+        rm -f "/etc/systemd/system/$retired.timer" "/etc/systemd/system/$retired.service"
+        echo "    Removed the $retired timer (the job worker runs it now)"
+    fi
+done
 install -m 644 "$APP_DIR"/deploy/server/systemd/teashop-*.service "$APP_DIR"/deploy/server/systemd/teashop-*.timer \
     /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now teashop-backup.timer teashop-restore-test.timer teashop-subscription-reminders.timer \
-    teashop-order-summary.timer
+systemctl enable --now teashop-backup.timer teashop-restore-test.timer
 systemctl list-timers 'teashop-*' --no-pager
 
 step "Done"

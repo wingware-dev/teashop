@@ -150,6 +150,25 @@ class RefundForm(forms.Form):
     reason = forms.CharField(label="Why (the customer sees this)", max_length=300,
                              help_text='e.g. "The tin arrived dented" or "Refund of the shipping"')
 
+    def __init__(self, *args, order=None, **kwargs):
+        """With order, a box for how many of each line, and one for the
+        shipping, the refund is for: they decide the sales tax given back."""
+        super().__init__(*args, **kwargs)
+        self.lines = list(order.lines.all()) if order else []
+        for line in self.lines:
+            self.fields[f"line_{line.pk}"] = forms.IntegerField(
+                label=f"{line.product_name} {line.size_name}".strip(), min_value=0, max_value=line.quantity,
+                initial=0, required=False)
+        if order is not None and order.shipping_amount:
+            self.fields["shipping"] = forms.BooleanField(label=f"Shipping (${order.shipping_amount:,.2f})",
+                                                         required=False)
+
+    def items(self):
+        return {line: self.cleaned_data.get(f"line_{line.pk}") or 0 for line in self.lines}
+
+    def line_fields(self):
+        return [self[f"line_{line.pk}"] for line in self.lines]
+
 
 class CancelForm(forms.Form):
     reason = forms.CharField(label="Why (the customer sees this)", max_length=300,

@@ -99,9 +99,9 @@ collected by quarter and sales into each state against its threshold.
 - After the first payment, an acknowledgment email gives the terms and
   how to cancel.
 - Yearly terms get a reminder 15-45 days before each renewal, sent by the
-  daily `send_subscription_reminders` job (systemd timer
-  `teashop-subscription-reminders`, installed by `install-app.sh`).  The
-  dashboard flags a reminder that is late.
+  daily `subscription_reminders` job (`apps/checkout/jobs.py`, 14:00
+  UTC, run by the job worker; see `docs/jobs.md`).  The dashboard flags a
+  reminder that is late.
 - Every subscription email has a one-step cancel link (no sign-in); so
   does the account page.  Cancelling stops all future charges.
 - When a renewal payment fails, the email links to a card page

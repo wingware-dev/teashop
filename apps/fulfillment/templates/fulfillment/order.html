@@ -156,7 +156,7 @@
   <h2 id="delay-title">Can't ship in time?</h2>
   <p class="small">The FTC Mail Order Rule: before the promised date ({{ order.ship_by|date:"l, F j" }}), tell the customer the new date and offer to cancel for a full refund.  For a first delay of up to 30 days, saying nothing means they agree; a longer delay, or a second one, needs their yes.</p>
   {% for notice in notices %}
-    <p class="small">Notice sent {{ notice.sent_at|date:"M j"|default:"(email failed)" }}: new date {{ notice.new_ship_by|date:"M j" }} — {{ notice.get_response_display }}{% if notice.awaiting_consent %}, answer needed by {{ notice.answer_by|date:"M j" }}{% endif %}.</p>
+    <p class="small">Notice sent {{ notice.sent_at|date:"M j"|default:"(not sent yet)" }}: new date {{ notice.new_ship_by|date:"M j" }} — {{ notice.get_response_display }}{% if notice.awaiting_consent %}, answer needed by {{ notice.answer_by|date:"M j" }}{% endif %}.</p>
   {% endfor %}
   <form method="post" action="{% url 'fulfillment:delay_notice' order.number %}">
     {% csrf_token %}
@@ -171,7 +171,7 @@
   <h2 id="money-title">Refunds and cancelling</h2>
   <p>Paid {{ order.amount_received|default:order.total|money }}{% if refunded %}, refunded {{ refunded|money }}{% endif %}.  {% if refundable %}{{ refundable|money }} can still be refunded.{% endif %}</p>
   {% if refunds %}
-    <ul class="small">{% for refund in refunds %}<li>{{ refund.created_at|date:"M j" }}: {{ refund.amount|money }}, {{ refund.get_kind_display|lower }}: {{ refund.reason }}</li>{% endfor %}</ul>
+    <ul class="small">{% for refund in refunds %}<li>{{ refund.created_at|date:"M j" }}: {{ refund.amount|money }}{% if refund.tax_amount %} (with {{ refund.tax_amount|money }} tax){% endif %}, {{ refund.get_kind_display|lower }}: {{ refund.reason }}</li>{% endfor %}</ul>
   {% endif %}
   {% if refundable and order.status != "pending" %}
     <details class="ff-more">
@@ -180,6 +180,14 @@
         {% csrf_token %}
         {% field refund_form.amount %}
         {% field refund_form.reason %}
+        {% if refund_form.lines or refund_form.shipping %}
+          <fieldset>
+            <legend>What it is for</legend>
+            <p class="small">Decides the sales tax given back: none for tea.  The amount may be less than these come to, not more.  Leave all at 0 to refund from the order as a whole.</p>
+            {% for bound in refund_form.line_fields %}{% field bound %}{% endfor %}
+            {% if refund_form.shipping %}{% field refund_form.shipping %}{% endif %}
+          </fieldset>
+        {% endif %}
         <button type="submit" class="secondary">Refund</button>
       </form>
     </details>

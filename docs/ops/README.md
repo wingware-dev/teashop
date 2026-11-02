@@ -86,7 +86,9 @@ and runs `deploy/deploy.sh <commit>`, which:
    (stops here if they fail; nothing changed);
 3. **backs up the database** to `backups/predeploy/` (the last 10 are kept);
 4. applies database migrations;
-5. starts the new version and waits until its health check passes;
+5. starts the new version (web and the job worker, which sends the emails
+   and runs the daily jobs; see `docs/jobs.md`) and waits until their
+   health checks pass;
 6. if it doesn't, **starts the previous version again** and fails the
    deploy (you get GitHub's failure email).
 
@@ -95,6 +97,11 @@ log and shows under "Operations" on the owner dashboard
 (`deploy/record-ops-event.sh`, which runs `manage.py record_ops_event`).
 
 You can run the same script by hand on the server as the `deploy` user.
+
+**Once, after the first deploy with the job worker:** the 6pm order
+summary and the renewal reminders used to be systemd timers.  Re-run
+`sudo /srv/teashop/deploy/server/install-app.sh --repo ... --domain ...`
+to remove them; until then the summary can arrive twice.
 
 ### Setting up automatic deploys
 

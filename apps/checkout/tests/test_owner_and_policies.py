@@ -4,11 +4,12 @@ items, the policy pages and the Content-Security-Policy header."""
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
+from django.db.models import Sum
 from django.test import override_settings
 from django.utils import timezone
 
-from apps.checkout import alerts, nexus
-from apps.checkout.models import ZERO, CheckoutSettings, NexusThreshold, Order
+from apps.checkout import alerts, nexus, tax
+from apps.checkout.models import ZERO, CheckoutSettings, NexusThreshold, Order, OrderLine
 from apps.core.testing import login_verified, make_owner
 from apps.fulfillment.models import Refund
 
@@ -62,8 +63,14 @@ def local(*args):
     return datetime(*args, 12, tzinfo=timezone.get_current_timezone())
 
 
-def refund(order, amount, when, kind="partial"):
-    return Refund.objects.create(order=order, kind=kind, amount=Decimal(amount), reason="test", created_at=when)
+def refund(order, amount, when, kind="partial", **what):
+    """A Refund recording the tax refund_tax gives back, as the fulfillment
+    service does (without its payment provider)."""
+    earlier = order.refunds.aggregate(amount=Sum("amount"), taxable=Sum("taxable_amount"), tax=Sum("tax_amount"))
+    taxable, tax_amount = tax.refund_tax(order, Decimal(amount), before=tuple(
+        earlier[key] or ZERO for key in ("amount", "taxable", "tax")), **what)
+    return Refund.objects.create(order=order, kind=kind, amount=Decimal(amount), taxable_amount=taxable,
+                                 tax_amount=tax_amount, reason="test", created_at=when)
 
 
 def ny_order(when, total="108.00", taxable="40.00", tax="8.00", **fields):

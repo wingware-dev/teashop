@@ -1,10 +1,12 @@
 """Packing, labels, cancellations, refunds, reships, delay notices and
 pickups, with the stand-in carrier and payments."""
 
+import importlib
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest import mock
 
+from django.apps import apps as django_apps
 from django.core import mail
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase, override_settings
@@ -12,6 +14,7 @@ from django.utils import timezone
 
 from apps.audit import acting_as_agent
 from apps.catalog.models import SoldPackage
+from apps.checkout import tax as checkout_tax
 from apps.checkout.models import Order
 from apps.checkout.shipping import Address
 from apps.inventory.models import Item, StockMovement
@@ -236,6 +239,91 @@ class CancelAndRefundTests(FulfillmentTestCase):
             services.refund(order, Decimal("1.00"), "Sorry")
 
 
+def taxed(order, rate=Decimal("0.08")):
+    """order with New York tax at rate on its teapot and its share of the
+    shipping, as checkout charges it."""
+    goods, shipping = checkout_tax.taxable_base([(line.net_amount, line.taxable) for line in order.lines.all()],
+                                                order.shipping_amount)
+    order.taxable_amount = goods + shipping
+    order.tax_amount = checkout_tax.money(order.taxable_amount * rate)
+    order.tax_rate = rate
+    order.total += order.tax_amount
+    order.amount_received = order.total
+    order.save()
+    return order
+
+
+class RefundTaxTests(FulfillmentTestCase):
+    """Each refund records the taxable amount and tax it gives back, from
+    what it is for."""
+
+    def setUp(self):
+        super().setUp()
+        self.order = taxed(paid_order([(self.assam, 1), (self.teapot, 1)]))
+        self.tea = self.order.lines.get(taxable=False)
+        self.pot = self.order.lines.get(taxable=True)
+
+    def test_refunding_tea_gives_back_no_tax(self):
+        refund = services.refund(self.order, self.tea.net_amount, "Stale", items={self.tea: 1})
+        self.assertEqual((refund.taxable_amount, refund.tax_amount), (Decimal("0.00"), Decimal("0.00")))
+
+    def test_refunding_merchandise_gives_back_its_tax(self):
+        refund = services.refund(self.order, Decimal("30.24"), "Broken", items={self.pot: 1})
+        self.assertEqual((refund.taxable_amount, refund.tax_amount), (Decimal("28.00"), Decimal("2.24")))
+
+    def test_part_of_an_item_gives_back_that_part_of_its_tax(self):
+        refund = services.refund(self.order, Decimal("15.12"), "Chipped lid", items={self.pot: 1})
+        self.assertEqual((refund.taxable_amount, refund.tax_amount), (Decimal("14.00"), Decimal("1.12")))
+
+    def test_shipping_gives_back_the_tax_on_its_taxable_share(self):
+        _, share = checkout_tax.taxable_base([(self.tea.net_amount, False), (self.pot.net_amount, True)],
+                                             self.order.shipping_amount)
+        tax = checkout_tax.money(share * Decimal("0.08"))
+        refund = services.refund(self.order, self.order.shipping_amount + tax, "Late", shipping=True)
+        self.assertEqual((refund.taxable_amount, refund.tax_amount), (share, tax))
+
+    def test_no_more_than_what_was_ticked(self):
+        with mock.patch.object(services, "_payment_provider") as provider, \
+                self.assertRaisesMessage(services.FulfillmentError, "more than what you ticked"):
+            services.refund(self.order, self.tea.net_amount + Decimal("0.01"), "Stale", items={self.tea: 1})
+        provider.assert_not_called()
+        self.assertFalse(Refund.objects.exists())
+
+    def test_items_of_another_order_are_refused(self):
+        other = paid_order([(self.assam, 1)])
+        with self.assertRaisesMessage(services.FulfillmentError, "not in this order"):
+            services.refund(self.order, Decimal("1.00"), "Mixed up", items={other.lines.get(): 1})
+
+    def test_the_rest_refunded_gives_back_the_rest_of_the_tax(self):
+        services.refund(self.order, self.tea.net_amount, "Stale", items={self.tea: 1})
+        services.refund(self.order, services.refundable(self.order), "Sent back")
+        self.assertEqual(sum(r.tax_amount for r in self.order.refunds.all()), self.order.tax_amount)
+        self.assertEqual(sum(r.taxable_amount for r in self.order.refunds.all()), self.order.taxable_amount)
+
+    def test_unspecified_partial_refund_takes_a_share_of_the_order(self):
+        quarter = (self.order.total / 4).quantize(Decimal("0.01"))
+        refund = services.refund(self.order, quarter, "Sorry")
+        self.assertEqual(refund.tax_amount, checkout_tax.money(quarter * self.order.tax_amount / self.order.total))
+
+    def test_cancelling_gives_back_all_the_tax(self):
+        services.cancel_order(self.order, "Customer asked")
+        refund = self.order.refunds.get()
+        self.assertEqual((refund.taxable_amount, refund.tax_amount),
+                         (self.order.taxable_amount, self.order.tax_amount))
+
+    def test_migration_fills_in_earlier_refunds_as_a_share_of_the_order(self):
+        quarter = (self.order.total / 4).quantize(Decimal("0.01"))
+        first = Refund.objects.create(order=self.order, kind="partial", amount=quarter, reason="old")
+        last = Refund.objects.create(order=self.order, kind="partial", amount=self.order.total - quarter,
+                                     reason="old", created_at=first.created_at + timedelta(minutes=1))
+        importlib.import_module("apps.fulfillment.migrations.0002_refund_tax").fill_in(django_apps, None)
+        first.refresh_from_db()
+        last.refresh_from_db()
+        self.assertEqual(first.tax_amount, checkout_tax.money(quarter * self.order.tax_amount / self.order.total))
+        self.assertEqual(first.tax_amount + last.tax_amount, self.order.tax_amount)
+        self.assertEqual(first.taxable_amount + last.taxable_amount, self.order.taxable_amount)
+
+
 class ReshipAndAddressTests(FulfillmentTestCase):
     def test_reship_a_lost_parcel(self):
         order = paid_order([(self.assam, 2)])
@@ -269,6 +357,7 @@ class DelayNoticeTests(FulfillmentTestCase):
         order = paid_order([(self.assam, 1)], ship_by=date.today() + timedelta(days=1))
         notice = services.send_delay_notice(order, date.today() + timedelta(days=10), "Waiting for the importer")
         order.refresh_from_db()
+        notice.refresh_from_db()  # the email job set sent_at
         self.assertFalse(notice.needs_consent)
         self.assertEqual(order.ship_by, notice.new_ship_by)
         self.assertIsNotNone(notice.sent_at)

@@ -8,6 +8,7 @@ be built side by side with few conflicts:
 | App | Phase | Holds |
 |---|---|---|
 | `core` | 1 | Health check, owner dashboard shell, shared helpers, the design vocabulary (`design.py`) |
+| `jobs` | — | The background job queue and its worker; see `docs/jobs.md` |
 | `audit` | 1 | The audit log |
 | `inventory` | 2 | Raw materials, lots, stock movements, bills of materials |
 | `catalog` | 2, 3 | Products, size options, categories, regions, collections, photos, copy rules |
@@ -127,7 +128,12 @@ SAQ A, the shortest self-assessment.
 
 ## Background jobs
 
-Not needed yet.  When a phase needs them (emails, label purchases,
-agents), use a queue stored in PostgreSQL (for example the `django-tasks`
-database backend) so there is no extra service to run, and run it as one
-more service in `compose.yaml`.
+`apps/jobs` is a small job queue kept in PostgreSQL, run by the `worker`
+service in `compose.yaml` (`manage.py run_jobs`): queued work, automatic
+retries and daily or periodic jobs, with no other service to run.  All
+emails go through it, as do the 6pm order summary and the renewal
+reminders.  Anything slow or that may fail and should be retried (emails,
+label purchases, agents) goes on it rather than in a request.  How to
+declare, queue and schedule jobs: `docs/jobs.md`.  Use it rather than a
+new systemd timer; systemd keeps only the backup timers, which run
+outside the app.

@@ -166,7 +166,7 @@ def web_environment():
     for line in lines[start + 1:]:
         if re.match(r"  \S", line) or not line.startswith(" "):
             break  # the next service, or the end of services
-        if line == "    environment:":
+        if re.fullmatch(r"    environment:( &[\w-]+)?", line):
             in_env = True
         elif in_env and (match := re.match(r"      ([A-Z][A-Z0-9_]*):", line)):
             keys.add(match.group(1))
@@ -183,6 +183,14 @@ class ComposeEnvironmentTests(SimpleTestCase):
         for_django = env_example_names() & settings_names
         self.assertIn("LABEL_PACKER_ADDRESS", for_django)
         self.assertEqual(sorted(for_django - web_environment()), [])
+
+    def test_job_worker_shares_the_web_settings(self):
+        compose = (ROOT / "compose.yaml").read_text()
+        self.assertIn("    environment: &app-environment\n", compose)
+        worker = compose.split("\n  worker:\n", 1)[1].split("\n\n", 1)[0]
+        self.assertIn("    environment: *app-environment\n", worker)
+        self.assertIn('command: ["python", "manage.py", "run_jobs"]', worker)
+        self.assertIn("teashop-worker.heartbeat", worker)
 
     def test_every_env_example_variable_is_used_by_compose(self):
         compose = (ROOT / "compose.yaml").read_text()

@@ -189,7 +189,7 @@ def order_detail(request, number):
         "to_print": to_print,
         "refunds": order.refunds.all(), "refunded": services.refunded(order), "refundable": services.refundable(order),
         "notices": order.delay_notices.all(),
-        "refund_form": forms.RefundForm(prefix="refund"),
+        "refund_form": forms.RefundForm(prefix="refund", order=order),
         "cancel_form": forms.CancelForm(prefix="cancel"),
         "delay_form": forms.DelayNoticeForm(prefix="delay", initial={"new_ship_by": max(order.ship_by or today, today)
                                                                      + timedelta(days=7)}),
@@ -363,10 +363,11 @@ def change_address(request, number):
 @require_POST
 def refund(request, number):
     order = get_object_or_404(Order, number=number)
-    form = forms.RefundForm(request.POST, prefix="refund")
+    form = forms.RefundForm(request.POST, prefix="refund", order=order)
     if form.is_valid():
         try:
-            done = services.refund(order, form.cleaned_data["amount"], form.cleaned_data["reason"], user=request.user)
+            done = services.refund(order, form.cleaned_data["amount"], form.cleaned_data["reason"], user=request.user,
+                                   items=form.items(), shipping=form.cleaned_data.get("shipping", False))
         except (ValidationError, PermissionDenied) as exc:
             _errors(request, exc)
         else:
@@ -450,9 +451,9 @@ def delay_notice(request, number):
         except ValidationError as exc:
             _errors(request, exc)
         else:
-            if not notice.sent_at:
-                messages.error(request, "The notice is recorded but the email failed.  Check the email settings.")
-            elif notice.needs_consent:
+            # The email is queued (apps.jobs); a failure is retried and shows
+            # on the dashboard.
+            if notice.needs_consent:
                 messages.success(request, f"Delay notice sent.  The customer must agree to wait; if they have not "
                                  f"by {notice.answer_by:%B %-d}, cancel and refund the order.")
             else:

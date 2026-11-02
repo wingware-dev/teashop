@@ -1,9 +1,0 @@
-[Unit]
-Description=Daily teashop subscription renewal reminders
-
-[Timer]
-OnCalendar=*-*-* 14:00:00 UTC
-Persistent=true
-
-[Install]
-WantedBy=timers.target

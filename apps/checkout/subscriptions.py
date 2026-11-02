@@ -7,8 +7,8 @@ and California's (Bus. & Prof. Code 17600-17606):
 - an acknowledgment email with the terms and how to cancel follows the
   first payment (emails.subscription_acknowledgment);
 - terms of a year or more get a reminder 15 to 45 days before each renewal
-  (send_reminders(), run daily by the send_subscription_reminders
-  command); there are no free trials, and a price change applies only to
+  (send_reminders(), run daily by the subscription_reminders job in
+  jobs.py); there are no free trials, and a price change applies only to
   new subscribers, so no other notices are due;
 - cancelling is one button online, from the account page or the link in
   every subscription email, no sign-in needed (cancel()).
@@ -198,19 +198,20 @@ def needs_reminder(subscription, now=None):
 
 
 def send_reminders(now=None):
-    """Send the renewal reminders due; returns how many were sent."""
-    sent = 0
+    """Queue the renewal reminders due; returns how many were queued.  The
+    email job marks each period reminded once sent, and a reminder still
+    waiting or retrying is not queued twice."""
+    queued = 0
     for subscription in Subscription.objects.filter(status=Subscription.Status.ACTIVE, interval_months__gte=12):
-        if needs_reminder(subscription, now) and emails.subscription_reminder(subscription):
-            subscription.reminded_for = subscription.current_period_end
-            subscription.save(update_fields=["reminded_for"])
-            sent += 1
-    return sent
+        if needs_reminder(subscription, now):
+            emails.subscription_reminder(subscription)
+            queued += 1
+    return queued
 
 
 def reminders_overdue(now=None):
     """Active yearly subscriptions now inside the law's window without a
-    reminder (the daily command didn't run, or the email failed)."""
+    reminder (the daily job didn't run, or the email failed)."""
     now = now or timezone.now()
     overdue = []
     for subscription in Subscription.objects.filter(status=Subscription.Status.ACTIVE, interval_months__gte=12):

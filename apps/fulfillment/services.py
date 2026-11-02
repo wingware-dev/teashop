@@ -27,6 +27,7 @@ from apps.catalog.models import Product
 from apps.checkout import orders as checkout_orders
 from apps.checkout import payments
 from apps.checkout import shipping as checkout_shipping
+from apps.checkout import tax as checkout_tax
 from apps.checkout.models import Order, add_business_days
 from apps.inventory import services as inventory
 from apps.inventory.models import StockMovement
@@ -435,9 +436,12 @@ def _payment_provider(order):
     return current
 
 
-def refund(order, amount, reason, *, user=None, kind=None, email=True):
+def refund(order, amount, reason, *, user=None, kind=None, email=True, items=None, shipping=False):
     """Give amount (dollars) of the order's payment back.  Only the owner
-    may: AI agents are refused.  Returns the Refund."""
+    may: AI agents are refused.  items {OrderLine: quantity} and shipping
+    say what it is for, which decides the sales tax given back with it
+    (checkout.tax.refund_tax; neither: the order as a whole).  Returns the
+    Refund."""
     _refuse_agents("give refunds")
     amount = Decimal(amount).quantize(CENT)
     if order.status not in (*Order.PAID_STATUSES, Order.Status.CANCELLED):
@@ -449,6 +453,15 @@ def refund(order, amount, reason, *, user=None, kind=None, email=True):
         raise FulfillmentError("Enter the amount to refund.")
     if amount > available:
         raise FulfillmentError(f"At most ${available:,.2f} is left to refund on this order.")
+    if any(line.order_id != order.pk for line in items or {}):
+        raise FulfillmentError("Those items are not in this order.")
+    earlier = order.refunds.aggregate(amount=Sum("amount"), taxable=Sum("taxable_amount"), tax=Sum("tax_amount"))
+    try:
+        taxable, tax = checkout_tax.refund_tax(
+            order, amount, items=items, shipping=shipping,
+            before=tuple(earlier[key] or Decimal("0.00") for key in ("amount", "taxable", "tax")))
+    except checkout_tax.RefundTaxError as exc:
+        raise FulfillmentError(str(exc)) from exc
     kind = kind or (Refund.Kind.FULL if amount == available and not order.refunds.exists() else Refund.Kind.PARTIAL)
     provider = _payment_provider(order)
     number = order.refunds.count() + 1
@@ -456,13 +469,13 @@ def refund(order, amount, reason, *, user=None, kind=None, email=True):
         provider_id = provider.refund(order, amount, f"{order.number}-{number}-{payments.cents(amount)}")
     except payments.PaymentError as exc:
         raise FulfillmentError(str(exc)) from exc
-    refund = Refund.objects.create(order=order, kind=kind, amount=amount, reason=reason.strip()[:300],
+    refund = Refund.objects.create(order=order, kind=kind, amount=amount, taxable_amount=taxable, tax_amount=tax,
+                                   reason=reason.strip()[:300],
                                    provider=provider.name, provider_id=provider_id,
                                    created_by=user if user and user.is_authenticated else None)
     record("fulfillment.refunded", obj=order, message=f"${amount:,.2f} ({refund.get_kind_display()}): {reason}")
-    if email and emails.refund_sent(refund):
-        refund.email_sent_at = timezone.now()
-        refund.save(update_fields=["email_sent_at"])
+    if email:
+        emails.refund_sent(refund)  # queued; sets refund.email_sent_at once sent
     return refund
 
 
@@ -575,9 +588,7 @@ def send_delay_notice(order, new_ship_by, reason, user=None):
             order.save(update_fields=["ship_by"])
         record("fulfillment.delay_notice", obj=order, message=(
             f"New date {new_ship_by:%Y-%m-%d}" + (", needs the customer's consent" if needs_consent else "")))
-    if emails.delay_notice(notice):
-        notice.sent_at = timezone.now()
-        notice.save(update_fields=["sent_at"])
+    emails.delay_notice(notice)  # queued; sets notice.sent_at once sent
     return notice
 
 

@@ -60,6 +60,62 @@ def taxable_base(lines, shipping):
     return money(taxable), money(shipping * taxable / total)
 
 
+class RefundTaxError(Exception):
+    """The refund does not fit what it is said to be for; the message is
+    for the owner."""
+
+
+def _share(value, numerator, denominator):
+    if not denominator:
+        return ZERO
+    return money(value * numerator / denominator)
+
+
+def refund_tax(order, amount, *, items=None, shipping=False, before=(ZERO, ZERO, ZERO)):
+    """(taxable amount, tax) given back by refunding amount (tax included)
+    of order.
+
+    items {OrderLine: quantity} and shipping say what the refund is for;
+    the amount is spread over them in proportion to what they cost with
+    tax, so a refund of tea gives back no tax.  It may be less than they
+    come to (say half back for a dented teapot), not more.  With neither,
+    the refund is for the order as a whole: a share of its total.
+
+    before is (amount, taxable amount, tax) of the order's earlier refunds.
+    The tax given back never passes what was collected, and a refund that
+    brings the refunds up to the order's total gives back whatever is left,
+    so a fully refunded order gives back exactly its tax."""
+    before_amount, before_taxable, before_tax = before
+    left_taxable = max(order.taxable_amount - before_taxable, ZERO)
+    left_tax = max(order.tax_amount - before_tax, ZERO)
+    if before_amount + amount >= order.total:
+        return left_taxable, left_tax
+    items = {line: quantity for line, quantity in (items or {}).items() if quantity}
+    if items or shipping:
+        rate = order.tax_amount / order.taxable_amount if order.taxable_amount else ZERO
+        base = taxable = ZERO
+        for line, quantity in items.items():
+            part = line.net_amount * quantity / line.quantity
+            base += part
+            taxable += part if line.taxable else ZERO
+        if shipping:
+            lines = [(line.net_amount, line.taxable) for line in order.lines.all()]
+            share = min(taxable_base(lines, order.shipping_amount)[1], order.taxable_amount)
+            base += order.shipping_amount
+            taxable += share
+        worth = base + taxable * rate
+        if amount > money(worth):
+            raise RefundTaxError(f"That is more than what you ticked comes to (${money(worth):,.2f}).  Tick more, "
+                                 "or leave everything unticked to refund from the order as a whole.")
+        refund_taxable, refund_tax_ = _share(amount, taxable, worth), _share(amount, taxable * rate, worth)
+    else:
+        upto = before_amount + amount
+        refund_taxable = (_share(upto, order.taxable_amount, order.total)
+                          - _share(before_amount, order.taxable_amount, order.total))
+        refund_tax_ = _share(upto, order.tax_amount, order.total) - _share(before_amount, order.tax_amount, order.total)
+    return (min(max(refund_taxable, ZERO), left_taxable), min(max(refund_tax_, ZERO), left_tax, amount))
+
+
 def calculate(lines, shipping, address):
     """The TaxResult for lines [(amount after discount, taxable)] and the
     shipping charged, delivered to address."""

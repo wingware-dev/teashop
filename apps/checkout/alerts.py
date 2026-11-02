@@ -36,8 +36,9 @@ def attention_items():
                                   paid_at__lt=timezone.now() - timedelta(minutes=10)).count()
     if unsent:
         items.append(Attention(f"Order confirmations not sent: {unsent}",
-                               "Email failed.  Check the email settings, then use \"Send the confirmation email "
-                               "again\" on the orders.", orders_url, "urgent"))
+                               "The email is failing; it is tried again automatically for about 18 hours.  Check "
+                               "the email settings, then use \"Send the confirmation email again\" on the orders.",
+                               orders_url, "urgent"))
     mismatched = [o for o in Order.objects.filter(status=Order.Status.PAID).exclude(amount_received=None)
                   if o.amount_received != o.total]
     if mismatched:
@@ -65,8 +66,8 @@ def attention_items():
     overdue = subscriptions.reminders_overdue()
     if overdue:
         items.append(Attention(f"Subscription renewal reminders not sent: {len(overdue)}",
-                               "The law needs a reminder 15-45 days before a yearly renewal.  Is the daily "
-                               "send_subscription_reminders job running?",
+                               "The law needs a reminder 15-45 days before a yearly renewal.  Is the job worker "
+                               "running (docs/jobs.md), and is email working?",
                                reverse("admin:checkout_subscription_changelist"), "urgent"))
     shop = CheckoutSettings.current()
     if shop.on_vacation():

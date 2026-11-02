@@ -4,9 +4,10 @@ from apps.checkout import subscriptions
 
 
 class Command(BaseCommand):
-    help = ("Email renewal reminders for yearly subscriptions renewing in 15 to 30 days (NY GBL 527-a, "
-            "California's automatic renewal law).  Run daily.")
+    help = ("Queue renewal reminders for yearly subscriptions renewing in 15 to 30 days (NY GBL 527-a, "
+            "California's automatic renewal law).  The job worker does this daily (apps/checkout/jobs.py); "
+            "run it by hand to catch up.")
 
     def handle(self, *args, **options):
-        sent = subscriptions.send_reminders()
-        self.stdout.write(f"Sent {sent} renewal reminder{'s' if sent != 1 else ''}.")
+        queued = subscriptions.send_reminders()
+        self.stdout.write(f"Queued {queued} renewal reminder{'s' if queued != 1 else ''}.")

@@ -132,7 +132,7 @@ class RenewalTests(CheckoutTestCase):
         self.at(29)
         out = StringIO()
         call_command("send_subscription_reminders", stdout=out)
-        self.assertIn("Sent 1", out.getvalue())
+        self.assertIn("Queued 1", out.getvalue())
         self.assertIn("renews on", mail.outbox[0].subject)
         self.assertIn(self.subscription.cancel_url(), mail.outbox[0].body)
         call_command("send_subscription_reminders", stdout=StringIO())
