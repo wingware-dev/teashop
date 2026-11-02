@@ -11,5 +11,6 @@ code wraps its work in acting_as_agent() so its changes are attributed to it::
         record("support.reply_sent", obj=ticket, message="Answered order-status question")
 """
 
-from .context import Actor, acting_as, acting_as_agent, acting_as_system, current_actor  # noqa: F401
+from .context import (  # noqa: F401
+    Actor, acting_as, acting_as_agent, acting_as_system, agent_involved, current_actor)
 from .recording import record  # noqa: F401

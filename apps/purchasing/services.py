@@ -11,7 +11,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from apps.audit import current_actor
+from apps.audit import agent_involved
 from apps.inventory import services as inventory
 from apps.inventory.models import Lot, PurchaseOrder, PurchaseOrderLine, StockMovement
 from apps.inventory.reorder import reorders
@@ -107,7 +107,7 @@ def apply_count(count, user):
     """Turn each counted difference into a stock adjustment with its reason
     (count correction when there are more), and close the count.  All or
     nothing: on any problem no adjustment is made."""
-    if current_actor().type == "agent" or user is None or not user.is_authenticated:
+    if agent_involved() or user is None or not user.is_authenticated:
         raise PermissionDenied("Only the owner can apply a stock count.")
     with transaction.atomic():
         count = StockCount.objects.select_for_update().get(pk=count.pk)

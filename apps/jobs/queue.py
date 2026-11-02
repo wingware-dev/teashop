@@ -302,9 +302,13 @@ def retry_now(queryset):
 def _job_actor():
     """Who a job queued now runs as: whoever queued it, except that a job
     an AI agent queues (an email, a reminder) runs later as the system,
-    since the agent did not decide on it."""
+    since the agent did not decide on it.  It keeps the agent's name in
+    for_agent, so what agents may not do it may not do either (and jobs
+    it queues in turn keep it too)."""
     actor = current_actor()
-    return SYSTEM if actor.type == "agent" else actor
+    if actor.type == "agent":
+        return dataclasses.replace(SYSTEM, for_agent=actor.label)
+    return actor
 
 
 def _actor_to_json(actor):

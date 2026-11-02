@@ -90,6 +90,8 @@ object is gone should return, not raise.
 What a job records in the audit log is credited to whoever queued it (the
 signed-in owner, a customer's request), as if it ran then; a job an AI
 agent queues runs as the system, since the agent did not decide on it.
+It still counts as the agent's for what agents may not do: guards check
+`agent_involved()`, which sees the agent's name kept on the job.
 
 ## Schedules (daily and periodic jobs)
 

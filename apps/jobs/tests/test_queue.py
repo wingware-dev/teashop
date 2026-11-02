@@ -57,6 +57,21 @@ def records_something():
     record("tests.did_something", message="from a job")
 
 
+@jobs.job(max_attempts=1)
+def lets_support_answer_alone():
+    """Something only the owner may do (a guard refuses agents)."""
+    from apps.support import services
+    from apps.support.models import Category
+
+    services.set_answers_alone(Category.ORDER_STATUS, False)
+
+
+@jobs.job
+def queues_another():
+    records_something.enqueue()
+    lets_support_answer_alone.enqueue()
+
+
 class QueueTestCase(TestCase):
     def setUp(self):
         calls.clear()
@@ -113,6 +128,39 @@ class EnqueueTests(QueueTestCase):
         jobs.run_due()
         event = AuditEvent.objects.get(action="tests.did_something")
         self.assertEqual((event.actor_type, event.actor_label), ("system", "system"))
+
+    def assert_refused(self):
+        from apps.support.models import CategoryMode
+
+        refused = Job.objects.get(name__endswith=".lets_support_answer_alone")
+        self.assertEqual(refused.status, Job.Status.FAILED)
+        self.assertIn("AI agents cannot", refused.last_error)
+        self.assertFalse(CategoryMode.objects.exists())
+        # Its failure is still the system's in the audit log.
+        failed = AuditEvent.objects.get(action="jobs.failed")
+        self.assertEqual((failed.actor_type, failed.actor_label), ("system", "system"))
+
+    def test_jobs_an_agent_queues_are_still_refused_what_agents_are(self):
+        with acting_as_agent("support-agent"):
+            lets_support_answer_alone.enqueue()
+        with self.assertLogs("apps.jobs.queue", "ERROR"):
+            jobs.run_due()
+        self.assert_refused()
+
+    def test_jobs_queued_by_an_agents_job_keep_its_name(self):
+        with acting_as_agent("support-agent"):
+            queues_another.enqueue()
+        with self.assertLogs("apps.jobs.queue", "ERROR"):
+            jobs.run_due()
+        self.assert_refused()
+        event = AuditEvent.objects.get(action="tests.did_something")
+        self.assertEqual((event.actor_type, event.actor_label), ("system", "system"))
+
+    def test_the_owners_jobs_are_not_refused(self):
+        with acting_as(Actor(type="user", user_id=7, label="owner")):
+            lets_support_answer_alone.enqueue()
+        jobs.run_due()
+        self.assertEqual(Job.objects.get().status, Job.Status.DONE)
 
     def test_job_rows_stay_out_of_the_audit_log(self):
         remember.enqueue(1)

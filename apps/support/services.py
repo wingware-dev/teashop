@@ -14,7 +14,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils import timezone
 
 from apps import jobs
-from apps.audit import current_actor, record
+from apps.audit import agent_involved, record
 
 from .models import ANSWERABLE, CategoryMode, Conversation, Draft, Message
 
@@ -214,7 +214,7 @@ def set_answers_alone(category, on):
     """The owner lets the assistant answer category alone, or not.  Turning
     it on needs the approval rate to show it is ready; never for Other, and
     never by an agent."""
-    if current_actor().type == "agent":
+    if agent_involved():
         raise PermissionDenied("AI agents cannot change what they may answer alone.")
     if on and category not in ANSWERABLE:
         raise ValidationError("The assistant never answers this category alone.")

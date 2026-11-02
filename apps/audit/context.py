@@ -17,6 +17,10 @@ class Actor:
     label: str = ""
     ip_address: str | None = None
     request_path: str = ""
+    # The AI agent this work traces back to though it isn't credited to it:
+    # a job the agent queued runs as the system with for_agent set.  Not in
+    # the audit log; agent_involved() checks it, so guards still refuse.
+    for_agent: str = ""
 
 
 SYSTEM = Actor(type="system", label="system")
@@ -26,6 +30,14 @@ _current = contextvars.ContextVar("audit_actor", default=None)
 
 def current_actor():
     return _current.get() or SYSTEM
+
+
+def agent_involved(actor=None):
+    """The name of the AI agent acting now (actor, default the current
+    one), directly or through a job it queued; "" if none.  Guards that
+    keep agents from an action check this, not actor.type."""
+    actor = actor or current_actor()
+    return actor.label if actor.type == "agent" else actor.for_agent
 
 
 @contextmanager

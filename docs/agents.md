@@ -93,7 +93,9 @@ def draft_post(idea):
   agents whatever the prompt says: `fulfillment.services` (refunds,
   cancellations), `inventory.services.approve_purchase_order`,
   `support.services.set_answers_alone`.  Do the same in new code
-  (`if current_actor().type == "agent": raise PermissionDenied(...)`).
+  (`if agent_involved(): raise PermissionDenied(...)`, from `apps.audit`).
+  `agent_involved()` also covers jobs an agent queued, which run as the
+  system but keep the agent's name.
 - **Stand-ins**: give `client_for()` a factory for a stand-in with
   `model = ai.STANDIN_MODEL` and `complete(system=, messages=, tools=,
   max_tokens=) -> ai.Reply`, answering with the same blocks as the API

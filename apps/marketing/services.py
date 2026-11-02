@@ -19,7 +19,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps import jobs
-from apps.audit import current_actor, record
+from apps.audit import agent_involved, record
 
 from . import guardrails, publishers
 from .models import Idea, Post
@@ -30,7 +30,7 @@ POST_FIELDS = ("network", "text", "title", "link", "photo", "gift", "scheduled_f
 
 
 def _refuse_agents(what):
-    if current_actor().type == "agent":
+    if agent_involved():
         raise PermissionDenied(f"AI agents cannot {what}; only the owner can.")
 
 
@@ -77,7 +77,7 @@ def update_post(post, changes, user=None):
     for name in changed:
         setattr(post, name, changes[name])
     post.full_clean()
-    if current_actor().type != "agent" and post.from_agent and any(n in changed for n in ("text", "title")):
+    if not agent_involved() and post.from_agent and any(n in changed for n in ("text", "title")):
         post.edited_by_owner = True
     was = post.status
     if was in (Post.Status.APPROVED, Post.Status.REJECTED):

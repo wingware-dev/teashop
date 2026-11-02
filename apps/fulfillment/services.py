@@ -21,7 +21,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 
-from apps.audit import current_actor, record
+from apps.audit import agent_involved, record
 from apps.catalog import services as catalog
 from apps.catalog.models import Product
 from apps.checkout import orders as checkout_orders
@@ -55,7 +55,7 @@ class AllergenCheckNeeded(FulfillmentError):
 
 
 def _refuse_agents(what):
-    if current_actor().type == "agent":
+    if agent_involved():
         raise PermissionDenied(f"AI agents cannot {what}; the owner does.")
 
 

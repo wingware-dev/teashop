@@ -16,7 +16,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from apps.audit import current_actor
+from apps.audit import agent_involved
 
 from .models import BlendBatch, BlendInput, Item, Lot, PurchaseOrder, StockMovement
 
@@ -114,7 +114,7 @@ def approve_purchase_order(order, user):
     who approved it and when.  Nothing else can move a draft on, so no
     order (and no spending) happens without this.  AI agents can draft
     orders but never approve them."""
-    if current_actor().type == "agent":
+    if agent_involved():
         raise PermissionDenied("AI agents cannot approve purchase orders.")
     if user is None or not user.is_authenticated or not user.is_staff:
         raise PermissionDenied("Only the owner can approve purchase orders.")

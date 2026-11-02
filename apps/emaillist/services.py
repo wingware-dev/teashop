@@ -14,7 +14,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps import jobs
-from apps.audit import current_actor, record
+from apps.audit import agent_involved, current_actor, record
 
 from .models import ConsentEvent, Delivery, Mailing, Subscriber, new_token
 
@@ -152,7 +152,7 @@ def approve(mailing, user):
     subscriber as their frequency allows, starting with those due today.
     Nothing else releases a mailing; AI agents can draft but never
     approve."""
-    if current_actor().type == "agent":
+    if agent_involved():
         raise PermissionDenied("AI agents cannot approve mailings.")
     if user is None or not user.is_authenticated or not user.is_staff:
         raise PermissionDenied("Only the owner can approve mailings.")
