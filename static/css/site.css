@@ -213,7 +213,8 @@ button.link {
 }
 .wizard-actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem; }
 
-input[type="text"], input[type="password"], input[type="number"], input[type="email"], input[type="search"], input[type="tel"], select, textarea {
+input[type="text"], input[type="password"], input[type="number"], input[type="email"], input[type="search"], input[type="tel"],
+input[type="url"], input[type="date"], input[type="datetime-local"], select, textarea {
   font: inherit;
   width: 100%;
   min-height: 2.75rem;

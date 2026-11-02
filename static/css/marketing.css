@@ -17,11 +17,6 @@
   background: var(--surface-2);
   border-radius: var(--radius);
 }
-/* site.css styles text inputs but not these; match them on these pages. */
-input[type="datetime-local"], input[type="date"], input[type="url"] {
-  font: inherit; width: 100%; min-height: 2.75rem; padding: 0.45rem 0.7rem; border: 1px solid var(--muted);
-  border-radius: 0.45rem; background: var(--surface); color: var(--text);
-}
 .warnings { color: var(--text); border-left: 4px solid var(--c-buttercup); padding-left: 1.5rem; }
 
 fieldset.networks, fieldset.codes { border: 1px solid var(--border); border-radius: var(--radius); margin: 0 0 1rem;
