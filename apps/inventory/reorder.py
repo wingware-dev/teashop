@@ -9,7 +9,8 @@ is used and how long the supplier takes to deliver.
                     item's minimum order
 
 "Used" means packed for orders, used in blend batches, and given away as
-samples or marketing; losses are left out, since they are not demand.
+samples or marketing, less stock returned (a cancelled order unpacked);
+losses are left out, since they are not demand.
 An item first received within the window is measured over the days since
 then (at least REORDER_MIN_HISTORY_DAYS), so a new tea isn't
 underestimated.  Blends made here have no supplier: their lead time is
@@ -73,10 +74,14 @@ class Reorder:
 
 
 def used_movements():
+    """Movements that make up use: demand going out (negative) and stock
+    returned from it (positive 'returned' adjustments, as from
+    catalog.services.reverse_package), so their sum is minus the net use."""
     demand = Q(kind__in=[StockMovement.Kind.SALE, StockMovement.Kind.BLEND_INPUT]) | Q(
         kind=StockMovement.Kind.ADJUSTMENT, reason__in=list(StockMovement.MARKETING_REASONS)
     )
-    return StockMovement.objects.filter(demand, quantity__lt=0)
+    returned = Q(kind=StockMovement.Kind.ADJUSTMENT, reason=StockMovement.Reason.RETURNED, quantity__gt=0)
+    return StockMovement.objects.filter((demand & Q(quantity__lt=0)) | returned)
 
 
 def daily_use_by_item(items, today=None):
@@ -98,7 +103,9 @@ def daily_use_by_item(items, today=None):
     )
     rates = {}
     for item_id in ids:
-        total = -(used.get(item_id) or 0)
+        # A return in the window for a sale before it can outweigh the
+        # window's use: never below nothing.
+        total = max(-(used.get(item_id) or 0), 0)
         if not total:
             rates[item_id] = Decimal(0)
             continue

@@ -69,6 +69,27 @@ class ReorderTests(TestCase):
         inventory.make_blend(services_batch)
         self.assertEqual(reorder_for(self.assam).daily_use, Decimal(20))  # 1800 g / 90 days
 
+    def test_returned_stock_nets_out_of_use(self):
+        sell(self.lot, 1800, days_ago=10, reference="1001")
+        sell(self.lot, 900, days_ago=5, reference="1002")
+
+        def give_back(quantity, reference):
+            # As catalog.services.reverse_package records an unpacked order.
+            return inventory.post_movement(
+                self.lot, quantity, StockMovement.Kind.ADJUSTMENT,
+                reason=StockMovement.Reason.RETURNED, reference=reference)
+
+        give_back(900, "1002")
+        self.assertEqual(reorder_for(self.assam).daily_use, Decimal(20))  # (2700 - 900) g / 90 days
+        # Not reusable: returned, then written off as damaged, a loss and not demand.
+        give_back(900, "1001")
+        inventory.post_movement(self.lot, -900, StockMovement.Kind.ADJUSTMENT,
+                                reason=StockMovement.Reason.DAMAGED, reference="1001")
+        self.assertEqual(reorder_for(self.assam).daily_use, Decimal(10))  # 900 g / 90 days
+        # A return for a sale before the window can't take use below nothing.
+        give_back(5000, "0999")
+        self.assertEqual(reorder_for(self.assam).daily_use, 0)
+
     def test_new_item_measured_since_first_delivery(self):
         tin = make_item("Tin", kind=Item.Kind.PACKAGING)
         lot = make_lot(tin, 100, received_on=timezone.localdate() - timedelta(days=5))
