@@ -40,3 +40,8 @@ var/
 .env
 .deploy/
 backups/
+
+# Wing per-user task settings, agent guide and macOS folder data
+TASKS/settings/
+AGENTS.md
+.DS_Store
