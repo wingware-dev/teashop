@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20" viewBox="0 0 120 20">
+<!-- One tile of the leafy vine border, used as a CSS mask so it takes the
+     page's accent colour in either theme. -->
+<path d="M0 10c15-7 30-7 45 0s30 7 45 0 22-6 30 0" fill="none" stroke="#000" stroke-width="1.6"/>
+<path d="M20 6.5c2-5 8-6 12-4-2 4-7 6-12 4z"/>
+<path d="M50 12.5c3 4.5 9 5 12.5 2.5-3-3.5-8-5-12.5-2.5z"/>
+<path d="M80 6.8c1.5-5 7.5-6.5 11.5-4.5-1.5 4-6.5 6.5-11.5 4.5z"/>
+<circle cx="106" cy="13" r="2.4"/>
+<circle cx="110" cy="10.5" r="1.5"/>
+</svg>

@@ -1,12 +1,14 @@
 from django import forms
 from django.contrib import admin, messages
-from django.core.exceptions import ValidationError
-from django.db.models import F, Q, Sum
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Q, Sum
 from django.forms.models import BaseInlineFormSet
+from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 from . import services, tracing
+from .reorder import reorders
 from .models import (
     Allergen,
     BlendBatch,
@@ -63,7 +65,7 @@ class StockLevelFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == "low":
-            return queryset.filter(reorder_level__gt=0, usable_on_hand__lte=F("reorder_level"))
+            return queryset.filter(pk__in=[r.item.pk for r in reorders() if r.is_low])
         if self.value() == "out":
             return queryset.filter(usable_on_hand=0)
         return queryset
@@ -85,26 +87,41 @@ class ItemLotInline(ReadOnlyInlineMixin, admin.TabularInline):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ["name", "code", "kind", "on_hand", "reorder_level_display", "low", "is_active"]
     list_filter = [StockLevelFilter, "kind", "is_active"]
     search_fields = ["name", "code", "ingredient_name"]
     autocomplete_fields = ["default_supplier"]
     inlines = [ItemLotInline]
+    fieldsets = [
+        (None, {"fields": ["name", "code", "kind", "ingredient_name", "default_supplier", "is_active"]}),
+        ("Reordering", {"fields": ["auto_reorder", "reorder_level", "safety_days", "cover_days", "minimum_order"]}),
+        (None, {"fields": ["notes"]}),
+    ]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(usable_on_hand=Sum("lots__quantity_on_hand", filter=USABLE, default=0))
 
+    def get_list_display(self, request):
+        # Reorder levels are worked out for all items at once (reorder.py),
+        # not per row.
+        info = {r.item.pk: r for r in reorders()}
+
+        @admin.display(description="Reorder level")
+        def reorder_level_display(item):
+            r = info.get(item.pk)
+            if not r or not r.level:
+                return "—"
+            return item.format_quantity(r.level) + (" (auto)" if r.level > item.reorder_level else "")
+
+        @admin.display(description="Low", boolean=True)
+        def low(item):
+            r = info.get(item.pk)
+            return bool(r and r.is_low)
+
+        return ["name", "code", "kind", "on_hand", reorder_level_display, low, "is_active"]
+
     @admin.display(description="Usable stock", ordering="usable_on_hand")
     def on_hand(self, item):
         return item.format_quantity(item.usable_on_hand)
-
-    @admin.display(description="Reorder level", ordering="reorder_level")
-    def reorder_level_display(self, item):
-        return item.format_quantity(item.reorder_level) if item.reorder_level else "—"
-
-    @admin.display(description="Low", boolean=True)
-    def low(self, item):
-        return bool(item.reorder_level) and item.usable_on_hand <= item.reorder_level
 
 
 class LotDocumentInline(admin.TabularInline):
@@ -276,11 +293,74 @@ class PurchaseOrderLineInline(admin.TabularInline):
 
 @admin.register(PurchaseOrder)
 class PurchaseOrderAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "supplier", "status", "ordered_on", "expected_on"]
-    list_filter = ["status", "supplier"]
+    """Drafts (by hand or suggested from reorder levels) wait for the
+    owner's approval: the "Approve and mark ordered" button, or the list
+    action.  The status is never edited by hand."""
+
+    list_display = ["__str__", "supplier", "status", "source", "ordered_on", "expected_on", "approved_by"]
+    list_filter = ["status", "source", "supplier"]
     search_fields = ["reference", "supplier__name", "notes"]
     autocomplete_fields = ["supplier"]
     inlines = [PurchaseOrderLineInline]
+    actions = ["approve", "cancel"]
+    change_form_template = "admin/inventory/purchaseorder/change_form.html"
+    fields = ["supplier", "reference", "ordered_on", "expected_on", "notes", "status", "source", "approval", "deliveries"]
+    readonly_fields = ["status", "source", "approval", "deliveries"]
+
+    @admin.display(description="Approval")
+    def approval(self, order):
+        if order.approved_at:
+            return f"Approved by {order.approved_by or 'a removed user'} on {order.approved_at:%Y-%m-%d %H:%M}"
+        if order.status == PurchaseOrder.Status.DRAFT:
+            return "Not approved yet: nothing is ordered until you approve it."
+        return "—"
+
+    @admin.display(description="Deliveries")
+    def deliveries(self, order):
+        if not order.pk or order.status in (PurchaseOrder.Status.DRAFT, PurchaseOrder.Status.CANCELLED):
+            return "—"
+        receipts = format_html_join(
+            ", ",
+            '<a href="{}">{}</a>',
+            ((reverse("admin:inventory_receipt_change", args=[r.pk]), f"{r.received_on:%Y-%m-%d}") for r in order.receipts.all()),
+        )
+        add = reverse("admin:inventory_receipt_add") + f"?supplier={order.supplier_id}&purchase_order={order.pk}"
+        link = format_html('<a href="{}">Record a delivery for this order</a>', add)
+        return format_html("{} {}", receipts, link) if receipts else link
+
+    def approve_one(self, request, order):
+        try:
+            services.approve_purchase_order(order, request.user)
+        except (ValidationError, PermissionDenied) as error:
+            text = " ".join(error.messages) if isinstance(error, ValidationError) else str(error)
+            self.message_user(request, text, messages.ERROR)
+            return False
+        return True
+
+    @admin.action(description="Approve selected drafts and mark them ordered")
+    def approve(self, request, queryset):
+        count = sum(self.approve_one(request, order) for order in queryset)
+        if count:
+            self.message_user(request, f"{count} purchase order(s) approved.  Send them to the supplier.")
+
+    @admin.action(description="Cancel selected purchase orders")
+    def cancel(self, request, queryset):
+        count = 0
+        for order in queryset:
+            try:
+                services.cancel_purchase_order(order)
+                count += 1
+            except ValidationError as error:
+                self.message_user(request, " ".join(error.messages), messages.ERROR)
+        if count:
+            self.message_user(request, f"{count} purchase order(s) cancelled.")
+
+    def response_change(self, request, obj):
+        if "_approve" in request.POST:
+            if self.approve_one(request, obj):
+                self.message_user(request, f"{obj} approved.  Send it to the supplier.")
+            return HttpResponseRedirect(request.path)
+        return super().response_change(request, obj)
 
 
 @admin.register(PurchaseOrderLine)

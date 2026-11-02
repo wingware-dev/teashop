@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Reorder · Teashop{% endblock %}
+{% block content %}
+  <h1>Reorder</h1>
+
+  <section class="card">
+    <h2>Suggested purchase orders</h2>
+    {% if to_order %}
+      <p>{{ to_order|length }} item{{ to_order|length|pluralize }} {{ to_order|length|pluralize:"is,are" }} at or below the reorder level with not enough on order.</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit">Draft purchase orders</button>
+      </form>
+      <p class="muted small">Drafts one order per supplier for you to check and approve.  Nothing is ordered or paid until you approve it.</p>
+    {% else %}
+      <p class="muted">Nothing needs ordering now.</p>
+    {% endif %}
+    <p><a href="{{ orders_url }}">Draft purchase orders waiting for approval</a></p>
+  </section>
+
+  <section class="card">
+    <h2>Every item</h2>
+    <p class="muted small">Reorder level = daily use × (lead time + safety days), never below the item's own level.  Suggested = enough for lead time, safety and cover days, less stock and what is on order.  Daily use counts orders, blends and samples over the last 90 days.</p>
+    <div class="table-scroll" role="region" aria-label="Reorder levels" tabindex="0">
+    <table class="events">
+      <thead>
+        <tr><th>Item</th><th class="num">Usable stock</th><th class="num">Daily use</th><th class="num">Days left</th><th class="num">Lead + safety days</th><th class="num">Reorder level</th><th class="num">On order</th><th class="num">Suggested</th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          {% with d=r.display %}
+          <tr>
+            <td><a href="{% url 'admin:inventory_item_change' r.item.pk %}">{{ r.item.name }}</a>{% if r.made_here %} <span class="muted small">(blend made here)</span>{% elif not r.item.default_supplier %} <span class="muted small">(no supplier)</span>{% endif %}</td>
+            <td class="num{% if r.is_low %} status-failed{% endif %}">{{ d.on_hand }}{% if r.is_low %} (low){% endif %}</td>
+            <td class="num">{{ d.daily_use }}</td>
+            <td class="num">{{ r.days_left|default_if_none:"—" }}</td>
+            <td class="num">{{ r.lead_days }} + {{ r.safety_days }}</td>
+            <td class="num">{{ d.level }}</td>
+            <td class="num">{{ d.on_order }}</td>
+            <td class="num">{{ d.suggested }}</td>
+          </tr>
+          {% endwith %}
+        {% empty %}
+          <tr><td colspan="8" class="muted">No items yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<!-- The storefront's decorative motifs (apps/core/design.py lists them).
+     Drawn for this shop; decoration only, not the logo.  Colours come from
+     CSS custom properties: m1 is the main colour (default currentColor), m2, m3
+     and m4 the details, so each follows the page's palette and theme. -->
+<symbol id="motif-leaf" viewBox="0 0 64 64">
+  <path d="M9 55C7 31 23 10 55 8c2 29-17 47-46 47z" style="fill:var(--m1, currentColor)"/>
+  <path fill="none" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"
+        d="M11 53C23 41 35 28 50 13M21 43l-1-11M29 35l-1-12M38 26l-1-10M21 43l11 1M29 35l12 1M38 26l10 0" style="stroke:var(--m4, #fff)"/>
+</symbol>
+<symbol id="motif-sprig" viewBox="0 0 64 64">
+  <path fill="none" stroke-width="2.5" stroke-linecap="round" d="M32 62C33 48 31 30 32 17" style="stroke:var(--m3, currentColor)"/>
+  <path d="M32 45C21 47 9 41 5 28c13-2 25 4 27 17z" style="fill:var(--m1, currentColor)"/>
+  <path d="M32 35c11 2 23-4 27-17-13-2-25 4-27 17z" style="fill:var(--m1, currentColor)"/>
+  <path d="M32 19c-5-4-6-12 0-18 6 6 5 14 0 18z" style="fill:var(--m1, currentColor)"/>
+</symbol>
+<symbol id="motif-blossom" viewBox="0 0 64 64">
+  <g style="fill:var(--m1, currentColor)">
+    <ellipse cx="32" cy="17" rx="9" ry="13" transform="rotate(0 32 32)"/>
+    <ellipse cx="32" cy="17" rx="9" ry="13" transform="rotate(72 32 32)"/>
+    <ellipse cx="32" cy="17" rx="9" ry="13" transform="rotate(144 32 32)"/>
+    <ellipse cx="32" cy="17" rx="9" ry="13" transform="rotate(216 32 32)"/>
+    <ellipse cx="32" cy="17" rx="9" ry="13" transform="rotate(288 32 32)"/>
+  </g>
+  <circle cx="32" cy="32" r="7.5" style="fill:var(--m2, #e8b923)"/>
+  <circle cx="32" cy="32" r="3" style="fill:var(--m3, #6b4423)"/>
+</symbol>
+<symbol id="motif-bee" viewBox="0 0 64 64">
+  <ellipse cx="25" cy="19" rx="9" ry="13" transform="rotate(-25 25 19)" fill-opacity=".8"
+           stroke-width="1.5" style="fill:var(--m4, #fff);stroke:var(--m3, #3b2a1a)"/>
+  <ellipse cx="38" cy="18" rx="8" ry="12" transform="rotate(20 38 18)" fill-opacity=".8"
+           stroke-width="1.5" style="fill:var(--m4, #fff);stroke:var(--m3, #3b2a1a)"/>
+  <ellipse cx="32" cy="38" rx="18" ry="13" style="fill:var(--m2, #e8b923)"/>
+  <path fill="none" stroke-width="4.5" d="M25 26.6V49.4M34 25.2V50.8M43 28V48" style="stroke:var(--m3, #3b2a1a)"/>
+  <circle cx="52" cy="35" r="6.5" style="fill:var(--m3, #3b2a1a)"/>
+  <path d="M14.5 36l-8 2.5 8 2.5z" style="fill:var(--m3, #3b2a1a)"/>
+  <path fill="none" stroke-width="1.6" stroke-linecap="round" d="M54 29.5q2-6 7-7.5M51 29q-.5-6 2.5-9" style="stroke:var(--m3, #3b2a1a)"/>
+</symbol>
+<symbol id="motif-butterfly" viewBox="0 0 64 64">
+  <g style="fill:var(--m1, currentColor)">
+    <path d="M31 31C24 14 10 7 6 13s4 19 25 18z"/>
+    <path d="M33 31C40 14 54 7 58 13s-4 19-25 18z"/>
+    <path d="M31 34C18 33 9 41 12 49s15 3 19-15z"/>
+    <path d="M33 34c13-1 22 7 19 15s-15 3-19-15z"/>
+  </g>
+  <g style="fill:var(--m2, #e8b923)">
+    <circle cx="15" cy="17" r="3.2"/><circle cx="49" cy="17" r="3.2"/>
+    <circle cx="18.5" cy="44" r="2.4"/><circle cx="45.5" cy="44" r="2.4"/>
+  </g>
+  <rect x="30.4" y="21" width="3.2" height="26" rx="1.6" style="fill:var(--m3, #3b2a1a)"/>
+  <path fill="none" stroke-width="1.5" stroke-linecap="round" d="M31 22q-3-7-8-9M33 22q3-7 8-9" style="stroke:var(--m3, #3b2a1a)"/>
+</symbol>
+<symbol id="motif-bird" viewBox="0 0 64 64">
+  <path fill="none" stroke-width="2.5" stroke-linecap="round" d="M4 57c14-2 38-2 56 1" style="stroke:var(--m3, #6b4423)"/>
+  <path fill="none" stroke-width="1.8" stroke-linecap="round" d="M29 47l-1 9M36 46l1 10" style="stroke:var(--m3, #6b4423)"/>
+  <polygon points="19,40 2,33 6,46" style="fill:var(--m1, currentColor)"/>
+  <ellipse cx="30" cy="38" rx="18" ry="11" transform="rotate(-18 30 38)" style="fill:var(--m1, currentColor)"/>
+  <circle cx="45" cy="25" r="9.5" style="fill:var(--m1, currentColor)"/>
+  <path d="M41 33c6 1 9 6 7 11-4 3-10 2-13-2 0-4 2-8 6-9z" style="fill:var(--m5, #c0392b)"/>
+  <path fill-opacity=".55" d="M18 36c8-8 20-8 24-1-7 7-17 8-24 1z" style="fill:var(--m3, #6b4423)"/>
+  <polygon points="53.5,22 62,25.5 53.5,28.5" style="fill:var(--m2, #e8b923)"/>
+  <circle cx="48" cy="22.5" r="1.8" style="fill:var(--m4, #fff)"/>
+</symbol>
+<symbol id="motif-fern" viewBox="0 0 64 64">
+  <path fill="none" stroke-width="2" stroke-linecap="round" d="M32 62Q28 34 40 4" style="stroke:var(--m1, currentColor)"/>
+  <g style="fill:var(--m1, currentColor)">
+    <ellipse cx="25.3" cy="52.6" rx="6.5" ry="2.4" transform="rotate(-156 25.3 52.6)"/>
+    <ellipse cx="36.8" cy="51.8" rx="6.5" ry="2.4" transform="rotate(-32 36.8 51.8)"/>
+    <ellipse cx="25.7" cy="47.2" rx="6.0" ry="2.2" transform="rotate(-153 25.7 47.2)"/>
+    <ellipse cx="36.3" cy="47.0" rx="6.0" ry="2.2" transform="rotate(-29 36.3 47.0)"/>
+    <ellipse cx="26.3" cy="41.8" rx="5.5" ry="2.0" transform="rotate(-150 26.3 41.8)"/>
+    <ellipse cx="36.0" cy="42.1" rx="5.5" ry="2.0" transform="rotate(-26 36.0 42.1)"/>
+    <ellipse cx="27.2" cy="36.4" rx="5.0" ry="1.8" transform="rotate(-147 27.2 36.4)"/>
+    <ellipse cx="36.0" cy="37.1" rx="5.0" ry="1.8" transform="rotate(-23 36.0 37.1)"/>
+    <ellipse cx="28.3" cy="31.0" rx="4.5" ry="1.6" transform="rotate(-144 28.3 31.0)"/>
+    <ellipse cx="36.2" cy="32.1" rx="4.5" ry="1.6" transform="rotate(-20 36.2 32.1)"/>
+    <ellipse cx="29.8" cy="25.7" rx="4.0" ry="1.4" transform="rotate(-141 29.8 25.7)"/>
+    <ellipse cx="36.7" cy="26.9" rx="4.0" ry="1.4" transform="rotate(-17 36.7 26.9)"/>
+    <ellipse cx="31.4" cy="20.3" rx="3.5" ry="1.3" transform="rotate(-139 31.4 20.3)"/>
+    <ellipse cx="37.4" cy="21.7" rx="3.5" ry="1.3" transform="rotate(-15 37.4 21.7)"/>
+    <ellipse cx="33.4" cy="15.0" rx="3.0" ry="1.1" transform="rotate(-136 33.4 15.0)"/>
+    <ellipse cx="38.4" cy="16.4" rx="3.0" ry="1.1" transform="rotate(-12 38.4 16.4)"/>
+    <ellipse cx="35.6" cy="9.7" rx="2.5" ry="0.9" transform="rotate(-133 35.6 9.7)"/>
+    <ellipse cx="39.7" cy="11.0" rx="2.5" ry="0.9" transform="rotate(-9 39.7 11.0)"/>
+  </g>
+</symbol>
+<symbol id="motif-teapot" viewBox="0 0 64 64">
+  <path d="M50 31c7-3 12 0 12 6 0 7-7 11-13 13l1-4.5c4-1.5 7.5-4.5 7.5-8.5 0-3.5-3-4.5-6.5-3z" style="fill:var(--m1, currentColor)"/>
+  <path d="M15 35L4 24.5c-1.5-1.5 0-3.5 2-2.5l11 6.5z" style="fill:var(--m1, currentColor)"/>
+  <path d="M13 31c0-8 8-12.5 19-12.5S51 23 51 31v7c0 10.5-8 17-19 17s-19-6.5-19-17z" style="fill:var(--m1, currentColor)"/>
+  <rect x="21" y="14" width="22" height="5.5" rx="2.75" style="fill:var(--m3, #6b4423)"/>
+  <circle cx="32" cy="10.5" r="3.8" style="fill:var(--m3, #6b4423)"/>
+  <path fill="none" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round" d="M19 41h26" style="stroke:var(--m4, #fff)"/>
+  <g fill-opacity=".55" style="fill:var(--m4, #fff)"><circle cx="25" cy="33" r="2"/><circle cx="32" cy="31" r="2"/><circle cx="39" cy="33" r="2"/></g>
+</symbol>
+</svg>

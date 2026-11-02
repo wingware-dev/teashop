@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}{{ title }} · {{ shop_name }}{% endblock %}
+{% block meta %}
+  {% if intro %}<meta name="description" content="{{ intro|truncatechars:160 }}">{% endif %}
+  {% if not is_search %}<link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">{% endif %}
+  {% if is_search or filters.active %}<meta name="robots" content="noindex">{% endif %}
+{% endblock %}
+{% block content %}
+  {% include "storefront/_breadcrumbs.html" %}
+  <section class="banner palette-{{ palette }}" aria-labelledby="page-title">
+    {% if kicker %}<p class="kicker">{{ kicker }}</p>{% endif %}
+    <h1 id="page-title">{{ title }}</h1>
+    {% if intro %}<p class="intro">{{ intro }}</p>{% endif %}
+    {% motif motif_name "banner-art" %}
+  </section>
+
+  <div class="listing palette-{{ palette }}">
+    {% include "storefront/_filters.html" %}
+    <section aria-labelledby="results-title">
+      <div class="result-bar">
+        <h2 id="results-title" class="visually-hidden">Teas</h2>
+        <p class="muted" role="status">{{ page.paginator.count }} {% if page.paginator.count == 1 %}item{% else %}items{% endif %}{% if page.paginator.num_pages > 1 %}, page {{ page.number }} of {{ page.paginator.num_pages }}{% endif %}</p>
+      </div>
+      {% if products %}
+        <ul class="product-grid">
+          {% for product in products %}<li>{% include "storefront/_product_card.html" %}</li>{% endfor %}
+        </ul>
+        {% if page.has_other_pages %}
+          <nav class="pagination" aria-label="Pages">
+            <ul>
+              {% if page.has_previous %}<li><a href="{% querystring page=page.previous_page_number %}" rel="prev">Previous</a></li>{% endif %}
+              {% for number in page.paginator.page_range %}
+                <li>{% if number == page.number %}<span aria-current="page">{{ number }}</span>{% else %}<a href="{% querystring page=number %}">{{ number }}</a>{% endif %}</li>
+              {% endfor %}
+              {% if page.has_next %}<li><a href="{% querystring page=page.next_page_number %}" rel="next">Next</a></li>{% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="empty">
+          {% motif "bee" %}
+          {% if filters.active %}
+            <p>Nothing matches all of those choices.</p>
+            <p><a href="{{ request.path }}">Clear the filters</a> or try fewer.</p>
+          {% else %}
+            <p>Nothing here yet. New teas are on their way.</p>
+            <p><a href="{% url 'storefront:all_teas' %}">See all teas</a></p>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Merch and accessories · {{ shop_name }}{% endblock %}
+{% block meta %}<meta name="description" content="Teapots, brewing accessories and {{ shop_name }}'s own goods.">{% endblock %}
+{% block content %}
+  {% include "storefront/_breadcrumbs.html" %}
+  <section class="banner palette-bark" aria-labelledby="page-title">
+    <h1 id="page-title">Merch and accessories</h1>
+    <p class="intro">Teapots, strainers and the other things that make brewing easy, and a few goods of our own.</p>
+    {% motif "teapot" "banner-art" %}
+  </section>
+  {% for category, items in sections %}
+    <section class="palette-{{ category.palette }}" aria-labelledby="goods-{{ category.slug }}">
+      <div class="section-head">
+        <h2 id="goods-{{ category.slug }}">{% motif category.motif %}{{ category.name }}</h2>
+        <a href="{{ category.get_absolute_url }}">See all {{ category.name|lower }}</a>
+      </div>
+      <ul class="product-grid">{% for product in items %}<li>{% include "storefront/_product_card.html" %}</li>{% endfor %}</ul>
+    </section>
+  {% endfor %}
+  {% if uncategorised %}
+    <section aria-labelledby="goods-more">
+      <div class="section-head"><h2 id="goods-more">{% motif "sprig" %}More</h2></div>
+      <ul class="product-grid">{% for product in uncategorised %}<li>{% include "storefront/_product_card.html" %}</li>{% endfor %}</ul>
+    </section>
+  {% endif %}
+  {% if not sections and not uncategorised %}
+    <div class="empty">{% motif "teapot" %}<p>Teapots and accessories are on their way.</p></div>
+  {% endif %}
+{% endblock %}

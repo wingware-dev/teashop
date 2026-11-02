@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Losses and samples · Teashop{% endblock %}
+{% block content %}
+  <h1>Losses and samples</h1>
+
+  <section class="card">
+    <h2>Last {{ months }} months, at landed cost</h2>
+    <p>Loss ${{ totals.loss }} · Samples and giveaways (marketing) ${{ totals.marketing }} · Personal use ${{ totals.personal }}</p>
+    {% if totals.uncosted %}<p class="muted small">{{ totals.uncosted }} adjustment{{ totals.uncosted|pluralize }} came from lots with no landed cost, so count as $0.</p>{% endif %}
+    <div class="table-scroll" role="region" aria-label="Losses by month" tabindex="0">
+    <table class="events">
+      <thead>
+        <tr><th class="num">Month</th>{% for code, label in reasons %}<th class="num">{{ label }}</th>{% endfor %}<th class="num">Total loss</th><th class="num">Marketing</th><th class="num">Personal use</th></tr>
+      </thead>
+      <tbody>
+        {% for line in table %}
+          <tr>
+            <td class="num">{{ line.row.month|date:"Y-m" }}</td>
+            {% for cost in line.loss_by_reason %}<td class="num">{% if cost %}{{ cost }}{% else %}—{% endif %}</td>{% endfor %}
+            <td class="num"><strong>{% if line.row.loss %}{{ line.row.loss|floatformat:2 }}{% else %}—{% endif %}</strong></td>
+            <td class="num">{% if line.row.marketing %}{{ line.row.marketing|floatformat:2 }}{% else %}—{% endif %}</td>
+            <td class="num">{% if line.row.personal %}{{ line.row.personal|floatformat:2 }}{% else %}—{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <p class="muted small">Count corrections are net: a count that finds more lowers the month's loss.</p>
+  </section>
+
+  <section class="card">
+    <h2>Most lost items</h2>
+    {% if worst %}
+      <div class="table-scroll" role="region" aria-label="Most lost items" tabindex="0">
+      <table class="events">
+        <thead><tr><th>Item</th><th class="num">Lost</th><th class="num">Cost</th></tr></thead>
+        <tbody>
+          {% for loss in worst %}
+            <tr><td>{{ loss.item.name }}</td><td class="num">{{ loss.quantity }} {{ loss.item.unit }}</td><td class="num">${{ loss.cost|floatformat:2 }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    {% else %}
+      <p class="muted">No losses recorded.</p>
+    {% endif %}
+    <p><a href="{% url 'admin:purchasing_stockcount_add' %}">Start a stock count</a> · <a href="{% url 'admin:inventory_stockadjustment_add' %}">Record an adjustment</a></p>
+  </section>
+{% endblock %}

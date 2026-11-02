@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}{{ product.name }} · {{ shop_name }}{% endblock %}
+{% block meta %}
+  <meta name="description" content="{{ product.summary|default:product.description|truncatechars:160 }}">
+  <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}">
+  <meta property="og:type" content="product">
+  <meta property="og:title" content="{{ product.name }}">
+  <meta property="og:description" content="{{ product.summary|default:product.description|truncatechars:200 }}">
+  {% if photos %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ photos.0.image.url }}">{% endif %}
+{% endblock %}
+{% block content %}
+<div class="product-wrap palette-{{ palette }} layout-{{ layout }}">
+  {% include "storefront/_breadcrumbs.html" %}
+
+  {% if preview %}
+    <section class="preview-bar" aria-labelledby="preview-title">
+      <h2 id="preview-title">Preview: page design {{ preview.pk }} ({{ preview.get_status_display|lower }})</h2>
+      <p>Proposed by {{ preview.made_by }} on {{ preview.created_at|date:"M j, Y" }}: the {{ preview.get_palette_display|lower }} palette, the {{ preview.get_motif_display|lower }} motif, {{ preview.get_layout_display|lower }}.{% if preview.status == "live" %} Customers see this design now.{% endif %}</p>
+      {% if preview.rationale %}<p><strong>Why:</strong> {{ preview.rationale }}</p>{% endif %}
+      {% if problems %}
+        <div class="problems">
+          <p>Fix these before approving:</p>
+          <ul>{% for field, messages in problems.items %}{% for message in messages %}<li>{{ message }}</li>{% endfor %}{% endfor %}</ul>
+        </div>
+      {% endif %}
+      <form method="post" action="{% url 'storefront:variant_decide' preview.pk %}">
+        {% csrf_token %}
+        <div class="note">
+          <label for="decision-note">Note (optional)</label>
+          <input type="text" id="decision-note" name="note" maxlength="300">
+        </div>
+        {% if preview.status == "live" %}
+          <button type="submit" name="decision" value="take_down" class="secondary">Take down</button>
+        {% else %}
+          {% if not problems %}<button type="submit" name="decision" value="approve">Approve and make live</button>{% endif %}
+          {% if preview.status == "draft" %}<button type="submit" name="decision" value="reject" class="secondary">Reject</button>{% endif %}
+        {% endif %}
+      </form>
+      <p class="small"><a href="{% url 'storefront:variant_list' %}">All page designs</a></p>
+    </section>
+  {% endif %}
+
+  {% if layout == "story" and variant.story %}<p class="story">{{ variant.story }}</p>{% endif %}
+
+  <div class="product-page">
+    <div class="product-head">
+      {% if product.category %}<p class="kicker">{{ product.category.name }}{% if product.region %} · {{ product.region.name }}{% endif %}</p>{% endif %}
+      <h1>{{ product.name }}</h1>
+      {% if variant.headline %}<p class="headline">{{ variant.headline }}</p>{% endif %}
+      {% if product.summary %}<p class="summary">{{ product.summary }}</p>{% endif %}
+      {% if product.kind == "tea" %}{% caffeine_meter product %}{% endif %}
+    </div>
+
+    <figure class="gallery">
+      <div class="main">
+        {% if photos %}
+          {% with photo=photos.0 %}
+            <img src="{{ photo.small_url }}" srcset="{{ photo.srcset }}" sizes="(min-width: 52rem) 55vw, 100vw"
+                 width="{{ photo.width }}" height="{{ photo.height }}" alt="{{ photo.alt_text }}" fetchpriority="high">
+          {% endwith %}
+        {% else %}
+          {% include "storefront/_art.html" with main=motif_name %}
+        {% endif %}
+      </div>
+      {% if photos|length > 1 %}
+        <ul aria-label="More photos">
+          {% for photo in photos|slice:"1:" %}
+            <li><img src="{{ photo.small_url }}" width="{{ photo.width }}" height="{{ photo.height }}" alt="{{ photo.alt_text }}" loading="lazy" decoding="async"></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      {% if not photos %}<figcaption>Photos of this {% if product.kind == "tea" %}tea{% else %}item{% endif %} are coming soon.</figcaption>{% endif %}
+    </figure>
+
+    <section class="buy-box" aria-labelledby="sizes-title">
+      <h2 id="sizes-title">Sizes and prices</h2>
+      {% if sizes %}
+        <table class="sizes">
+          <thead><tr><th scope="col">Size</th><th scope="col" class="num">Price</th><th scope="col">Availability</th></tr></thead>
+          <tbody>
+            {% for size, available in sizes %}
+              <tr>
+                <th scope="row">{{ size.name }}</th>
+                <td class="num">{{ size.price|money }}</td>
+                <td>{% if available %}In stock{% else %}<span class="stock-out">Sold out</span>{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>Not available right now.</p>
+      {% endif %}
+      <p class="notice">{% motif "bee" %}<span>Online ordering opens soon.</span></p>
+    </section>
+  </div>
+
+  {% if variant.story and layout != "story" %}<p class="story">{{ variant.story }}</p>{% endif %}
+  {% if product.description %}<div class="prose">{{ product.description|paragraphs }}</div>{% endif %}
+
+  {% if product.kind == "tea" %}
+    <div class="facts">
+      <section class="fact" aria-labelledby="origin-title">
+        <h2 id="origin-title">{% motif "bird" %}Origin</h2>
+        <dl>
+          {% if facts.countries %}<dt>Grown in</dt><dd>{{ facts.countries|join:", " }}</dd>{% endif %}
+          {% if product.region %}<dt>Region</dt><dd><a href="{{ product.region.get_absolute_url }}">{{ product.region.name }}</a></dd>{% endif %}
+          {% if product.origin_detail %}<dt>Garden</dt><dd>{{ product.origin_detail }}</dd>{% endif %}
+        </dl>
+        {% if not facts.countries and not product.region and not product.origin_detail %}<p class="muted">Origin details to come.</p>{% endif %}
+      </section>
+
+      <section class="fact" aria-labelledby="tasting-title">
+        <h2 id="tasting-title">{% motif "blossom" %}Tasting notes</h2>
+        {% if product.tasting_notes %}{{ product.tasting_notes|paragraphs }}{% endif %}
+        {% if product.flavour_notes.all %}<ul class="chips" aria-label="Flavour notes">{% for note in product.flavour_notes.all %}<li>{{ note.name }}</li>{% endfor %}</ul>{% endif %}
+      </section>
+
+      <section class="fact" aria-labelledby="brew-title">
+        <h2 id="brew-title">{% motif "teapot" %}Brewing guide</h2>
+        <dl>
+          {% if product.brew_temp_c %}<dt>Water</dt><dd>{{ product.brew_temp_c|fahrenheit }} °F ({{ product.brew_temp_c }} °C)</dd>{% endif %}
+          {% if product.brew_minutes %}<dt>Steep</dt><dd>{{ product.brew_minutes }}</dd>{% endif %}
+          {% if product.brew_grams %}<dt>Tea</dt><dd>{{ product.brew_grams|floatformat:"-1" }} g for a 250 ml (8 oz) cup</dd>{% endif %}
+          {% if product.brew_infusions %}<dt>Infusions</dt><dd>{{ product.brew_infusions }}</dd>{% endif %}
+        </dl>
+        {% if product.brew_notes %}{{ product.brew_notes|paragraphs }}{% endif %}
+      </section>
+
+      <section class="fact" aria-labelledby="ingredients-title">
+        <h2 id="ingredients-title">{% motif "leaf" %}Ingredients and allergens</h2>
+        <dl>
+          <dt>Ingredients</dt><dd>{{ facts.ingredients|default:"To come" }}</dd>
+          {% if facts.allergens %}<dt>Contains</dt><dd><strong>{{ facts.allergens|join:", " }}</strong></dd>{% endif %}
+        </dl>
+        <p class="small muted">The label on your package lists exactly what is in it.</p>
+      </section>
+    </div>
+  {% endif %}
+
+  {% if related %}
+    <section aria-labelledby="related-title">
+      <div class="section-head"><h2 id="related-title">{% motif "sprig" %}You might also like</h2></div>
+      <ul class="product-grid">{% for product in related %}<li>{% include "storefront/_product_card.html" %}</li>{% endfor %}</ul>
+    </section>
+  {% endif %}
+
+  {% if articles %}
+    <section aria-labelledby="product-notes-title">
+      <div class="section-head"><h2 id="product-notes-title">{% motif "fern" %}Read more</h2></div>
+      <ul class="article-list">{% for article in articles %}<li>{% include "storefront/_article_card.html" %}</li>{% endfor %}</ul>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

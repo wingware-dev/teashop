@@ -1,31 +1,101 @@
-{% load static %}<!DOCTYPE html>
+{% load static storefront %}<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>{% block title %}Teashop{% endblock %}</title>
+  <title>{% block title %}{{ shop_name }}{% endblock %}</title>
+  {% block meta %}{% endblock %}
+  {% if request.resolver_match.namespace != "storefront" or request.resolver_match.url_name|slice:":8" == "variant_" %}<meta name="robots" content="noindex">{% endif %}
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <script src="{% static 'js/theme-init.js' %}"></script>
+  <script src="{% static 'js/site.js' %}" defer></script>
+  {% for data in structured_data %}{{ data|ld_json }}{% endfor %}
   {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Skip to main content</a>
   <header class="site-header">
-    <a class="brand" href="{% url 'core:home' %}">Teashop</a>
-    <nav>
-      {% if user.is_authenticated %}
-        {% if user.is_staff %}<a href="{% url 'core:owner_dashboard' %}">Dashboard</a>{% endif %}
-        <a href="{% url 'two_factor:profile' %}">Account security</a>
-        <form method="post" action="{% url 'core:logout' %}" class="inline">
-          {% csrf_token %}<button type="submit" class="link">Log out</button>
+    <div class="header-inner">
+      <a class="brand" href="{% url 'storefront:home' %}"{% if is_home %} aria-current="page"{% endif %}>
+        <span class="wordmark">{{ shop_name }}</span>
+        <span class="tagline">Specialty teas</span>
+      </a>
+      {% if shop_visible %}
+        <form class="header-search" role="search" action="{% url 'storefront:search' %}" method="get">
+          <label for="site-search" class="visually-hidden">Search teas</label>
+          <input type="search" id="site-search" name="q" value="{% if is_search %}{{ filters.q }}{% endif %}" placeholder="Search teas" autocomplete="off">
+          <button type="submit">Search</button>
         </form>
       {% endif %}
-    </nav>
+      <div class="header-tools">
+        <button type="button" class="theme-toggle" data-theme-toggle hidden>{% motif "blossom" %}Theme: <span data-theme-name>Automatic</span></button>
+        {% if user.is_authenticated %}
+          {% if user.is_staff %}<a href="{% url 'core:owner_dashboard' %}">Dashboard</a>{% endif %}
+          <a href="{% url 'two_factor:profile' %}">Account security</a>
+          <form method="post" action="{% url 'core:logout' %}" class="inline">
+            {% csrf_token %}<button type="submit" class="link">Log out</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% if shop_visible %}
+      <nav class="main-nav" aria-label="Shop sections">
+        <ul>
+          <li>
+            <details class="menu">
+              <summary>Teas</summary>
+              <ul>
+                <li><a href="{% url 'storefront:all_teas' %}">{% motif "sprig" %}All teas</a></li>
+                {% for category in nav_teas %}
+                  <li class="palette-{{ category.palette }}"><a href="{{ category.get_absolute_url }}">{% motif category.motif %}{{ category.name }}</a></li>
+                {% endfor %}
+              </ul>
+            </details>
+          </li>
+          <li><a href="{% url 'storefront:regions' %}">Regions</a></li>
+          {% for collection in nav_collections %}
+            <li><a href="{{ collection.get_absolute_url }}"{% if section == collection %} aria-current="page"{% endif %}>{{ collection.name }}</a></li>
+          {% endfor %}
+          <li><a href="{% url 'storefront:goods' %}">Merch and accessories</a></li>
+          <li><a href="{% url 'storefront:articles' %}">Tea notes</a></li>
+        </ul>
+      </nav>
+    {% endif %}
+    <div class="vine"></div>
   </header>
-  <main class="container {% block main_class %}{% endblock %}">
+  <main id="main" class="container {% block main_class %}{% endblock %}" tabindex="-1">
     {% if messages %}
       <ul class="messages">{% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>
     {% endif %}
     {% block content %}{% endblock %}
   </main>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <p class="footer-motifs">{% motif "leaf" %}{% motif "blossom" %}{% motif "bee" %}{% motif "bird" %}{% motif "butterfly" %}</p>
+        <p><strong>{{ shop_name }}</strong><br>Specialty teas, weighed and packed by hand when you order.</p>
+      </div>
+      {% if shop_visible %}
+        <nav aria-label="Teas">
+          <h2>Teas</h2>
+          <ul>
+            <li><a href="{% url 'storefront:all_teas' %}">All teas</a></li>
+            {% for category in nav_teas %}<li><a href="{{ category.get_absolute_url }}">{{ category.name }}</a></li>{% endfor %}
+          </ul>
+        </nav>
+        <nav aria-label="More from the shop">
+          <h2>More</h2>
+          <ul>
+            <li><a href="{% url 'storefront:regions' %}">Regions</a></li>
+            {% for collection in nav_collections %}<li><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></li>{% endfor %}
+            <li><a href="{% url 'storefront:goods' %}">Merch and accessories</a></li>
+            <li><a href="{% url 'storefront:articles' %}">Tea notes</a></li>
+          </ul>
+        </nav>
+      {% endif %}
+      <p class="small muted">Prices in US dollars.<br>© {% now "Y" %} {{ shop_name }}</p>
+    </div>
+  </footer>
 </body>
 </html>

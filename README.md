@@ -71,7 +71,8 @@ local certificate).
 |---|---|
 | `config/` | Django settings (all from environment variables) and URLs |
 | `apps/` | One Django app per feature; see `docs/architecture.md` |
-| `apps/core/` | Home page, health check, owner dashboard, shared helpers |
+| `apps/core/` | Health check, owner dashboard, shared helpers |
+| `apps/storefront/` | The public shop; see `docs/storefront.md` |
 | `apps/audit/` | Append-only log of admin, agent and system actions |
 | `templates/`, `static/` | Site-wide templates and styles |
 | `compose.yaml`, `Dockerfile` | The server stack: PostgreSQL, the app, Caddy, backups |

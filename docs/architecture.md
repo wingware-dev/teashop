@@ -7,11 +7,11 @@ be built side by side with few conflicts:
 
 | App | Phase | Holds |
 |---|---|---|
-| `core` | 1 | Home page, health check, owner dashboard shell, shared helpers |
+| `core` | 1 | Health check, owner dashboard shell, shared helpers, the design vocabulary (`design.py`) |
 | `audit` | 1 | The audit log |
 | `inventory` | 2 | Raw materials, lots, stock movements, bills of materials |
-| `catalog` | 2 | Products, size options, categories, regions |
-| `storefront` | 3 | Public pages and the design system |
+| `catalog` | 2, 3 | Products, size options, categories, regions, collections, photos, copy rules |
+| `storefront` | 3 | Public pages (including the home page), page designs, tea notes, sitemap; see `docs/storefront.md` |
 | `checkout` | 4 | Cart, Stripe, shipping rates, tax |
 | `fulfillment` | 5 | Order queue, labels, tracking |
 
@@ -54,6 +54,18 @@ core can't import feature apps, so each app registers a provider in its
 a list of `Attention(title, detail, url, level)`.  A provider that raises
 is logged and skipped.  inventory (low stock, best-by dates, lots on hold)
 and catalog (organic sales limit, sizes that can't be packed) do this.
+`register_shortcut(title, url_name)` adds a link to the dashboard's
+Shortcuts card the same way (purchasing adds its reorder, losses and
+profit pages).
+
+## Purchasing (phase 7)
+
+`apps/purchasing` holds stock counts, drafting purchase orders from
+reorder levels, and the loss and profit reports.  The reorder math is in
+`apps/inventory/reorder.py`, since inventory's low-stock alert uses it.
+Purchase orders stay in inventory; `inventory.services.
+approve_purchase_order()` is the only way a draft becomes ordered, and it
+refuses AI agents.
 
 ## Inventory and catalog (phase 2)
 

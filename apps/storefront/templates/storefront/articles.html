@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Tea notes · {{ shop_name }}{% endblock %}
+{% block meta %}<meta name="description" content="Stories about tea: where it grows, how it is made, its history and how to brew it.">{% endblock %}
+{% block content %}
+  {% include "storefront/_breadcrumbs.html" %}
+  <section class="banner palette-plum" aria-labelledby="page-title">
+    <h1 id="page-title">Tea notes</h1>
+    <p class="intro">Where tea grows, how it is made, its long history, and how to brew a better cup.</p>
+    {% motif "fern" "banner-art" %}
+  </section>
+  {% if articles %}
+    <ul class="article-list">{% for article in articles %}<li>{% include "storefront/_article_card.html" %}</li>{% endfor %}</ul>
+  {% else %}
+    <div class="empty">{% motif "fern" %}<p>The first tea notes are being written.</p></div>
+  {% endif %}
+{% endblock %}

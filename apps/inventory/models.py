@@ -12,6 +12,7 @@ received it (see tracing.py).
 
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
@@ -96,7 +97,23 @@ class Item(models.Model):
     )
     reorder_level = models.PositiveIntegerField(
         default=0,
-        help_text="Alert when usable stock falls to this or below (grams for bulk items, pieces otherwise); 0 for no alert",
+        help_text="Alert when usable stock falls to this or below (grams for bulk items, pieces otherwise).  "
+        "With automatic reorder levels this is the lowest level used; 0 for none.",
+    )
+    auto_reorder = models.BooleanField(
+        "automatic reorder level",
+        default=True,
+        help_text="Work the reorder level out from how fast this is used and the supplier's lead time",
+    )
+    safety_days = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="Days of extra stock kept as a buffer; blank for the shop default"
+    )
+    cover_days = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="Days of use each order should cover; blank for the shop default"
+    )
+    minimum_order = models.PositiveIntegerField(
+        default=0,
+        help_text="Smallest quantity the supplier sells (grams or pieces); suggested orders are a multiple of it",
     )
     default_supplier = models.ForeignKey(
         Supplier, null=True, blank=True, on_delete=models.SET_NULL, related_name="items"
@@ -130,22 +147,42 @@ class Item(models.Model):
         return self.lots.usable().aggregate(total=Sum("quantity_on_hand"))["total"] or 0
 
     def is_low(self):
-        return self.reorder_level > 0 and self.on_hand() <= self.reorder_level
+        from .reorder import reorder_level
+
+        level = reorder_level(self)
+        return level > 0 and self.on_hand() <= level
+
+    def is_made_here(self):
+        """A blend made from a recipe here, not bought."""
+        return self.recipes.filter(is_active=True).exists()
 
 
 class PurchaseOrder(models.Model):
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        ORDERED = "ordered", "Ordered"
+        DRAFT = "draft", "Draft, waiting for your approval"
+        ORDERED = "ordered", "Approved and ordered"
         PARTIAL = "partial", "Partly received"
         RECEIVED = "received", "Received"
         CANCELLED = "cancelled", "Cancelled"
+
+    class Source(models.TextChoices):
+        MANUAL = "manual", "Entered by hand"
+        SUGGESTED = "suggested", "Suggested from reorder levels"
+
+    # Orders that are approved and not yet complete: their outstanding
+    # quantities count as on order.
+    OPEN = (Status.ORDERED, Status.PARTIAL)
 
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, related_name="purchase_orders")
     reference = models.CharField(max_length=60, blank=True, help_text="Your PO number or the supplier's order number")
     ordered_on = models.DateField(null=True, blank=True)
     expected_on = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.DRAFT)
+    source = models.CharField(max_length=10, choices=Source.choices, default=Source.MANUAL, editable=False)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", editable=False
+    )
+    approved_at = models.DateTimeField(null=True, blank=True, editable=False)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -316,6 +353,10 @@ class Lot(models.Model):
             receipt = self.receipt
             if item and line.item_id != item.pk:
                 errors["purchase_order_line"] = f"That order line is for {line.item}, not {item}."
+            elif self._state.adding and line.order.status in (PurchaseOrder.Status.DRAFT, PurchaseOrder.Status.CANCELLED):
+                errors["purchase_order_line"] = (
+                    f"That purchase order is {line.order.get_status_display().lower()}; approve it before receiving against it."
+                )
             elif receipt is not None and receipt.purchase_order_id not in (None, line.order_id):
                 errors["purchase_order_line"] = "That line is on a different purchase order from this delivery."
         if item and item.by_weight and self.source == self.Source.RECEIVED:
@@ -372,6 +413,18 @@ class Lot(models.Model):
         if self.landed_cost is None or not self.item.by_weight:
             return None
         return self.landed_cost / Decimal(1000)
+
+    def unit_cost(self):
+        """Landed cost of one gram (bulk) or one piece, or None if unknown."""
+        if self.landed_cost is None:
+            return None
+        return self.landed_cost / Decimal(1000) if self.item.by_weight else self.landed_cost
+
+    def unit_tariff(self):
+        """The tariff part of unit_cost(), or None if unknown."""
+        if self.tariff_cost is None:
+            return None
+        return self.tariff_cost / Decimal(1000) if self.item.by_weight else self.tariff_cost
 
 
 class LotDocument(models.Model):

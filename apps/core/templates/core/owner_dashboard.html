@@ -59,6 +59,7 @@
     <ul>
       <li><a href="{{ admin_url }}">Back office (admin)</a></li>
       <li><a href="{% url 'two_factor:profile' %}">Two-factor settings and backup codes</a></li>
+      {% for title, url in shortcuts %}<li><a href="{{ url }}">{{ title }}</a></li>{% endfor %}
     </ul>
   </section>
 

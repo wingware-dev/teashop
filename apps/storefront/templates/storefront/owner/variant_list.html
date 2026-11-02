@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Page designs · {{ shop_name }}{% endblock %}
+{% block content %}
+  <h1>Page designs</h1>
+  <p>Designs for tea pages, proposed by the design agent or added in the admin. None reaches customers until you approve it; approving one replaces the tea's current design.</p>
+
+  <section class="card" aria-labelledby="waiting-title">
+    <h2 id="waiting-title">Waiting for your approval</h2>
+    {% if waiting %}
+      <div class="table-scroll">
+        <table class="events">
+          <thead><tr><th scope="col">Tea</th><th scope="col">Design</th><th scope="col">Proposed by</th><th scope="col">When</th></tr></thead>
+          <tbody>
+            {% for variant in waiting %}
+              <tr>
+                <td><a href="{{ variant.get_absolute_url }}">{{ variant.product }}</a></td>
+                <td>{{ variant.get_palette_display }}, {{ variant.get_motif_display|lower }}, {{ variant.get_layout_display|lower }}</td>
+                <td>{{ variant.made_by }}</td>
+                <td>{{ variant.created_at|date:"M j, Y H:i" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted">Nothing waiting.</p>
+    {% endif %}
+  </section>
+
+  <section class="card" aria-labelledby="live-title">
+    <h2 id="live-title">Live now</h2>
+    {% if live %}
+      <ul>
+        {% for variant in live %}
+          <li><a href="{{ variant.get_absolute_url }}">{{ variant.product }}</a>: {{ variant.get_palette_display|lower }}, {{ variant.get_motif_display|lower }}, approved {{ variant.decided_at|date:"M j, Y" }}{% if variant.decided_by %} by {{ variant.decided_by }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Every tea page uses the standard design.</p>
+    {% endif %}
+  </section>
+
+  {% if decided %}
+    <section class="card" aria-labelledby="decided-title">
+      <h2 id="decided-title">Earlier decisions</h2>
+      <ul>
+        {% for variant in decided %}
+          <li><a href="{{ variant.get_absolute_url }}">{{ variant.product }}</a>: {{ variant.get_status_display|lower }}{% if variant.decision_note %} ({{ variant.decision_note }}){% endif %}</li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}{{ article.title }} · {{ shop_name }}{% endblock %}
+{% block meta %}
+  <meta name="description" content="{{ article.summary|truncatechars:160 }}">
+  <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ article.get_absolute_url }}">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="{{ article.title }}">
+  <meta property="og:description" content="{{ article.summary|truncatechars:200 }}">
+{% endblock %}
+{% block content %}
+  {% include "storefront/_breadcrumbs.html" %}
+  <article class="palette-{{ article.palette }}" aria-labelledby="page-title">
+    <header class="banner">
+      <p class="kicker">Tea notes · {{ article.published_on|date:"F j, Y" }}</p>
+      <h1 id="page-title">{{ article.title }}</h1>
+      <p class="intro">{{ article.summary }}</p>
+      {% motif article.motif "banner-art" %}
+    </header>
+    <div class="prose">{{ article.body|article_body }}</div>
+  </article>
+  {% if related %}
+    <section aria-labelledby="related-title">
+      <div class="section-head"><h2 id="related-title">{% motif "sprig" %}Teas in this story</h2></div>
+      <ul class="product-grid">{% for product in related %}<li>{% include "storefront/_product_card.html" %}</li>{% endfor %}</ul>
+    </section>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% if rows %}
+  <div class="table-scroll" role="region" aria-label="{{ label }}" tabindex="0">
+  <table class="events">
+    <thead><tr><th></th><th class="num">Packages</th><th class="num">Tea</th><th class="num">Sales</th><th class="num">Tea cost</th><th class="num">Of which tariffs</th><th class="num">Packaging</th><th class="num">Margin</th><th class="num">Margin %</th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.label }}{% if row.uncosted %} <span class="muted small">({{ row.uncosted }} without cost)</span>{% endif %}</td>
+          <td class="num">{{ row.packages }}</td>
+          <td class="num">{% if row.grams %}{{ row.grams }} g{% else %}—{% endif %}</td>
+          <td class="num">{{ row.revenue|floatformat:2 }}</td>
+          <td class="num">{{ row.tea_cost|floatformat:2 }}</td>
+          <td class="num">{{ row.tariffs|floatformat:2 }}</td>
+          <td class="num">{{ row.packaging_cost|floatformat:2 }}</td>
+          <td class="num">{{ row.margin|floatformat:2 }}</td>
+          <td class="num">{{ row.margin_percent|default_if_none:"—" }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% else %}
+  <p class="muted">Nothing packed in this period.</p>
+{% endif %}

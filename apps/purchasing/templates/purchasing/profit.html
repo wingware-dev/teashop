@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Profit · Teashop{% endblock %}
+{% block content %}
+  <h1>Profit per tea and per size</h1>
+
+  <section class="card">
+    <form method="get" class="period">
+      <label for="start">From</label> <input type="date" id="start" name="start" value="{{ start|date:'Y-m-d' }}">
+      <label for="end">to</label> <input type="date" id="end" name="end" value="{{ end|date:'Y-m-d' }}">
+      <button type="submit">Show</button>
+    </form>
+    <p>Sales ${{ total.revenue|floatformat:2 }} · Landed cost ${{ total.cost|floatformat:2 }} (tariffs ${{ total.tariffs|floatformat:2 }}) · Margin ${{ total.margin|floatformat:2 }}{% if total.margin_percent is not None %} ({{ total.margin_percent }}%){% endif %}</p>
+    <p class="muted small">Tea is valued at the landed cost of the lot it was packed from, packaging at its average landed cost.  Shipping, payment fees and taxes are not included.  Samples and giveaways in the period cost ${{ marketing }}.  Stock on hand is worth ${{ stock_value }} at landed cost{% if uncosted_lots %} ({{ uncosted_lots }} lot{{ uncosted_lots|pluralize }} with no cost){% endif %}.</p>
+    {% if total.uncosted %}<p class="status-failed">{{ total.uncosted }} package{{ total.uncosted|pluralize }} used lots with no landed cost; their margin is overstated.</p>{% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Per tea</h2>
+    {% include "purchasing/_profit_table.html" with rows=by_tea label="Per tea" %}
+  </section>
+
+  <section class="card">
+    <h2>Per size</h2>
+    {% include "purchasing/_profit_table.html" with rows=by_size label="Per size" %}
+  </section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+{% block submit_buttons_bottom %}
+  {% if original and original.status == "open" %}
+    <div class="submit-row">
+      <input type="submit" name="_apply" value="Save and apply count" class="default">
+      <p class="help">Records each difference as a stock adjustment with its reason.  Shortages need a reason; save first if you are not done counting.</p>
+    </div>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

@@ -4,25 +4,21 @@ best-by date, lots on hold."""
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Q, Sum
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.core.attention import Attention
 
 from .models import Item, Lot
+from .reorder import reorders
 
 
 def low_stock_items():
-    """Active items with a reorder level whose usable stock is at or below it,
-    as [(item, on_hand)]."""
-    usable = Q(lots__status=Lot.Status.ACTIVE, lots__quantity_on_hand__gt=0)
-    items = (
-        Item.objects.filter(is_active=True, reorder_level__gt=0)
-        .annotate(usable_on_hand=Sum("lots__quantity_on_hand", filter=usable, default=0))
-        .order_by("name")
-    )
-    return [(item, item.usable_on_hand) for item in items if item.usable_on_hand <= item.reorder_level]
+    """Active items whose usable stock is at or below their reorder level
+    (fixed, or worked out from use and lead time: see reorder.py), as
+    [(item, on_hand)]."""
+    low = [r for r in reorders(Item.objects.filter(is_active=True).order_by("name")) if r.is_low]
+    return [(r.item, r.on_hand) for r in low]
 
 
 def lots_near_best_by(days=None):

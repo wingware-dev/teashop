@@ -9,11 +9,128 @@ to the tea lot for recalls and counts towards the organic sales limit.
 """
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.design import MOTIFS, PALETTES
 from apps.inventory.models import Item, Lot
+
+from . import copy_rules
+
+
+def _copy_errors(obj, fields):
+    """{field: [health claim problems]} for the named text fields."""
+    errors = {}
+    for name in fields:
+        problems = copy_rules.health_claim_problems(getattr(obj, name), where=obj._meta.get_field(name).verbose_name.capitalize())
+        if problems:
+            errors[name] = problems
+    return errors
+
+
+class StorefrontSection(models.Model):
+    """What category, region and collection pages share: a name, a short
+    introduction, and the motif and palette the page is drawn with."""
+
+    name = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=90, unique=True)
+    intro = models.TextField(blank=True, help_text="A few sentences at the top of the page; no health claims")
+    motif = models.CharField(max_length=20, choices=MOTIFS, default="leaf")
+    palette = models.CharField(max_length=20, choices=PALETTES, default="moss")
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True, help_text="Shown in the shop")
+
+    class Meta:
+        abstract = True
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        errors = _copy_errors(self, ["name", "intro"])
+        if errors:
+            raise ValidationError(errors)
+
+
+class Category(StorefrontSection):
+    """A shop section by kind: black, green, oolong, flavoured, herbal
+    tea; merch; accessories."""
+
+    class Section(models.TextChoices):
+        TEA = "tea", "Teas"
+        GOODS = "goods", "Merch and accessories"
+
+    section = models.CharField(max_length=8, choices=Section.choices, default=Section.TEA)
+    is_herbal = models.BooleanField(
+        default=False,
+        help_text='Herbal teas (not from the tea plant): product names must say "herbal tea" or "tisane"',
+    )
+
+    class Meta(StorefrontSection.Meta):
+        verbose_name_plural = "categories"
+
+    def get_absolute_url(self):
+        name = "storefront:category" if self.section == self.Section.TEA else "storefront:goods_category"
+        return reverse(name, args=[self.slug])
+
+
+class Region(StorefrontSection):
+    """Where teas are grown: Assam, Yunnan, Uji, Nuwara Eliya..."""
+
+    country = models.CharField(max_length=80, help_text="Country, for grouping the regions list")
+
+    class Meta(StorefrontSection.Meta):
+        ordering = ["country", "sort_order", "name"]
+
+    def get_absolute_url(self):
+        return reverse("storefront:region", args=[self.slug])
+
+
+class CollectionQuerySet(models.QuerySet):
+    def showing(self, day=None):
+        """Active collections whose dates (if any) include day (default today)."""
+        day = day or timezone.localdate()
+        return self.filter(is_active=True).exclude(starts_on__gt=day).exclude(ends_on__lt=day)
+
+
+class Collection(StorefrontSection):
+    """A hand-picked list: specials, this week's picks, new arrivals."""
+
+    products = models.ManyToManyField("Product", blank=True, related_name="collections")
+    starts_on = models.DateField(null=True, blank=True, help_text="Shown from this day (empty: now)")
+    ends_on = models.DateField(null=True, blank=True, help_text="Shown up to and including this day (empty: no end)")
+    featured = models.BooleanField(default=False, help_text="Shown on the home page")
+
+    objects = CollectionQuerySet.as_manager()
+
+    def get_absolute_url(self):
+        return reverse("storefront:collection", args=[self.slug])
+
+    def clean(self):
+        super().clean()
+        if self.starts_on and self.ends_on and self.ends_on < self.starts_on:
+            raise ValidationError({"ends_on": "The end date is before the start date."})
+
+
+class FlavourNote(models.Model):
+    """A tasting note customers can filter by: malty, floral, citrus..."""
+
+    name = models.CharField(max_length=40, unique=True)
+    slug = models.SlugField(max_length=50, unique=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        errors = _copy_errors(self, ["name"])
+        if errors:
+            raise ValidationError(errors)
 
 
 class Product(models.Model):
@@ -47,11 +164,80 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # -- What the shop shows ---------------------------------------------
+    class Caffeine(models.TextChoices):
+        NONE = "none", "None (caffeine-free)"
+        LOW = "low", "Low"
+        MEDIUM = "medium", "Medium"
+        HIGH = "high", "High"
+
+    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT, related_name="products")
+    region = models.ForeignKey(Region, null=True, blank=True, on_delete=models.SET_NULL, related_name="products")
+    summary = models.CharField(
+        max_length=200, blank=True, help_text="One line for lists and search results, and the page description"
+    )
+    origin_detail = models.CharField(
+        max_length=200, blank=True, help_text='Where exactly, e.g. "Second flush, Halmari estate, upper Assam"'
+    )
+    origin_certified = models.BooleanField(
+        default=False,
+        help_text="Certified genuine for a protected origin name such as Darjeeling (keep the certificate with "
+        "the lot).  Only then can the name and copy use that origin.",
+    )
+    tasting_notes = models.TextField(blank=True, help_text="Taste, aroma, colour of the cup")
+    flavour_notes = models.ManyToManyField(FlavourNote, blank=True, related_name="products")
+    caffeine = models.CharField(max_length=8, choices=Caffeine.choices, blank=True)
+    brew_temp_c = models.PositiveSmallIntegerField(
+        "water temperature (°C)", null=True, blank=True, validators=[MinValueValidator(40), MaxValueValidator(100)]
+    )
+    brew_minutes = models.CharField(
+        "steeping time", max_length=30, blank=True, help_text='e.g. "3-4 minutes"'
+    )
+    brew_grams = models.DecimalField(
+        "tea per cup (g)", max_digits=4, decimal_places=1, null=True, blank=True,
+        help_text="Grams for a 250 ml (8 oz) cup",
+    )
+    brew_infusions = models.PositiveSmallIntegerField(
+        "infusions", null=True, blank=True, help_text="How many times the leaves can be steeped"
+    )
+    brew_notes = models.TextField("brewing notes", blank=True, help_text="Anything else: iced, with milk, gongfu style")
+    featured = models.BooleanField(default=False, help_text="Shown on the home page")
+
+    TEXT_FIELDS = ["name", "label_name", "summary", "origin_detail", "description", "tasting_notes", "brew_notes"]
+
     class Meta:
         ordering = ["name"]
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse("storefront:product", args=[self.slug])
+
+    @property
+    def is_herbal(self):
+        """A herbal tea (not from the tea plant): its tea is a herbal
+        ingredient, or it is in a herbal category."""
+        return bool((self.tea_id and self.tea.kind == Item.Kind.HERBAL) or (self.category_id and self.category.is_herbal))
+
+    def copy_problems(self):
+        """{field: [problems]} with the words customers see: health claims,
+        herbal naming, caffeine-free, protected origins."""
+        errors = _copy_errors(self, self.TEXT_FIELDS)
+
+        def add(field, problems):
+            if problems:
+                errors.setdefault(field, []).extend(problems)
+
+        if self.is_herbal:
+            add("name", copy_rules.herbal_name_problems(self.name))
+            if self.label_name:
+                add("label_name", copy_rules.herbal_name_problems(self.label_name))
+        for name in self.TEXT_FIELDS:
+            where = self._meta.get_field(name).verbose_name.capitalize()
+            add(name, copy_rules.caffeine_free_problems(getattr(self, name), self.caffeine == self.Caffeine.NONE, where))
+            add(name, copy_rules.origin_problems(getattr(self, name), self.origin_certified, where))
+        return errors
 
     def clean(self):
         if self.kind == self.Kind.TEA and not self.tea_id:
@@ -61,6 +247,110 @@ class Product(models.Model):
                 raise ValidationError({"tea": "Merchandise is not packed from bulk tea; leave this empty."})
             if self.sold_as_organic:
                 raise ValidationError({"sold_as_organic": "Only teas can be sold as organic here."})
+        if self.category_id:
+            wanted = Category.Section.TEA if self.kind == self.Kind.TEA else Category.Section.GOODS
+            if self.category.section != wanted:
+                raise ValidationError({"category": f"Choose a category in {Category.Section(wanted).label}."})
+        errors = self.copy_problems()
+        if errors:
+            raise ValidationError(errors)
+
+    # -- Facts for the product page ----------------------------------------
+    def shop_sizes(self):
+        """Active sizes, smallest first."""
+        return [size for size in self.size_options.all() if size.is_active]
+
+    def from_price(self):
+        prices = [size.price for size in self.shop_sizes()]
+        return min(prices) if prices else None
+
+    def shop_facts(self):
+        """What the tea in the packages being sold now contains, from the
+        usable lots it is packed from: countries grown in, the ingredient
+        list, and every allergen any of those lots declares (so a package
+        from any of them is covered).  None for merchandise."""
+        if self.kind != self.Kind.TEA or not self.tea_id:
+            return None
+        lots = list(self.tea.usable_lots().prefetch_related("allergens"))
+        if self.sold_as_organic:
+            lots = [lot for lot in lots if lot.organic]
+        countries, allergens = [], []
+        for lot in lots:
+            for country in lot.country_of_origin.split(","):
+                if country.strip() and country.strip() not in countries:
+                    countries.append(country.strip())
+            for allergen in lot.allergens.all():
+                if allergen.name not in allergens:
+                    allergens.append(allergen.name)
+        ingredients = (lots[0].ingredients if lots else "") or self.tea.ingredient_name
+        return {"countries": countries, "ingredients": ingredients, "allergens": allergens, "has_stock": bool(lots)}
+
+
+def photo_path(photo, filename):
+    return f"products/{photo.product.slug}/{filename}"
+
+
+class ProductPhoto(models.Model):
+    """The owner's own photo of a product.  AI-made art may decorate pages
+    but never stands in for what the customer is buying.
+
+    On save the upload is turned upright, stripped of its metadata
+    (phones record where a photo was taken, which would be the owner's
+    home) and limited in size, and smaller copies for phones are made
+    (see images.py)."""
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="photos")
+    image = models.ImageField(upload_to=photo_path, width_field="width", height_field="height")
+    width = models.PositiveIntegerField(editable=False, default=0)
+    height = models.PositiveIntegerField(editable=False, default=0)
+    alt_text = models.CharField(
+        max_length=200,
+        help_text='What the photo shows, for people who cannot see it, e.g. "Twisted dark leaves in an open tin"',
+    )
+    sort_order = models.PositiveSmallIntegerField(default=0, help_text="The first photo is the main one")
+
+    class Meta:
+        ordering = ["product", "sort_order", "pk"]
+
+    def __str__(self):
+        return f"{self.product}: {self.alt_text}"
+
+    def clean(self):
+        if not self.alt_text.strip():
+            raise ValidationError({"alt_text": "Describe the photo for people who cannot see it."})
+
+    def save(self, *args, **kwargs):
+        from . import images
+
+        if self.image and not getattr(self.image, "_committed", True):
+            images.clean_upload(self)
+        super().save(*args, **kwargs)
+        images.make_renditions(self)
+
+    def delete(self, *args, **kwargs):
+        from . import images
+
+        images.delete_renditions(self)
+        storage, name = self.image.storage, self.image.name
+        result = super().delete(*args, **kwargs)
+        if name:
+            storage.delete(name)
+        return result
+
+    def srcset(self):
+        from . import images
+
+        return images.srcset(self)
+
+    def url_for_width(self, width):
+        from . import images
+
+        return images.rendition_url(self, width)
+
+    @property
+    def small_url(self):
+        """For cards and thumbnails (480 pixels wide, or the photo)."""
+        return self.url_for_width(480)
 
 
 class SizeOption(models.Model):
@@ -77,6 +367,15 @@ class SizeOption(models.Model):
         help_text="Grams of tea in each package (teas only)",
     )
     price = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(0)])
+
+    class Package(models.TextChoices):
+        TIN = "tin", "Tin"
+        POUCH = "pouch", "Pouch"
+        BOX = "box", "Box"
+
+    package = models.CharField(
+        max_length=8, choices=Package.choices, blank=True, help_text="For the shop's package filter (teas)"
+    )
     sort_order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 

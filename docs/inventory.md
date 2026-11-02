@@ -25,6 +25,36 @@ flavourings) and pieces for everything else.
    for products you describe as organic: they are packed from organic
    lots only and count towards the yearly limit.
 
+## Reordering and purchase orders
+
+The dashboard's **Reorder** page (also under Shortcuts) lists every item
+with its usable stock, daily use, days left and reorder level.
+
+- **Reorder level** = daily use × (supplier lead time + safety days).
+  Daily use counts what was packed for orders, used in blends and given
+  away as samples over the last 90 days (losses don't count).  A new
+  item is measured since its first delivery.  The item's own reorder
+  level is the lowest level used; untick **automatic reorder level** on
+  the item to use only that.
+- **Suggested quantity** = enough for lead time + safety days + cover days
+  (60 by default), less usable stock and what is still to come on
+  approved orders, rounded up to the item's **minimum order**.  Set the
+  lead time on the supplier, and safety or cover days per item if the
+  defaults (`REORDER_SAFETY_DAYS`, `REORDER_COVER_DAYS`) don't suit it.
+- **Draft purchase orders** makes one draft per supplier (the item's
+  default supplier) with the suggested quantities and the last price
+  paid.  Items with no supplier are listed for you to order by hand;
+  blends made here show as "make a blend batch" instead.
+- **Nothing is ordered until you approve.**  Open the draft, change
+  quantities or prices, then **Save, approve and mark ordered** (or the
+  list action).  That records you as approver and sets the expected
+  date from the supplier's lead time.  Then send the order to the
+  supplier yourself.  AI agents can draft but never approve, and a
+  delivery can't be received against an unapproved draft.
+- On an approved order, **Record a delivery for this order** opens a
+  receipt already filled in with the supplier and order.  Late
+  deliveries show on the dashboard.
+
 ## Receiving a delivery
 
 **Receipts → Add**: choose the supplier and, if there is one, the
@@ -46,6 +76,27 @@ reason.  Free samples and giveaways have their own reasons, so they count
 as marketing, not loss.  A lot's received quantity never changes; every
 change is a movement you can see on the lot's page.
 
+## Stock counts
+
+**Stock counts → Add**: tick what to count (or nothing, for everything).
+It lists every lot with stock and what the records expect.  Weigh bulk
+tea in grams and count pieces, enter what is there (save as you go), and
+for anything short choose why: spoiled, damaged, sample, giveaway,
+personal use, or unknown loss.  **Save and apply count** records each
+difference as a stock adjustment.  Orders packed while you count don't
+upset it: only the difference you found at the shelf is applied.
+
+## Losses and profit
+
+- **Losses and samples** (Shortcuts): the last 12 months at landed cost,
+  per reason, with samples and giveaways as marketing and personal use
+  apart from loss, and the items lost most.
+- **Profit per tea and per size**: for any dates, sales, landed cost
+  (with the tariff part shown) and margin per tea and per size.  Tea is
+  valued at the cost of the very lot it was packed from; packaging at
+  its average landed cost.  Shipping, payment fees and taxes are not in
+  it.  Packages from lots with no landed cost are flagged.
+
 ## Making a blend
 
 **Blend batches → Add**: the recipe, how many grams you made, and the
@@ -65,7 +116,9 @@ contact.  **Put on hold** stops packing from a lot while you check it.
 
 ## Alerts on the dashboard
 
-Items at or below their reorder level, lots within 60 days of their
+Items at or below their reorder level, items to reorder with no purchase
+order yet, drafts waiting for your approval, late deliveries, stock
+counts left unapplied for a week, lots within 60 days of their
 best-by date (`INVENTORY_BEST_BY_WARNING_DAYS`), lots on hold, sizes that
 can't be packed from stock, and organic sales from $4,000 a year
 (`ORGANIC_SALES_ALERT`) towards the $5,000 limit for selling organic

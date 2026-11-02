@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}{{ shop_name }} · coming soon{% endblock %}
+{% block content %}
+  <section class="hero">
+    <div>
+      <p class="kicker">Opening soon</p>
+      <h1>Specialty teas, coming soon</h1>
+      <p class="lede">We're steeping something special. The shop opens soon.</p>
+    </div>
+    <div class="hero-art">
+      {% motif "sprig" "a1" %}{% motif "blossom" "a2" %}{% motif "bee" "a3" %}{% motif "bird" "a4" %}{% motif "butterfly" "a5" %}
+    </div>
+  </section>
+{% endblock %}

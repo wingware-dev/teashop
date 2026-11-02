@@ -9,11 +9,6 @@ from apps.core.testing import OWNER_PASSWORD, make_owner
 from apps.core.uitesting import BrowserTestCase
 
 
-class PublicPagesUITests(BrowserTestCase):
-    def test_home(self):
-        self.check_page(reverse("core:home"), "home")
-
-
 class OwnerLoginUITests(BrowserTestCase):
     def test_login_with_password_and_code_reaches_dashboard(self):
         for viewport in ("phone", "desktop"):

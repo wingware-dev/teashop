@@ -1,0 +1,65 @@
+{% load storefront %}
+{# Closed at first on phones, so results come first; site.js opens it on wide screens. #}
+<details class="filters">
+  <summary>{% motif "fern" %}Filter and sort{% if filters.active %} <span class="chip">Filters on</span>{% endif %}</summary>
+  <form method="get" action="">
+    <div class="field">
+      <label for="filter-q">Search words</label>
+      <input type="search" id="filter-q" name="q" value="{{ filters.q }}">
+    </div>
+    {% if choices.categories %}
+      <fieldset>
+        <legend>Kind of tea</legend>
+        {% for category in choices.categories %}
+          <label class="option"><input type="checkbox" name="category" value="{{ category.slug }}"{% if category.slug in filters.categories %} checked{% endif %}> {{ category.name }}</label>
+        {% endfor %}
+      </fieldset>
+    {% endif %}
+    {% if choices.regions %}
+      <fieldset>
+        <legend>Region</legend>
+        {% for region in choices.regions %}
+          <label class="option"><input type="checkbox" name="region" value="{{ region.slug }}"{% if region.slug in filters.regions %} checked{% endif %}> {{ region.name }}</label>
+        {% endfor %}
+      </fieldset>
+    {% endif %}
+    {% if choices.notes %}
+      <fieldset>
+        <legend>Flavour notes</legend>
+        {% for note in choices.notes %}
+          <label class="option"><input type="checkbox" name="note" value="{{ note.slug }}"{% if note.slug in filters.notes %} checked{% endif %}> {{ note.name }}</label>
+        {% endfor %}
+      </fieldset>
+    {% endif %}
+    {% if choices.caffeine %}
+      <fieldset>
+        <legend>Caffeine</legend>
+        {% for value, label in choices.caffeine %}
+          <label class="option"><input type="checkbox" name="caffeine" value="{{ value }}"{% if value in filters.caffeine %} checked{% endif %}> {{ label }}</label>
+        {% endfor %}
+      </fieldset>
+    {% endif %}
+    {% if choices.packages %}
+      <fieldset>
+        <legend>Package</legend>
+        {% for value, label in choices.packages %}
+          <label class="option"><input type="checkbox" name="package" value="{{ value }}"{% if value in filters.packages %} checked{% endif %}> {{ label }}</label>
+        {% endfor %}
+      </fieldset>
+    {% endif %}
+    <div class="field">
+      <label for="filter-price">Price up to ($)</label>
+      <input type="number" id="filter-price" name="price_max" min="1" step="1" inputmode="numeric" value="{{ filters.price_max|default_if_none:'' }}">
+    </div>
+    <div class="field">
+      <label for="filter-sort">Sort by</label>
+      <select id="filter-sort" name="sort">
+        {% for value, label in choices.sorts %}<option value="{{ value }}"{% if value == filters.sort %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filter-actions">
+      <button type="submit">Show teas</button>
+      {% if filters.active %}<a href="{{ request.path }}">Clear filters</a>{% endif %}
+    </div>
+  </form>
+</details>

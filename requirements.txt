@@ -10,3 +10,5 @@ django-two-factor-auth>=1.17,<2
 qrcode>=7,<9
 django-axes>=8,<10
 sentry-sdk>=2.20,<3
+# Product photos: checks uploads are images and makes the smaller sizes phones load.
+Pillow>=13,<14

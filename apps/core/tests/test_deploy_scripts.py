@@ -1,6 +1,7 @@
 """The SSH forced command that limits the CI deploy key to "deploy <commit>"."""
 
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -149,3 +150,41 @@ class OpsEventScriptTests(SimpleTestCase):
         result = self.run_script("backup-job.sh", "everything")
         self.assertEqual(result.returncode, 2)
         self.assertEqual(self.docker_calls(), [])
+
+
+def env_example_names():
+    """Every variable .env.example sets or shows commented out."""
+    text = (ROOT / ".env.example").read_text()
+    return set(re.findall(r"^#?[ \t]*([A-Z][A-Z0-9_]*)=", text, re.MULTILINE))
+
+
+def web_environment():
+    """The keys of the web service's environment block in compose.yaml."""
+    lines = (ROOT / "compose.yaml").read_text().splitlines()
+    start = lines.index("  web:")
+    keys, in_env = set(), False
+    for line in lines[start + 1:]:
+        if re.match(r"  \S", line) or not line.startswith(" "):
+            break  # the next service, or the end of services
+        if line == "    environment:":
+            in_env = True
+        elif in_env and (match := re.match(r"      ([A-Z][A-Z0-9_]*):", line)):
+            keys.add(match.group(1))
+        elif in_env and re.match(r"    \S", line):
+            in_env = False
+    return keys
+
+
+class ComposeEnvironmentTests(SimpleTestCase):
+    """Settings the owner puts in .env must reach the containers."""
+
+    def test_django_settings_in_env_example_reach_web_container(self):
+        settings_names = set(re.findall(r'env_\w+\("([A-Z][A-Z0-9_]*)"', (ROOT / "config" / "settings.py").read_text()))
+        for_django = env_example_names() & settings_names
+        self.assertIn("LABEL_PACKER_ADDRESS", for_django)
+        self.assertEqual(sorted(for_django - web_environment()), [])
+
+    def test_every_env_example_variable_is_used_by_compose(self):
+        compose = (ROOT / "compose.yaml").read_text()
+        unused = sorted(name for name in env_example_names() if "${" + name not in compose)
+        self.assertEqual(unused, [])

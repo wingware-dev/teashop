@@ -14,5 +14,15 @@ urlpatterns = [
     path("", include(two_factor_urlpatterns)),
     path(settings.ADMIN_URL, admin.site.urls),
     path("owner/inventory/", include("apps.inventory.urls")),
+    path("owner/purchasing/", include("apps.purchasing.urls")),
     path("", include("apps.core.urls")),
+    # The shop: the home page, catalog pages, robots.txt and sitemap.xml.
+    path("", include("apps.storefront.urls")),
 ]
+
+# On a laptop (DEBUG) Django serves uploaded product photos itself; on the
+# server Caddy serves them (deploy/caddy/Caddyfile).
+if settings.DEBUG:
+    from django.conf.urls.static import static
+
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

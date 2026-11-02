@@ -9,13 +9,16 @@ goes below zero.
 - make_blend(): run a recipe, using ingredient lots and making a blend lot.
 """
 
+from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from .models import BlendBatch, BlendInput, Item, Lot, StockMovement
+from apps.audit import current_actor
+
+from .models import BlendBatch, BlendInput, Item, Lot, PurchaseOrder, StockMovement
 
 
 class StockError(ValidationError):
@@ -104,6 +107,40 @@ def pick_lot(item, quantity, lots=None):
         if lot.quantity_on_hand >= quantity:
             return lot
     raise StockError(f"No single usable lot of {item} holds {item.format_quantity(quantity)}.")
+
+
+def approve_purchase_order(order, user):
+    """The owner approves a draft purchase order: it becomes ordered, with
+    who approved it and when.  Nothing else can move a draft on, so no
+    order (and no spending) happens without this.  AI agents can draft
+    orders but never approve them."""
+    if current_actor().type == "agent":
+        raise PermissionDenied("AI agents cannot approve purchase orders.")
+    if user is None or not user.is_authenticated or not user.is_staff:
+        raise PermissionDenied("Only the owner can approve purchase orders.")
+    with transaction.atomic():
+        order = PurchaseOrder.objects.select_for_update().get(pk=order.pk)
+        if order.status != PurchaseOrder.Status.DRAFT:
+            raise ValidationError(f"{order} is {order.get_status_display().lower()}, not a draft.")
+        if not order.lines.exists():
+            raise ValidationError(f"{order} has no lines.")
+        today = timezone.localdate()
+        order.status = PurchaseOrder.Status.ORDERED
+        order.approved_by = user
+        order.approved_at = timezone.now()
+        order.ordered_on = order.ordered_on or today
+        if not order.expected_on and order.supplier.lead_time_days is not None:
+            order.expected_on = order.ordered_on + timedelta(days=order.supplier.lead_time_days)
+        order.save()
+    return order
+
+
+def cancel_purchase_order(order):
+    if order.status in (PurchaseOrder.Status.RECEIVED, PurchaseOrder.Status.CANCELLED):
+        raise ValidationError(f"{order} is already {order.get_status_display().lower()}.")
+    order.status = PurchaseOrder.Status.CANCELLED
+    order.save(update_fields=["status"])
+    return order
 
 
 def suggest_blend_inputs(recipe, quantity_made):

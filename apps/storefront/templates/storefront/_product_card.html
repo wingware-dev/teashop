@@ -1,0 +1,25 @@
+{% load storefront %}
+<article class="product-card palette-{{ product.category.palette|default:'moss' }}">
+  <div class="media">
+    {% with photo=product.photos.all.0 %}
+      {% if photo %}
+        <img src="{{ photo.small_url }}" srcset="{{ photo.srcset }}" sizes="(min-width: 60rem) 18rem, (min-width: 34rem) 45vw, 100vw"
+             width="{{ photo.width }}" height="{{ photo.height }}" alt="{{ photo.alt_text }}" loading="lazy" decoding="async">
+      {% else %}
+        {% include "storefront/_art.html" with main=product.category.motif|default:"leaf" %}
+      {% endif %}
+    {% endwith %}
+  </div>
+  <div class="body">
+    {% if product.category %}<p class="kicker">{{ product.category.name }}{% if product.region %} · {{ product.region.name }}{% endif %}</p>{% endif %}
+    <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+    {% if product.summary %}<p class="summary">{{ product.summary }}</p>{% endif %}
+    {% if product.flavour_notes.all %}
+      <ul class="chips" aria-label="Flavour notes">{% for note in product.flavour_notes.all|slice:":4" %}<li>{{ note.name }}</li>{% endfor %}</ul>
+    {% endif %}
+    <div class="meta">
+      <span class="price">{% if product.from_price is not None %}From {{ product.from_price|money }}{% endif %}</span>
+      {% caffeine_meter product %}
+    </div>
+  </div>
+</article>

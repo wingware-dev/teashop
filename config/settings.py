@@ -76,6 +76,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
 ]
 THIRD_PARTY_APPS = [
     "django_otp",
@@ -89,6 +90,8 @@ LOCAL_APPS = [
     "apps.core",
     "apps.inventory",
     "apps.catalog",
+    "apps.storefront",
+    "apps.purchasing",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -120,6 +123,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.storefront.context_processors.storefront",
             ],
         },
     },
@@ -148,7 +152,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 LOGIN_URL = "two_factor:login"
 LOGIN_REDIRECT_URL = "core:owner_dashboard"
-LOGOUT_REDIRECT_URL = "core:home"
+LOGOUT_REDIRECT_URL = "storefront:home"
 OTP_TOTP_ISSUER = env_str("OTP_TOTP_ISSUER", "Teashop")
 
 # The owner admin lives at a non-default path in production to cut noise
@@ -248,6 +252,36 @@ ORGANIC_SALES_ALERT = env_int("ORGANIC_SALES_ALERT", 4000)
 # between lines.  A street address is required unless the business is
 # listed in a current phone or city directory.
 LABEL_PACKER_ADDRESS = env_str("LABEL_PACKER_ADDRESS").replace("\\n", "\n")
+
+# --- Purchasing: reorder levels (apps/inventory/reorder.py) -----------------
+# Use is measured over this many days (or since an item's first delivery,
+# at least REORDER_MIN_HISTORY_DAYS).
+REORDER_USAGE_WINDOW_DAYS = env_int("REORDER_USAGE_WINDOW_DAYS", 90)
+REORDER_MIN_HISTORY_DAYS = env_int("REORDER_MIN_HISTORY_DAYS", 14)
+# Defaults for items that don't set their own: extra stock kept as a buffer,
+# and how many days of use each order covers.
+REORDER_SAFETY_DAYS = env_int("REORDER_SAFETY_DAYS", 14)
+REORDER_COVER_DAYS = env_int("REORDER_COVER_DAYS", 60)
+# Lead time for a supplier that doesn't say, and for making a blend here.
+REORDER_DEFAULT_LEAD_DAYS = env_int("REORDER_DEFAULT_LEAD_DAYS", 21)
+BLEND_LEAD_DAYS = env_int("BLEND_LEAD_DAYS", 2)
+# Origin names protected as certification marks or geographical
+# indications.  Product names and copy may use them only for a product
+# marked "Origin certified" (apps/catalog/copy_rules.py).  Verify the list
+# with your suppliers; add names as you stock teas from such places.
+CATALOG_PROTECTED_ORIGINS = env_list(
+    "CATALOG_PROTECTED_ORIGINS",
+    ["Darjeeling", "Nilgiri", "Kangra", "Assam Orthodox", "Longjing", "Dragon Well", "Uji"],
+)
+
+# --- Storefront -------------------------------------------------------------
+# Until the shop opens, visitors see only the "coming soon" page and search
+# engines are asked to stay away; the signed-in owner sees the whole shop
+# to try it.  Opening the shop is the owner's decision: set
+# STOREFRONT_OPEN=true in .env and redeploy.
+STOREFRONT_OPEN = env_bool("STOREFRONT_OPEN", default=not PRODUCTION)
+# The shop's name, until the real one is chosen and its trademark searched.
+SHOP_NAME = env_str("SHOP_NAME", "Teashop")
 
 # --- Logging: everything to stdout, Docker rotates the files ----------------
 LOG_LEVEL = env_str("DJANGO_LOG_LEVEL", "INFO")

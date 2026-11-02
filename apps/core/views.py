@@ -15,10 +15,6 @@ from .decorators import owner_required
 log = logging.getLogger(__name__)
 
 
-def home(request):
-    return render(request, "core/home.html")
-
-
 @never_cache
 def healthz(request):
     """Health check for Docker, the deploy script and uptime monitors.
@@ -52,6 +48,7 @@ def owner_dashboard(request):
             "ops_problems": [status for status in ops if status.needs_attention],
             # From the feature apps' providers (attention.py): stock, organic sales...
             "attention_items": attention.collect(),
+            "shortcuts": attention.shortcuts(),
             "recent_events": recent_events,
             "admin_url": "/" + settings.ADMIN_URL,
             "version": settings.GIT_SHA,

@@ -1,0 +1,1 @@
+{% if level is not None %}<span class="caffeine"><span class="dots" aria-hidden="true">{% for step in steps %}<span class="dot{% if step <= level %} on{% endif %}"></span>{% endfor %}</span><span>Caffeine: {{ label }}</span></span>{% endif %}

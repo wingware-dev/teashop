@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}{{ shop_name }} · Specialty teas{% endblock %}
+{% block meta %}
+  <meta name="description" content="Black, green, oolong, white and herbal teas from {{ shop_name }}, weighed and packed by hand when you order.">
+  <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}/">
+{% endblock %}
+{% block content %}
+  <section class="hero" aria-labelledby="hero-title">
+    <div>
+      <p class="kicker">Leaf, flower and field</p>
+      <h1 id="hero-title">Specialty teas, packed fresh for you</h1>
+      <p class="lede">Black, green, oolong, white and herbal teas from growers we know, kept in bulk and weighed out by hand when you order.</p>
+      <div class="hero-actions">
+        <a class="button" href="{% url 'storefront:all_teas' %}">Browse all teas</a>
+        <a class="button secondary" href="{% url 'storefront:regions' %}">Explore by region</a>
+      </div>
+    </div>
+    <div class="hero-art">
+      {% motif "sprig" "a1" %}{% motif "blossom" "a2" %}{% motif "bee" "a3" %}{% motif "bird" "a4" %}{% motif "butterfly" "a5" %}
+    </div>
+  </section>
+
+  {% if tea_categories %}
+    <section aria-labelledby="kinds-title">
+      <div class="section-head"><h2 id="kinds-title">{% motif "leaf" %}Shop by kind of tea</h2></div>
+      <ul class="tiles">
+        {% for category in tea_categories %}
+          <li class="palette-{{ category.palette }}"><a class="tile" href="{{ category.get_absolute_url }}">{% motif category.motif %}{{ category.name }}</a></li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% for collection, items in collections %}
+    <section class="palette-{{ collection.palette }}" aria-labelledby="collection-{{ collection.pk }}">
+      <div class="section-head">
+        <h2 id="collection-{{ collection.pk }}">{% motif collection.motif %}{{ collection.name }}</h2>
+        <a href="{{ collection.get_absolute_url }}">See all {{ collection.name|lower }}</a>
+      </div>
+      <ul class="product-grid">
+        {% for product in items %}<li>{% include "storefront/_product_card.html" %}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endfor %}
+
+  {% if featured %}
+    <section aria-labelledby="featured-title">
+      <div class="section-head"><h2 id="featured-title">{% motif "blossom" %}Favourites</h2></div>
+      <ul class="product-grid">
+        {% for product in featured %}<li>{% include "storefront/_product_card.html" %}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if regions %}
+    <section class="palette-cornflower" aria-labelledby="regions-title">
+      <div class="section-head">
+        <h2 id="regions-title">{% motif "bird" %}Where our teas grow</h2>
+        <a href="{% url 'storefront:regions' %}">All regions</a>
+      </div>
+      <ul class="chips links">
+        {% for region in regions %}<li class="palette-{{ region.palette }}"><a class="chip" href="{{ region.get_absolute_url }}">{{ region.name }}, {{ region.country }}</a></li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if articles %}
+    <section aria-labelledby="notes-title">
+      <div class="section-head">
+        <h2 id="notes-title">{% motif "fern" %}Tea notes</h2>
+        <a href="{% url 'storefront:articles' %}">All tea notes</a>
+      </div>
+      <ul class="article-list">
+        {% for article in articles %}<li>{% include "storefront/_article_card.html" %}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <section class="palette-bark" aria-labelledby="goods-title">
+    <div class="section-head">
+      <h2 id="goods-title">{% motif "teapot" %}Teapots, accessories and shop goods</h2>
+      <a href="{% url 'storefront:goods' %}">Merch and accessories</a>
+    </div>
+    {% if goods %}
+      <ul class="product-grid">{% for product in goods %}<li>{% include "storefront/_product_card.html" %}</li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+{% endblock %}

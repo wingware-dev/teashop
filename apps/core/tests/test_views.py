@@ -8,14 +8,6 @@ from apps.audit import record
 from apps.core.testing import login_verified, make_owner
 
 
-class HomePageTests(TestCase):
-    def test_home_page_renders(self):
-        response = self.client.get(reverse("core:home"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Specialty teas, coming soon")
-        self.assertContains(response, "css/site.css")
-
-
 @override_settings(GIT_SHA="abc123")
 class HealthCheckTests(TestCase):
     def test_ok_when_database_reachable(self):
@@ -77,5 +69,5 @@ class OwnerDashboardTests(TestCase):
         owner, device = make_owner()
         login_verified(self.client, owner, device)
         response = self.client.post(reverse("core:logout"))
-        self.assertRedirects(response, reverse("core:home"))
+        self.assertRedirects(response, reverse("storefront:home"))
         self.assertEqual(self.client.get(self.url).status_code, 302)

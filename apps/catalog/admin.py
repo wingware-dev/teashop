@@ -4,13 +4,13 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 
 from . import services
-from .models import BomLine, Product, SizeOption, SoldPackage
+from .models import BomLine, Category, Collection, FlavourNote, Product, ProductPhoto, Region, SizeOption, SoldPackage
 
 
 class SizeOptionInline(admin.TabularInline):
     model = SizeOption
     extra = 1
-    fields = ["name", "sku", "net_grams", "price", "sort_order", "is_active", "available"]
+    fields = ["name", "sku", "net_grams", "package", "price", "sort_order", "is_active", "available"]
     readonly_fields = ["available"]
     show_change_link = True
 
@@ -19,14 +19,83 @@ class SizeOptionInline(admin.TabularInline):
         return size.packages_available() if size.pk else "—"
 
 
+class ProductPhotoInline(admin.TabularInline):
+    model = ProductPhoto
+    extra = 1
+    fields = ["image", "preview", "alt_text", "sort_order"]
+    readonly_fields = ["preview"]
+    verbose_name_plural = "Your photos of the product (the first is the main one)"
+
+    @admin.display(description="")
+    def preview(self, photo):
+        if not photo.pk or not photo.image:
+            return ""
+        return format_html('<img src="{}" alt="" style="max-width:120px;height:auto">', photo.url_for_width(480))
+
+
+class SectionAdmin(admin.ModelAdmin):
+    list_display = ["name", "slug", "sort_order", "is_active"]
+    list_editable = ["sort_order", "is_active"]
+    prepopulated_fields = {"slug": ["name"]}
+    search_fields = ["name"]
+
+
+@admin.register(Category)
+class CategoryAdmin(SectionAdmin):
+    list_display = ["name", "section", "is_herbal", "sort_order", "is_active"]
+    list_filter = ["section"]
+    fields = ["name", "slug", "section", "is_herbal", "intro", "motif", "palette", "sort_order", "is_active"]
+
+
+@admin.register(Region)
+class RegionAdmin(SectionAdmin):
+    list_display = ["name", "country", "sort_order", "is_active"]
+    list_filter = ["country"]
+    fields = ["name", "slug", "country", "intro", "motif", "palette", "sort_order", "is_active"]
+
+
+@admin.register(Collection)
+class CollectionAdmin(SectionAdmin):
+    list_display = ["name", "starts_on", "ends_on", "featured", "sort_order", "is_active"]
+    list_editable = ["featured", "sort_order", "is_active"]
+    fields = ["name", "slug", "intro", "products", "starts_on", "ends_on", "featured", "motif", "palette",
+              "sort_order", "is_active"]
+    filter_horizontal = ["products"]
+
+
+@admin.register(FlavourNote)
+class FlavourNoteAdmin(admin.ModelAdmin):
+    list_display = ["name", "slug"]
+    prepopulated_fields = {"slug": ["name"]}
+    search_fields = ["name"]
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ["name", "kind", "tea", "sold_as_organic", "is_active"]
-    list_filter = ["kind", "sold_as_organic", "is_active"]
+    list_display = ["name", "kind", "category", "region", "tea", "featured", "sold_as_organic", "is_active", "on_shop"]
+    list_filter = ["kind", "category", "region", "featured", "sold_as_organic", "is_active"]
     search_fields = ["name", "label_name", "tea__name"]
     prepopulated_fields = {"slug": ["name"]}
     autocomplete_fields = ["tea"]
-    inlines = [SizeOptionInline]
+    filter_horizontal = ["flavour_notes"]
+    list_select_related = ["category", "region", "tea"]
+    fieldsets = [
+        (None, {"fields": ["name", "slug", "kind", "tea", "label_name", "is_active", "featured"]}),
+        ("In the shop", {
+            "description": "No health or disease claims anywhere here: describe taste, aroma, origin and brewing. "
+                           'Herbal teas need "herbal tea" or "tisane" in the name.',
+            "fields": ["category", "region", "summary", "description", "tasting_notes", "flavour_notes", "caffeine"],
+        }),
+        ("Origin", {"fields": ["origin_detail", "origin_certified", "sold_as_organic"]}),
+        ("Brewing guide", {"fields": ["brew_temp_c", "brew_minutes", "brew_grams", "brew_infusions", "brew_notes"]}),
+    ]
+    inlines = [SizeOptionInline, ProductPhotoInline]
+
+    @admin.display(description="Shop page")
+    def on_shop(self, product):
+        if not product.pk or not product.slug:
+            return "—"
+        return format_html('<a href="{}">View</a>', product.get_absolute_url())
 
 
 class BomLineInline(admin.TabularInline):
@@ -44,7 +113,7 @@ class SizeOptionAdmin(admin.ModelAdmin):
     autocomplete_fields = ["product"]
     list_select_related = ["product__tea"]
     readonly_fields = ["bill_of_materials_display", "net_weight_label", "available"]
-    fields = ["product", "name", "sku", "net_grams", "price", "sort_order", "is_active"] + readonly_fields
+    fields = ["product", "name", "sku", "net_grams", "package", "price", "sort_order", "is_active"] + readonly_fields
     inlines = [BomLineInline]
 
     @admin.display(description="Packable now")

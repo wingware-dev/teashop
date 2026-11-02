@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Regions · {{ shop_name }}{% endblock %}
+{% block meta %}<meta name="description" content="Where our teas grow, country by country and region by region.">{% endblock %}
+{% block content %}
+  {% include "storefront/_breadcrumbs.html" %}
+  <section class="banner palette-cornflower" aria-labelledby="page-title">
+    <h1 id="page-title">Where our teas grow</h1>
+    <p class="intro">Tea takes on the taste of its place: the soil, the height, the weather of the season it was picked in. Choose a region to see its teas.</p>
+    {% motif "bird" "banner-art" %}
+  </section>
+  {% if by_country %}
+    <div class="region-groups">
+      {% for country, regions in by_country %}
+        <section class="card" aria-labelledby="country-{{ forloop.counter }}">
+          <h2 id="country-{{ forloop.counter }}">{{ country }}</h2>
+          <ul>
+            {% for region in regions %}<li class="palette-{{ region.palette }}"><a class="chip" href="{{ region.get_absolute_url }}">{{ region.name }}</a></li>{% endfor %}
+          </ul>
+        </section>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">{% motif "bird" %}<p>Regions appear here as teas arrive.</p></div>
+  {% endif %}
+{% endblock %}

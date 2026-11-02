@@ -1,0 +1,6 @@
+{% load storefront %}
+<article class="article-card palette-{{ article.palette }}">
+  <p class="kicker">{% motif article.motif %} {{ article.published_on|date:"F j, Y" }}</p>
+  <h3><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h3>
+  <p class="muted">{{ article.summary }}</p>
+</article>
