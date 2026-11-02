@@ -7,18 +7,26 @@ reach settings.NEXUS_ALERT_SHARE of its threshold, in the current or the
 previous calendar year (the usual measuring period; a few states use the
 last twelve months or other periods: check the state's rule when warned).
 
-Sales here are what customers paid, without the sales tax collected.
+Sales here are what customers paid, without the sales tax collected, less
+what was refunded.  A refund counts against the period it was issued in,
+not the one the order was paid in (as New York's returns require), so an
+order paid in one year and refunded in the next counts in full in the first
+and comes off the second.  Refunds give back sales tax with them: a refund
+is split between sales, taxable sales and tax in the proportions of its
+order's total (refund_shares).
 """
 
+from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
-from decimal import Decimal
+from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal
 
+from django.apps import apps
 from django.conf import settings
-from django.db.models import Count, F, Sum
+from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 
-from .models import ZERO, NexusThreshold, Order
+from .models import CENT, ZERO, NexusThreshold, Order
 from .places import SHIPPING_STATES
 
 
@@ -27,12 +35,107 @@ def _year_range(year):
     return datetime(year, 1, 1, tzinfo=tz), datetime(year + 1, 1, 1, tzinfo=tz)
 
 
+# Orders that took payment: paid or shipped, or cancelled after payment (a
+# cancellation refunds what was paid, and that refund comes off the period
+# it was issued in, so the sale itself stays in the period it was paid in).
+TOOK_PAYMENT = Q(status__in=Order.PAID_STATUSES) | Q(status=Order.Status.CANCELLED, paid_at__isnull=False)
+
+
+@dataclass
+class RefundShare:
+    """What one refund takes off the sales figures: amount is the part of
+    the order's total given back (at most the total: an overpayment refunded
+    was never a sale), and taxable and tax its shares of the order's taxable
+    amount and the sales tax collected."""
+    refund: object
+    state: str
+    amount: Decimal
+    taxable: Decimal
+    tax: Decimal
+
+
+def _part(value, numerator, denominator):
+    if not denominator:
+        return ZERO
+    return (value * numerator / denominator).quantize(CENT, rounding=ROUND_HALF_UP)
+
+
+def refund_shares(**refund_filters):
+    """A RefundShare for each refund matching refund_filters (on
+    fulfillment's Refund, e.g. created_at__gte=...), oldest first.
+
+    The tax given back with a partial refund is its share of the order's
+    total, worked out on the order's refunds to date so that, however an
+    order is refunded, its refunds' tax adds up to exactly the tax collected
+    once all of it is refunded."""
+    Refund = apps.get_model("fulfillment", "Refund")
+    wanted = list(Refund.objects.filter(**refund_filters).select_related("order").order_by("created_at", "pk"))
+    if not wanted:
+        return []
+    history = defaultdict(list)
+    for refund in (Refund.objects.filter(order__in={r.order_id for r in wanted})
+                   .only("pk", "order_id", "amount", "created_at").order_by("created_at", "pk")):
+        history[refund.order_id].append(refund)
+    shares = []
+    for refund in wanted:
+        order = refund.order
+        before = ZERO
+        for earlier in history[order.pk]:
+            if earlier.pk == refund.pk:
+                break
+            before += earlier.amount
+        upto = min(before + refund.amount, order.total)
+        before = min(before, order.total)
+        shares.append(RefundShare(
+            refund, order.ship_state, upto - before,
+            _part(upto, order.taxable_amount, order.total) - _part(before, order.taxable_amount, order.total),
+            _part(upto, order.tax_amount, order.total) - _part(before, order.tax_amount, order.total)))
+    return shares
+
+
 def sales_by_state(year):
-    """{state: (sales, orders)} for orders paid in year."""
+    """{state: (sales, orders)} for year: sales paid in it less refunds
+    issued in it, without sales tax; orders paid in it and not cancelled."""
     start, end = _year_range(year)
-    rows = (Order.objects.filter(status__in=Order.PAID_STATUSES, paid_at__gte=start, paid_at__lt=end)
-            .values("ship_state").annotate(sales=Sum(F("total") - F("tax_amount")), orders=Count("pk")))
-    return {row["ship_state"]: (row["sales"] or ZERO, row["orders"]) for row in rows}
+    rows = (Order.objects.filter(TOOK_PAYMENT, paid_at__gte=start, paid_at__lt=end)
+            .values("ship_state").annotate(
+                sales=Sum(F("total") - F("tax_amount")),
+                orders=Count("pk", filter=Q(status__in=Order.PAID_STATUSES))))
+    sales = defaultdict(lambda: ZERO)
+    orders = defaultdict(int)
+    for row in rows:
+        sales[row["ship_state"]] += row["sales"] or ZERO
+        orders[row["ship_state"]] += row["orders"]
+    for share in refund_shares(created_at__gte=start, created_at__lt=end):
+        sales[share.state] -= share.amount - share.tax
+    return {state: (sales[state], orders[state]) for state in sales}
+
+
+def ny_tax_by_quarter(year, today=None):
+    """[(label, figures)] for each quarter of year begun by today: New York
+    orders paid in the quarter, and their sales (with tax), taxable amount
+    and tax collected, less the refunds issued in the quarter."""
+    today = today or timezone.localdate()
+    rows = []
+    for quarter in range(4):
+        start = date(year, quarter * 3 + 1, 1)
+        end = date(year + 1, 1, 1) if quarter == 3 else date(year, quarter * 3 + 4, 1)
+        if start > today:
+            break
+        figures = Order.objects.filter(TOOK_PAYMENT, ship_state="NY", paid_at__date__gte=start,
+                                       paid_at__date__lt=end).aggregate(
+            orders=Count("pk"), sales=Sum("total"), taxable=Sum("taxable_amount"), tax=Sum("tax_amount"))
+        figures = {"orders": figures["orders"], "sales": figures["sales"] or ZERO,
+                   "taxable": figures["taxable"] or ZERO, "tax": figures["tax"] or ZERO,
+                   "refunds": 0, "refunded": ZERO}
+        for share in refund_shares(order__ship_state="NY", created_at__date__gte=start, created_at__date__lt=end):
+            figures["refunds"] += 1
+            figures["refunded"] += share.amount
+            figures["sales"] -= share.amount
+            figures["taxable"] -= share.taxable
+            figures["tax"] -= share.tax
+        rows.append((f"{year} Q{quarter + 1}", figures))
+    return rows
 
 
 def share_of(threshold, sales, orders):
