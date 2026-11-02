@@ -1,6 +1,6 @@
 # The teashop web app: Django served by gunicorn.  Caddy (compose.yaml)
 # sits in front and terminates HTTPS.
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
