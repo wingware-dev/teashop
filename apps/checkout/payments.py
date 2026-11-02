@@ -120,6 +120,10 @@ class FakePayments:
         log.info("Stand-in payments: refund of %s for order %s", amount, order.number)
         return f"fake_re_{key}"
 
+    def payment_fee(self, order):
+        """No money moved, so no fee is known: reports estimate it."""
+        return None
+
 
 class StripePayments:
     name = "stripe"
@@ -289,23 +293,43 @@ class StripePayments:
         except stripe.StripeError:
             log.exception("Stripe Tax did not record the sale for order %s", order.number)
 
+    def _payment_intent_id(self, order, doing):
+        """The PaymentIntent that paid the order: its own, or for a
+        subscription delivery the renewal invoice's.  Raises PaymentError."""
+        if order.payment_id.startswith("pi_"):
+            return order.payment_id
+        if order.payment_id.startswith("in_"):
+            invoice = self.client.v1.invoices.retrieve(order.payment_id, params={"expand": ["payments"]})
+            paid = [p.payment.payment_intent for p in (invoice.payments.data if invoice.payments else [])
+                    if getattr(p.payment, "payment_intent", None)]
+            if not paid:
+                raise PaymentError(f"Stripe has no payment for invoice {order.payment_id} to {doing}.")
+            intent = paid[0]
+            return intent if isinstance(intent, str) else intent.id
+        raise PaymentError(f"Order {order.number} has no Stripe payment to {doing}.")
+
+    def payment_fee(self, order):
+        """Stripe's fee on the order's payment in dollars, or None if Stripe
+        has not settled it yet.  Raises PaymentError if it can't be read."""
+        try:
+            intent = self.client.v1.payment_intents.retrieve(
+                self._payment_intent_id(order, "read the fee of"),
+                params={"expand": ["latest_charge.balance_transaction"]}).to_dict()
+        except stripe.StripeError as exc:
+            log.error("Could not read the fee for order %s: %s", order.number, exc)
+            raise PaymentError(f"Stripe did not give the fee: {exc}") from exc
+        charge = intent.get("latest_charge")
+        balance = charge.get("balance_transaction") if isinstance(charge, dict) else None
+        if not isinstance(balance, dict) or balance.get("fee") is None:
+            return None
+        return Decimal(balance["fee"]) / 100
+
     def refund(self, order, amount, key):
         """Refund amount (dollars) of the order's payment to the customer's
         card; key makes a retry safe.  Returns Stripe's refund id."""
         params = {"amount": cents(amount), "metadata": {"order_number": order.number}}
         try:
-            if order.payment_id.startswith("pi_"):
-                params["payment_intent"] = order.payment_id
-            elif order.payment_id.startswith("in_"):
-                # A subscription delivery: the renewal invoice's payment.
-                invoice = self.client.v1.invoices.retrieve(order.payment_id, params={"expand": ["payments"]})
-                paid = [p.payment.payment_intent for p in (invoice.payments.data if invoice.payments else [])
-                        if getattr(p.payment, "payment_intent", None)]
-                if not paid:
-                    raise PaymentError(f"Stripe has no payment for invoice {order.payment_id} to refund.")
-                params["payment_intent"] = paid[0]
-            else:
-                raise PaymentError(f"Order {order.number} has no Stripe payment to refund.")
+            params["payment_intent"] = self._payment_intent_id(order, "refund")
             refund = self.client.v1.refunds.create(params=params, options={"idempotency_key": f"refund-{key}"})
         except stripe.StripeError as exc:
             log.error("Stripe refused a refund for order %s: %s", order.number, exc)

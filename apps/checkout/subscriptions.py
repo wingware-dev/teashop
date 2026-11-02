@@ -31,6 +31,7 @@ from apps.audit import record
 from . import emails
 from . import payments as payment_providers
 from .models import CheckoutSettings, Order, OrderLine, Subscription
+from .orders import queue_payment_fee
 
 log = logging.getLogger(__name__)
 
@@ -99,6 +100,7 @@ def record_payment(subscription, *, first, period_end=None, invoice_id="", amoun
     else:
         emails.order_confirmation(order)
     emails.owner_new_order(order)
+    queue_payment_fee(order)
     return order
 
 

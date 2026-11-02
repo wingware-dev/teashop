@@ -15,10 +15,14 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path("owner/inventory/", include("apps.inventory.urls")),
     path("owner/purchasing/", include("apps.purchasing.urls")),
+    path("owner/reports/", include("apps.reports.urls")),
     path("", include("apps.core.urls")),
     # Packing and shipping (owner/fulfillment/...), and customers' answers
     # to delay notices.
     path("", include("apps.fulfillment.urls")),
+    # The marketing email list: sign-up, confirm, unsubscribe
+    # (email-list/...), and the owner's mailings (owner/email-list/...).
+    path("", include("apps.emaillist.urls")),
     # Cart, checkout, orders, subscriptions and customer accounts.
     path("", include("apps.checkout.urls")),
     # The shop: the home page, catalog pages, robots.txt and sitemap.xml.

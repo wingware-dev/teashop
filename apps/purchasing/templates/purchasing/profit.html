@@ -10,7 +10,7 @@
       <button type="submit">Show</button>
     </form>
     <p>Sales ${{ total.revenue|floatformat:2 }} · Landed cost ${{ total.cost|floatformat:2 }} (tariffs ${{ total.tariffs|floatformat:2 }}) · Margin ${{ total.margin|floatformat:2 }}{% if total.margin_percent is not None %} ({{ total.margin_percent }}%){% endif %}</p>
-    <p class="muted small">Tea is valued at the landed cost of the lot it was packed from, packaging at its average landed cost.  Shipping, payment fees and taxes are not included.  Samples and giveaways in the period cost ${{ marketing }}.  Stock on hand is worth ${{ stock_value }} at landed cost{% if uncosted_lots %} ({{ uncosted_lots }} lot{{ uncosted_lots|pluralize }} with no cost){% endif %}.</p>
+    <p class="muted small">Tea is valued at the landed cost of the lot it was packed from, packaging at its average landed cost.  Shipping, payment fees and taxes are not included here; see Per order below.  Samples and giveaways in the period cost ${{ marketing }}.  Stock on hand is worth ${{ stock_value }} at landed cost{% if uncosted_lots %} ({{ uncosted_lots }} lot{{ uncosted_lots|pluralize }} with no cost){% endif %}.</p>
     {% if total.uncosted %}<p class="status-failed">{{ total.uncosted }} package{{ total.uncosted|pluralize }} used lots with no landed cost; their margin is overstated.</p>{% endif %}
   </section>
 
@@ -22,5 +22,36 @@
   <section class="card">
     <h2>Per size</h2>
     {% include "purchasing/_profit_table.html" with rows=by_size label="Per size" %}
+  </section>
+
+  <section class="card">
+    <h2>Per order</h2>
+    <p class="muted small">Orders paid in the period: what the items sold for after discounts, plus the shipping charged, less refunds (without their sales tax), against the landed cost of what was packed, the postage bought and Stripe's fee.{% if order_total.fee_estimated %}  Fees marked * are estimated at Stripe's standard rate until Stripe reports them.{% endif %}</p>
+    {% if orders %}
+      <p>Revenue ${{ order_total.revenue|floatformat:2 }} · Goods ${{ order_total.goods_cost|floatformat:2 }} · Postage ${{ order_total.postage|floatformat:2 }} · Fees ${{ order_total.fee|floatformat:2 }} · Margin ${{ order_total.margin|floatformat:2 }}{% if order_total.margin_percent is not None %} ({{ order_total.margin_percent }}%){% endif %}</p>
+      <div class="table-scroll" role="region" aria-label="Per order" tabindex="0">
+      <table class="events">
+        <thead><tr><th>Order</th><th class="num">Items</th><th class="num">Shipping charged</th><th class="num">Refunded</th><th class="num">Goods cost</th><th class="num">Postage</th><th class="num">Fee</th><th class="num">Margin</th><th class="num">Margin %</th></tr></thead>
+        <tbody>
+          {% for row in orders %}
+            <tr>
+              <td>{{ row.order.number }}{% if row.order.subscription_id %} <span class="muted small">(subscription)</span>{% endif %}{% if row.uncosted %} <span class="muted small">({{ row.uncosted }} without cost)</span>{% endif %}</td>
+              <td class="num">{{ row.items|floatformat:2 }}</td>
+              <td class="num">{{ row.shipping_charged|floatformat:2 }}</td>
+              <td class="num">{{ row.refunded|floatformat:2 }}</td>
+              <td class="num">{{ row.goods_cost|floatformat:2 }}</td>
+              <td class="num">{{ row.postage|floatformat:2 }}</td>
+              <td class="num">{{ row.fee|floatformat:2 }}{% if row.fee_estimated %}*{% endif %}</td>
+              <td class="num">{{ row.margin|floatformat:2 }}</td>
+              <td class="num">{{ row.margin_percent|default_if_none:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% if more_orders %}<p class="muted small">And {{ more_orders }} older order{{ more_orders|pluralize }}; choose a shorter period to see them.</p>{% endif %}
+    {% else %}
+      <p class="muted">No orders paid in this period.</p>
+    {% endif %}
   </section>
 {% endblock %}

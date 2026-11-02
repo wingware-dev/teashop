@@ -308,6 +308,8 @@ class Order(AddressFields):
     payment_provider = models.CharField(max_length=20, blank=True)
     payment_id = models.CharField(max_length=80, blank=True, db_index=True)
     amount_received = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    payment_fee = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True,
+                                      help_text="What Stripe kept as its fee (empty: not reported yet)")
 
     created_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True)
     paid_at = models.DateTimeField(null=True, blank=True, db_index=True)

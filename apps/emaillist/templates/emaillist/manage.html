@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Your email settings · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  <h1>Your email settings</h1>
+  {% if subscriber.status == "subscribed" %}
+    <p><strong>{{ subscriber.email }}</strong> is on {{ shop_name }}'s email list.</p>
+    <form method="post">
+      {% csrf_token %}
+      {% include "emaillist/_frequency.html" with field=form.frequency %}
+      <div class="actions"><button type="submit">Save</button></div>
+    </form>
+    <h2>Unsubscribe</h2>
+    <form method="post" action="{% url 'emaillist:unsubscribe' subscriber.token %}">
+      {% csrf_token %}
+      <p>No more emails from the list.  Order and shipping emails still come, as they always do.</p>
+      <div class="actions"><button type="submit" class="secondary">Unsubscribe</button></div>
+    </form>
+  {% elif subscriber.status == "pending" %}
+    <p><strong>{{ subscriber.email }}</strong> is not on the list yet: open the link in the confirmation email we sent, or <a href="{% url 'emaillist:sign_up' %}">sign up again</a> for a new one.</p>
+  {% else %}
+    <p><strong>{{ subscriber.email }}</strong> is unsubscribed: we send it no news.  Changed your mind?  <a href="{% url 'emaillist:sign_up' %}">Sign up again</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

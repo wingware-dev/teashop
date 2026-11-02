@@ -35,19 +35,19 @@ def healthz(request):
 @never_cache
 @owner_required
 def owner_dashboard(request):
-    """The owner's home page.  Later phases add the "needs your attention"
-    queue here; for now it shows the latest deploy, backup and restore-test
-    results and recent audit events."""
+    """The owner's home page: the "Needs your attention" queue grouped by
+    kind, each with its deadline, the latest deploy, backup and
+    restore-test results, and recent audit events."""
     recent_events = AuditEvent.objects.all()[:25]
-    ops = ops_status()
+    # From the apps' providers (attention.py): orders, stock, failed jobs...
+    entries = attention.queue()
     return render(
         request,
         "core/owner_dashboard.html",
         {
-            "ops": ops,
-            "ops_problems": [status for status in ops if status.needs_attention],
-            # From the feature apps' providers (attention.py): stock, organic sales...
-            "attention_items": attention.collect(),
+            "ops": ops_status(),
+            "attention_groups": attention.grouped(entries),
+            "overdue_count": sum(1 for entry in entries if entry.overdue),
             "shortcuts": attention.shortcuts(),
             "recent_events": recent_events,
             "admin_url": "/" + settings.ADMIN_URL,

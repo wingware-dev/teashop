@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load reports %}
+{% block title %}Wave · Teashop{% endblock %}
+{% block content %}
+  <h1>Daily summaries for Wave</h1>
+  {% include "reports/_nav.html" %}
+
+  <section class="card">
+    {% if fake %}
+      <p class="status-failed">Not connected to Wave yet: summaries are kept here only.  Connect it with WAVE_CLIENT=wave, WAVE_TOKEN, WAVE_BUSINESS_ID and WAVE_ACCOUNTS (docs/reports.md).</p>
+    {% endif %}
+    <p class="muted small">Each night (2:30am) the day before is posted to Wave as one deposit to the Stripe clearing account: item sales, shipping and sales tax, less refunds and Stripe's fees.  Inventory bought is not posted, as Wave's bank feed has the supplier payments.</p>
+    <p>So far today: {{ today.orders }} order{{ today.orders|pluralize }}, deposit {{ today.deposit|usd }}.</p>
+    {% if waiting %}
+      <form method="post">{% csrf_token %}
+        <p>{{ waiting|length }} day{{ waiting|pluralize }} not posted yet. <button type="submit">Send them now</button></p>
+      </form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Days sent</h2>
+    {% if entries %}
+      <div class="table-scroll" role="region" aria-label="Days sent" tabindex="0">
+      <table class="events">
+        <thead><tr><th scope="col">Day</th><th scope="col">Status</th><th scope="col" class="num">Orders</th><th scope="col" class="num">Tea</th><th scope="col" class="num">Merchandise</th><th scope="col" class="num">Shipping</th><th scope="col" class="num">Sales tax</th><th scope="col" class="num">Refunds</th><th scope="col" class="num">Fees</th><th scope="col" class="num">Deposit</th><th scope="col" class="num">Stock received</th></tr></thead>
+        <tbody>
+          {% for entry in entries %}
+            <tr>
+              <th scope="row">{{ entry.day|date:"D M j, Y" }}</th>
+              <td{% if entry.status == "failed" %} class="status-failed"{% endif %}>{{ entry.get_status_display }}{% if entry.client == "fake" and entry.status == "posted" %} (kept here){% endif %}{% if entry.error %}<br><span class="small">{{ entry.error|truncatechars:160 }}</span>{% endif %}</td>
+              <td class="num">{{ entry.figures.orders }}</td>
+              <td class="num">{{ entry.figures.tea_sales|usd }}</td>
+              <td class="num">{{ entry.figures.goods_sales|usd }}</td>
+              <td class="num">{{ entry.figures.shipping|usd }}</td>
+              <td class="num">{{ entry.figures.sales_tax|usd }}</td>
+              <td class="num">{{ entry.figures.refunds|usd }}</td>
+              <td class="num">{{ entry.figures.fees|usd }}{% if entry.figures.fees_estimated %}*{% endif %}</td>
+              <td class="num">{{ entry.figures.deposit|usd }}</td>
+              <td class="num">{{ entry.figures.inventory_received|usd }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      <p class="muted small">* Estimated at Stripe's standard rate: Stripe had not reported the fee.</p>
+    {% else %}
+      <p class="muted">Nothing sent yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

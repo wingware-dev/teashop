@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load reports %}
+{% block title %}Estimated tax · Teashop{% endblock %}
+{% block content %}
+  <h1>Quarterly estimated income tax, {{ year }}</h1>
+  {% include "reports/_nav.html" %}
+
+  <section class="card">
+    <form method="get" class="period">
+      <label for="year">Year</label>
+      <select id="year" name="year">{% for y in years %}<option value="{{ y }}"{% if y == year %} selected{% endif %}>{{ y }}</option>{% endfor %}</select>
+      <button type="submit">Show</button>
+    </form>
+    <p class="muted small">As a sole proprietor you pay income tax and self-employment tax on the shop's profit four times a year: federal Form 1040-ES and New York IT-2105, due on the same days.  Owner's draws are not an expense and don't change the tax.  This is a set-aside guide from the shop's own figures, not a calculation of what you owe.  The tax columns are on the profit to date; "Pay now" is that estimate less what the earlier periods asked for.</p>
+    <div class="table-scroll" role="region" aria-label="Estimated tax by period" tabindex="0">
+    <table class="events">
+      <thead><tr><th scope="col">Period</th><th scope="col" class="num">Due</th><th scope="col" class="num">Profit</th><th scope="col" class="num">Profit to date</th><th scope="col" class="num">Self-employment tax</th><th scope="col" class="num">Federal income tax</th><th scope="col" class="num">NY income tax</th><th scope="col" class="num">Pay now</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <th scope="row">{{ row.period.label }}</th><td class="num">{{ row.period.due|date:"M j, Y" }}</td>
+            {% if row.started %}
+              <td class="num">{{ row.profit|usd }}</td><td class="num">{{ row.to_date|usd }}</td><td class="num">{{ row.se_tax|usd }}</td>
+              <td class="num">{{ row.federal|usd }}</td><td class="num">{{ row.state|usd }}</td><td class="num"><strong>{{ row.payment|usd }}</strong></td>
+            {% else %}
+              <td class="num muted" colspan="6">Not begun</td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>How it is worked out</h2>
+    <ul class="small">
+      <li>Profit: net sales less cost of goods, postage, payment fees, stock lost and samples, from the <a href="{% url 'reports:margin' %}">margin report</a>.  Expenses kept only in Wave (hosting, software, supplies, the home office) are not in it: subtract them, or the estimate runs high.</li>
+      <li>Self-employment tax: 15.3% of 92.35% of the profit (the 12.4% Social Security part only up to {{ wage_base|usd }} of earnings).</li>
+      <li>Income tax: the profit less half the self-employment tax, at {{ federal_rate|floatformat:"-1" }}% federal and {{ state_rate|floatformat:"-1" }}% New York.  These rates are placeholders (ESTIMATED_TAX_FEDERAL_RATE and ESTIMATED_TAX_STATE_RATE): set them with your tax preparer from your other income.</li>
+      <li>No penalty applies if this year's payments reach last year's total tax (110% of it if your income was over $150,000), so paying a quarter of that each period is a safe alternative.  Due dates on a weekend or holiday move to the next working day.</li>
+    </ul>
+  </section>
+{% endblock %}

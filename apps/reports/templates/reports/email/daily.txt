@@ -1,0 +1,12 @@
+{% autoescape off %}Everything waiting for you today{% if groups %}, by kind{% endif %}:
+{% for kind, deadline, entries in groups %}
+{{ kind.title }} ({% if kind.reminded_by %}reminded in {{ kind.reminded_by }}{% else %}{{ deadline.describe|lower }}{% endif %}):
+{% for entry, link in entries %}- {% if entry.overdue %}OVERDUE: {% elif entry.item.level == "urgent" %}URGENT: {% endif %}{{ entry.item.title }}{% if entry.item.detail %}
+  {{ entry.item.detail }}{% endif %}{% if link %}
+  {{ link }}{% endif %}
+{% endfor %}{% endfor %}
+The dashboard: {{ dashboard_url }}
+
+{{ shop_name }}
+{{ postal_address }}
+{% endautoescape %}

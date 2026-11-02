@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Unsubscribed · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  <h1>You're unsubscribed</h1>
+  <p>We won't send news to <strong>{{ subscriber.email }}</strong> again.  Emails about your orders still come as usual.</p>
+  <p class="small muted">Unsubscribed by mistake?  <a href="{% url 'emaillist:sign_up' %}">Sign up again</a>.</p>
+</div>
+{% endblock %}

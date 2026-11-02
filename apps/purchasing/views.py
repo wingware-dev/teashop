@@ -94,6 +94,7 @@ def profit(request):
     end = last + timedelta(days=1)
     by_tea, by_size, total = reports.profitability(start, end)
     value, uncosted_lots = reports.stock_value()
+    orders = reports.order_profit(start, end)
     return render(
         request,
         "purchasing/profit.html",
@@ -103,6 +104,9 @@ def profit(request):
             "by_tea": by_tea,
             "by_size": by_size,
             "total": total,
+            "orders": orders[:200],
+            "more_orders": max(len(orders) - 200, 0),
+            "order_total": reports.order_totals(orders),
             "marketing": reports.money(reports.marketing_cost(start, end)),
             "stock_value": value,
             "uncosted_lots": uncosted_lots,

@@ -1,0 +1,30 @@
+{% load reports %}
+{% if rows %}
+  <div class="table-scroll" role="region" aria-label="{{ label }}" tabindex="0">
+  <table class="events">
+    <thead><tr>
+      <th scope="col">{{ first }}</th><th scope="col" class="num">Orders</th><th scope="col" class="num">Units</th>
+      <th scope="col" class="num">Item sales</th><th scope="col" class="num">Discounts</th>
+      {% if full %}<th scope="col" class="num">Shipping</th><th scope="col" class="num">Refunds</th><th scope="col" class="num">Net sales</th><th scope="col" class="num">Sales tax</th>{% else %}<th scope="col" class="num">After discounts</th>{% endif %}
+    </tr></thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <th scope="row">{{ row.label }}</th><td class="num">{{ row.orders }}</td><td class="num">{{ row.units }}</td>
+          <td class="num">{{ row.gross|usd }}</td><td class="num">{{ row.discounts|usd }}</td>
+          {% if full %}<td class="num">{{ row.shipping|usd }}</td><td class="num">{{ row.refunds|usd }}</td><td class="num">{{ row.net|usd }}</td><td class="num">{{ row.tax|usd }}</td>{% else %}<td class="num">{{ row.items|usd }}</td>{% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+    {% if total %}
+      <tfoot><tr>
+        <th scope="row">Total</th><td class="num">{{ total.orders }}</td><td class="num">{{ total.units }}</td>
+        <td class="num">{{ total.gross|usd }}</td><td class="num">{{ total.discounts|usd }}</td>
+        <td class="num">{{ total.shipping|usd }}</td><td class="num">{{ total.refunds|usd }}</td><td class="num">{{ total.net|usd }}</td><td class="num">{{ total.tax|usd }}</td>
+      </tr></tfoot>
+    {% endif %}
+  </table>
+  </div>
+{% else %}
+  <p class="muted">No sales in this period.</p>
+{% endif %}

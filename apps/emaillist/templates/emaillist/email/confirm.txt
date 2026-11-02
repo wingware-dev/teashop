@@ -1,0 +1,8 @@
+{% autoescape off %}Hello,
+
+Someone (we hope you) asked to add {{ subscriber.email }} to {{ shop_name }}'s email list, {{ subscriber.get_frequency_display|lower }}.  To confirm, open this link within {{ confirm_days }} days and press the button:
+
+{{ confirm_url }}
+
+If it wasn't you, ignore this email: without the confirmation we send you nothing more.
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

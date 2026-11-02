@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load reports %}
+{% block title %}Margin · Teashop{% endblock %}
+{% block content %}
+  <h1>Cost of goods, margin, stock and loss</h1>
+  {% include "reports/_nav.html" %}
+
+  <section class="card">
+    {% include "reports/_period_form.html" %}
+    <div class="table-scroll" role="region" aria-label="Margin" tabindex="0">
+    <table class="events">
+      <tbody>
+        <tr><th scope="row">Net sales</th><td class="num">{{ m.net_sales|usd }}</td></tr>
+        <tr><th scope="row">Cost of goods sold</th><td class="num">{{ m.goods_cost|usd }}</td></tr>
+        <tr><th scope="row">Gross margin</th><td class="num"><strong>{{ m.gross_margin|usd }}</strong>{% if m.gross_margin_percent is not None %} ({{ m.gross_margin_percent }}%){% endif %}</td></tr>
+        <tr><th scope="row">Postage bought</th><td class="num">{{ m.postage|usd }}</td></tr>
+        <tr><th scope="row">Payment fees{% if m.fees_estimated %} (partly estimated){% endif %}</th><td class="num">{{ m.fees|usd }}</td></tr>
+        <tr><th scope="row">Margin after postage and fees</th><td class="num"><strong>{{ m.after_fulfilment|usd }}</strong></td></tr>
+        <tr><th scope="row">Stock lost (spoiled, damaged, missing)</th><td class="num">{{ m.loss|usd }}</td></tr>
+        <tr><th scope="row">Samples and giveaways</th><td class="num">{{ m.samples|usd }}</td></tr>
+      </tbody>
+    </table>
+    </div>
+    {% if m.uncosted %}<p class="status-failed">{{ m.uncosted }} package{{ m.uncosted|pluralize }} came from lots with no landed cost, so the cost of goods is understated.  Enter the lots' landed cost (Inventory → Lots).</p>{% endif %}
+    <p class="muted small">Cost of goods is the landed cost (price, shipping, tariffs{% if m.tariffs %}: {{ m.tariffs|usd }}{% endif %}) of the tea and packaging packed in the period; sales count when paid, so a period's edges can hold an order paid in one and packed in the next.  Loss and samples are at landed cost.  Fees marked estimated use Stripe's standard rate until Stripe reports them.</p>
+  </section>
+
+  <section class="card">
+    <h2>Stock on hand</h2>
+    <p>Worth <strong>{{ m.stock_value|usd }}</strong> at landed cost, now{% if m.uncosted_lots %}, not counting {{ m.uncosted_lots }} lot{{ m.uncosted_lots|pluralize }} with no cost{% endif %}.</p>
+    <p class="small"><a href="{% url 'purchasing:losses' %}">Losses and samples by month</a> · <a href="{% url 'purchasing:profit' %}?start={{ start|date:'Y-m-d' }}&amp;end={{ end|date:'Y-m-d' }}">Profit per tea, size and order</a></p>
+  </section>
+{% endblock %}

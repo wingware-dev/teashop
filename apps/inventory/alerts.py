@@ -41,6 +41,8 @@ def attention_items():
                 detail=names,
                 url=admin + "inventory/item/?stock=low",
                 level="urgent" if any(on_hand == 0 for _, on_hand in low) else "warning",
+                kind="stock",
+                key="inventory:low-stock",
             )
         )
     today = timezone.localdate()
@@ -52,6 +54,8 @@ def attention_items():
                 detail=f"{lot.item}: {lot.format_quantity(lot.quantity_on_hand)} left",
                 url=reverse("admin:inventory_lot_change", args=[lot.pk]),
                 level="urgent" if past else "warning",
+                kind="stock",
+                key=f"inventory:best-by:{lot.pk}:{'past' if past else 'near'}",
             )
         )
     held = Lot.objects.filter(status=Lot.Status.ON_HOLD, quantity_on_hand__gt=0).select_related("item")
@@ -61,6 +65,8 @@ def attention_items():
                 title=f"Lot {lot.code} is on hold",
                 detail=lot.status_note or f"{lot.item}: {lot.format_quantity(lot.quantity_on_hand)}",
                 url=reverse("admin:inventory_lot_change", args=[lot.pk]),
+                kind="stock",
+                key=f"inventory:hold:{lot.pk}",
             )
         )
     return items

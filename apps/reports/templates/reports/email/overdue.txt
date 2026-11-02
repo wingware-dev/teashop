@@ -1,0 +1,13 @@
+{% autoescape off %}These are waiting for you past their deadline:
+{% for kind, deadline, entries in groups %}
+{{ kind.title }} ({{ deadline.describe|lower }}):
+{% for entry, link in entries %}- {% if entry.item.level == "urgent" %}URGENT: {% endif %}{{ entry.item.title }}
+  Waiting since {{ entry.since|date:"D M j, g:i a" }}{% if entry.item.detail %}
+  {{ entry.item.detail }}{% endif %}{% if link %}
+  {{ link }}{% endif %}
+{% endfor %}{% endfor %}
+Everything waiting: {{ dashboard_url }}
+
+{{ shop_name }}
+{{ postal_address }}
+{% endautoescape %}

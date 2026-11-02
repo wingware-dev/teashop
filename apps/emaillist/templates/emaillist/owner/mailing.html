@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ mailing.subject }} · Email list · {{ shop_name }}{% endblock %}
+{% block content %}
+<h1>{{ mailing.subject }}</h1>
+<p><a href="{% url 'emaillist:owner_home' %}">Email list</a></p>
+<p>{{ mailing.get_status_display }}{% if mailing.approved_at %} {{ mailing.approved_at|date:"M j, Y, g:i a" }}{% endif %}{% if mailing.created_by %} · drafted by {{ mailing.created_by }}{% endif %}{% if mailing.send_until %} · not sent after {{ mailing.send_until|date:"M j" }}{% endif %}</p>
+
+{% if mailing.status == "approved" %}
+  <p>Sent in {{ sent }} email{{ sent|pluralize }}; {{ waiting }} subscriber{{ waiting|pluralize }} still to get it as their frequency allows.</p>
+{% endif %}
+
+<section class="card" aria-labelledby="preview-title">
+  <h2 id="preview-title">As a subscriber sees it</h2>
+  <p class="small muted">Subject: {{ mailing.subject }}.  If someone has other approved mailings waiting, they get one email with all of them, the newest first, and the subject says how many more are inside.</p>
+  <div class="table-scroll" role="region" aria-label="Email text" tabindex="0"><pre class="email-preview">{{ preview }}</pre></div>
+</section>
+
+{% if mailing.status == "draft" %}
+  <section class="card" aria-labelledby="approve-title">
+    <h2 id="approve-title">Approve</h2>
+    {% if problems %}
+      <ul class="problems">{% for problem in problems %}<li>{{ problem }}</li>{% endfor %}</ul>
+    {% else %}
+      <p>Check the subject says honestly what is inside.  Once approved it goes now to subscribers due an email, and to the others ({{ subscribed }} subscribed in all) as soon as their chosen frequency allows.</p>
+      <form method="post" action="{% url 'emaillist:mailing_approve' mailing.pk %}">{% csrf_token %}<div class="actions"><button type="submit">Approve and send</button></div></form>
+    {% endif %}
+    <div class="actions">
+      <a class="button secondary" href="{% url 'emaillist:mailing_edit' mailing.pk %}">Edit</a>
+      <form method="post" action="{% url 'emaillist:mailing_withdraw' mailing.pk %}" class="inline">{% csrf_token %}<button type="submit" class="secondary">Discard draft</button></form>
+    </div>
+  </section>
+{% elif mailing.status == "approved" %}
+  <form method="post" action="{% url 'emaillist:mailing_withdraw' mailing.pk %}">{% csrf_token %}<div class="actions"><button type="submit" class="secondary">Withdraw: send it to nobody else</button></div></form>
+{% endif %}
+{% endblock %}

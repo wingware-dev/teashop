@@ -11,6 +11,7 @@ environment variables (see .env.example).  DJANGO_ENV selects the mode:
 
 import os
 from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 
 import dj_database_url
@@ -97,6 +98,8 @@ LOCAL_APPS = [
     "apps.purchasing",
     "apps.checkout",
     "apps.fulfillment",
+    "apps.emaillist",
+    "apps.reports",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -285,6 +288,8 @@ AUDIT_EXCLUDED_MODELS = {
     # The job queue's bookkeeping; what jobs do is recorded as usual.
     "jobs.job",
     "jobs.schedule",
+    # The dashboard queue's clock; reminders sent are recorded as emails.
+    "core.attentionrecord",
 }
 # Fields whose changes alone don't make an event ("*" applies to every model).
 AUDIT_IGNORED_FIELDS = {
@@ -366,6 +371,49 @@ OWNER_NOTIFY_EMAIL = env_str("OWNER_NOTIFY_EMAIL")
 OWNER_NEW_ORDER_EMAILS = env_str("OWNER_NEW_ORDER_EMAILS", "daily")
 if OWNER_NEW_ORDER_EMAILS not in ("daily", "each"):
     raise ImproperlyConfigured("OWNER_NEW_ORDER_EMAILS must be 'daily' or 'each'")
+
+# --- Owner dashboard queue and reports (apps/core/attention.py, apps/reports) --
+# How long each kind of item in "Needs your attention" may wait before a
+# reminder email, changing the defaults in apps/core/attention.py (KINDS):
+# "0" at once, "30m", "4h", "3d", "daily" (in the daily reminder) or "HH:MM".
+# E.g. ATTENTION_DEADLINES=support=0,refunds=2h,approvals=1d
+ATTENTION_DEADLINES = dict(
+    item.split("=", 1) for item in env_list("ATTENTION_DEADLINES") if "=" in item
+)
+# The daily reminder of everything waiting (New York time).
+ATTENTION_DAILY_AT = env_str("ATTENTION_DAILY_AT", "08:00")
+
+# Payment fees for orders whose fee Stripe has not reported (the stand-in
+# payments, or before the fee is known): Stripe's standard US card rate.
+PAYMENT_FEE_PERCENT = Decimal(env_str("PAYMENT_FEE_PERCENT", "2.9"))
+PAYMENT_FEE_FIXED = Decimal(env_str("PAYMENT_FEE_FIXED", "0.30"))
+
+# Wave (accounting): each day's sales summary is posted as one transaction
+# on the Stripe clearing account (docs/reports.md).  WAVE_CLIENT "fake"
+# keeps the entries here without calling Wave; "wave" uses Wave's API with
+# WAVE_TOKEN (a full-access token) and WAVE_BUSINESS_ID.  WAVE_ACCOUNTS
+# maps each line to a Wave account id: anchor (the Stripe clearing bank
+# account), tea_sales, goods_sales, shipping_income, sales_tax, refunds,
+# payment_fees, e.g. WAVE_ACCOUNTS=anchor=QWNj...,tea_sales=QWNj...
+WAVE_CLIENT = env_str("WAVE_CLIENT", "fake")
+if WAVE_CLIENT not in ("fake", "wave"):
+    raise ImproperlyConfigured("WAVE_CLIENT must be 'fake' or 'wave'")
+WAVE_TOKEN = env_str("WAVE_TOKEN")
+WAVE_BUSINESS_ID = env_str("WAVE_BUSINESS_ID")
+WAVE_ACCOUNTS = dict(item.split("=", 1) for item in env_list("WAVE_ACCOUNTS") if "=" in item)
+WAVE_API_URL = env_str("WAVE_API_URL", "https://gql.waveapps.com/graphql/public")
+# The first day sent to Wave: days before it are left to you (empty: the
+# first day the daily job runs, yesterday).
+WAVE_START_DATE = env_str("WAVE_START_DATE")
+
+# Quarterly estimated tax: rough set-aside rates for income tax on the
+# shop's profit, on top of self-employment tax.  Placeholders: set them
+# with your tax preparer from your other income and last year's return.
+ESTIMATED_TAX_FEDERAL_RATE = Decimal(env_str("ESTIMATED_TAX_FEDERAL_RATE", "0.12"))
+ESTIMATED_TAX_STATE_RATE = Decimal(env_str("ESTIMATED_TAX_STATE_RATE", "0.055"))
+# Social Security part of self-employment tax stops at this much of
+# earnings (2026: $184,500; check each year).
+SOCIAL_SECURITY_WAGE_BASE = Decimal(env_str("SOCIAL_SECURITY_WAGE_BASE", "184500"))
 
 # --- Background jobs (apps/jobs, docs/jobs.md) -------------------------------
 # Emails and daily jobs are queued in the database and run by the worker
@@ -482,6 +530,28 @@ BOX_FILL_FACTOR = 1.3
 # The Mail Order Rule: a delay longer than this past the promised date
 # needs the customer's express consent, not just silence.
 MAIL_ORDER_IMPLIED_CONSENT_DAYS = 30
+
+# --- Email list (apps/emaillist, docs/emaillist.md) ---------------------------
+# Marketing mailings, opt-in with a confirmation email.  They go out through
+# a bulk sender (Amazon SES's SMTP interface is the recommended one) when
+# EMAIL_LIST_EMAIL_HOST is set, else through EMAIL_HOST like order emails.
+# Confirmation emails always go through EMAIL_HOST.
+EMAIL_LIST_EMAIL_HOST = env_str("EMAIL_LIST_EMAIL_HOST")
+EMAIL_LIST_EMAIL_PORT = env_int("EMAIL_LIST_EMAIL_PORT", 587)
+EMAIL_LIST_EMAIL_HOST_USER = env_str("EMAIL_LIST_EMAIL_HOST_USER")
+EMAIL_LIST_EMAIL_HOST_PASSWORD = env_str("EMAIL_LIST_EMAIL_HOST_PASSWORD")
+# The From address of mailings: on the domain whose SPF, DKIM and DMARC the
+# sender is set up for (Gmail's and Yahoo's bulk-sender rules).
+EMAIL_LIST_FROM_EMAIL = env_str("EMAIL_LIST_FROM_EMAIL") or DEFAULT_FROM_EMAIL
+# The List-Id header's identifier (RFC 2919): any stable dotted name.
+EMAIL_LIST_ID = env_str("EMAIL_LIST_ID") or "news.teashop.example"
+# Local time of the daily send to subscribers whose frequency now allows
+# another email.  Approving a mailing also sends at once to those due.
+EMAIL_LIST_SEND_AT = env_str("EMAIL_LIST_SEND_AT") or "10:00"
+# How long a confirmation link works.
+EMAIL_LIST_CONFIRM_WITHIN = timedelta(days=7)
+# Sign-up form submissions allowed per visitor address per hour.
+EMAIL_LIST_RATE_LIMIT = env_int("EMAIL_LIST_RATE_LIMIT", 10)
 
 # --- Logging: everything to stdout, Docker rotates the files ----------------
 LOG_LEVEL = env_str("DJANGO_LOG_LEVEL", "INFO")

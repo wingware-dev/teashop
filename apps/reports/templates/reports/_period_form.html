@@ -1,0 +1,11 @@
+<form method="get" class="period">
+  <label for="start">From</label> <input type="date" id="start" name="start" value="{{ start|date:'Y-m-d' }}">
+  <label for="end">to</label> <input type="date" id="end" name="end" value="{{ end|date:'Y-m-d' }}">
+  {% if groupings %}
+    <label for="by">by</label>
+    <select id="by" name="by">
+      {% for value, label in groupings %}<option value="{{ value }}"{% if value == by %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  {% endif %}
+  <button type="submit">Show</button>
+</form>

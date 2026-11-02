@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Confirm your subscription · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  {% if expired %}
+    <h1>This link has expired</h1>
+    <p>Confirmation links work for a week.  <a href="{% url 'emaillist:sign_up' %}">Sign up again</a> and we'll send a new one.</p>
+  {% else %}
+    <h1>Confirm your subscription</h1>
+    <p>Add <strong>{{ subscriber.email }}</strong> to {{ shop_name }}'s email list, {{ subscriber.get_frequency_display|lower }}?</p>
+    <form method="post">{% csrf_token %}<div class="actions"><button type="submit">Yes, sign me up</button></div></form>
+    <p class="small muted">Didn't ask for this?  Just close this page: we won't email you.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Unsubscribe · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  <h1>Unsubscribe</h1>
+  <p>Stop {{ shop_name }}'s news emails to <strong>{{ subscriber.email }}</strong>?</p>
+  <form method="post">{% csrf_token %}<div class="actions"><button type="submit">Unsubscribe</button></div></form>
+  {% if subscriber.status == "subscribed" %}<p class="small muted">Or <a href="{% url 'emaillist:manage' subscriber.token %}">hear from us less often</a> instead.</p>{% endif %}
+</div>
+{% endblock %}

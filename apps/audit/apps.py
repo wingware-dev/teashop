@@ -7,6 +7,9 @@ class AuditConfig(AppConfig):
     verbose_name = "Audit log"
 
     def ready(self):
-        from . import signals
+        from apps.core import attention
+
+        from . import alerts, signals
 
         signals.connect()
+        attention.register(alerts.attention_items)

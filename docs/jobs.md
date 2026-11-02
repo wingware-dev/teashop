@@ -14,7 +14,11 @@ no Redis or other service to run.  It gives every app:
 What runs on it now: every email in `apps/checkout/emails.py` and
 `apps/fulfillment/emails.py`, the 6pm order summary
 (`apps/fulfillment/jobs.py`), the renewal reminders
-(`apps/checkout/jobs.py`) and a nightly purge of old job rows.
+(`apps/checkout/jobs.py`), the email list's daily send and each mailing
+email (`apps/emaillist/jobs.py`, `sending.py`), the owner's daily and
+overdue reminders, the nightly summary for Wave (`apps/reports/jobs.py`),
+reading Stripe's fee for each payment (`apps/checkout/jobs.py`) and a
+nightly purge of old job rows.
 
 ## Declaring and queueing a job
 

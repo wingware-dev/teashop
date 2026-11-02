@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Link not recognised · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  <h1>We don't recognise this link</h1>
+  <p>It may be from an older email: each sign-up gets new links.  To stop our emails, use the link in the latest one, or write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> and we'll take you off the list.</p>
+</div>
+{% endblock %}

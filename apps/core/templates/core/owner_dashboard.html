@@ -5,22 +5,23 @@
 
   <section class="card">
     <h2>Needs your attention</h2>
-    {% if ops_problems or attention_items %}
-      <ul class="attention">
-        {% for item in attention_items %}
-          <li class="attention-{{ item.level }}">
-            {% if item.level == "urgent" %}<strong>Urgent:</strong> {% endif %}
-            {% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}
-            {% if item.detail %}<br><span class="muted small">{{ item.detail }}</span>{% endif %}
-          </li>
-        {% endfor %}
-        {% for status in ops_problems %}
-          <li class="status-failed">
-            {% if status.failed %}{{ status.kind.title }} failed {{ status.last.timestamp|date:"Y-m-d H:i" }}{% if status.last.message %}: {{ status.last.message|truncatechars:120 }}{% endif %}
-            {% else %}{{ status.kind.title }} is overdue: last succeeded {{ status.last_success.timestamp|date:"Y-m-d H:i"|default:"never" }}{% endif %}
-          </li>
-        {% endfor %}
-      </ul>
+    {% if attention_groups %}
+      {% if overdue_count %}<p class="status-failed">{{ overdue_count }} past {{ overdue_count|pluralize:"its,their" }} deadline.</p>{% endif %}
+      {% for kind, deadline, entries in attention_groups %}
+        <h3 class="attention-kind">{{ kind.title }} <span class="muted small">· {% if kind.reminded_by %}reminded in {{ kind.reminded_by }}{% else %}{{ deadline.describe }}{% endif %}</span></h3>
+        <ul class="attention">
+          {% for entry in entries %}
+            {% with item=entry.item %}
+            <li class="attention-{{ item.level }}">
+              {% if entry.overdue %}<strong class="status-failed">Overdue:</strong> {% elif item.level == "urgent" %}<strong>Urgent:</strong> {% endif %}
+              {% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}
+              {% if item.detail %}<br><span class="muted small">{{ item.detail }}</span>{% endif %}
+              <br><span class="muted small">Waiting since {{ entry.since|date:"M j, g:i a" }}{% if not entry.overdue %} · due {{ entry.due|date:"M j, g:i a" }}{% endif %}{% if entry.reminded_at %} · reminded {{ entry.reminded_at|date:"M j, g:i a" }}{% endif %}</span>
+            </li>
+            {% endwith %}
+          {% endfor %}
+        </ul>
+      {% endfor %}
     {% else %}
       <p class="muted">Nothing is waiting for you.</p>
     {% endif %}

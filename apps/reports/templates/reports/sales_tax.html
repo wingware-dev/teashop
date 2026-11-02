@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load reports %}
+{% block title %}New York sales tax · Teashop{% endblock %}
+{% block content %}
+  <h1>New York sales tax return</h1>
+  {% include "reports/_nav.html" %}
+
+  <section class="card">
+    <form method="get" class="period">
+      <label for="quarter">Quarter</label>
+      <select id="quarter" name="quarter">
+        {% for q in quarters %}<option value="{{ q.start|date:'Y-m-d' }}"{% if q.start|date:'Y-m-d' == request.GET.quarter or not request.GET.quarter and forloop.first %} selected{% endif %}>{{ q.label }}</option>{% endfor %}
+      </select>
+      <input type="checkbox" id="annual" name="annual" value="1"{% if annual %} checked{% endif %}> <label for="annual">Whole year (annual filers)</label>
+      <button type="submit">Show</button>
+    </form>
+    <h2>{{ period.label }}</h2>
+    <p>Due <strong>{{ period.due|date:"F j, Y" }}</strong>{% if in_progress %} · <span class="status-failed">This period has not ended: the figures will grow.</span>{% endif %}</p>
+    <div class="table-scroll" role="region" aria-label="Return figures" tabindex="0">
+    <table class="events">
+      <tbody>
+        <tr><th scope="row">Sales delivered in New York, without tax</th><td class="num">{{ result.gross|usd }}</td></tr>
+        <tr><th scope="row">Of which not taxable (tea is food)</th><td class="num">{{ result.nontaxable|usd }}</td></tr>
+        <tr><th scope="row">Taxable sales</th><td class="num">{{ result.taxable|usd }}</td></tr>
+        <tr><th scope="row">Sales tax due</th><td class="num"><strong>{{ result.tax|usd }}</strong></td></tr>
+        <tr><th scope="row">Orders</th><td class="num">{{ result.orders }}</td></tr>
+        <tr><th scope="row">Refunds taken off (without tax; tax {{ result.refunded_tax|usd }})</th><td class="num">{{ result.refunded|usd }}{% if result.refunds %} ({{ result.refunds }}){% endif %}</td></tr>
+        <tr><th scope="row">Sales delivered outside New York (not on the return)</th><td class="num">{{ result.outside|usd }}</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>By jurisdiction</h2>
+    {% if result.jurisdictions %}
+      <div class="table-scroll" role="region" aria-label="Taxable sales by jurisdiction" tabindex="0">
+      <table class="events">
+        <thead><tr><th scope="col">Jurisdiction</th><th scope="col" class="num">Rate</th><th scope="col" class="num">Taxable sales</th><th scope="col" class="num">Tax</th></tr></thead>
+        <tbody>
+          {% for j in result.jurisdictions %}
+            <tr><th scope="row">{{ j.name }}</th><td class="num">{{ j.rate_percent }}%</td><td class="num">{{ j.taxable|usd }}</td><td class="num">{{ j.tax|usd }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    {% else %}
+      <p class="muted">No taxable sales in New York in this period.</p>
+    {% endif %}
+    <p class="muted small">The return (ST-100 quarterly, ST-101 annual) asks for taxable sales and tax by the reporting code of each jurisdiction: find the codes for these in Publication 718.  Refunds come off the period they were given in, taking back the tax of what they were for.  The figures are the shop's own; check them against the form's instructions, and file even when nothing is due.</p>
+  </section>
+{% endblock %}

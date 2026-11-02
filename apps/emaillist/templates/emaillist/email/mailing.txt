@@ -1,0 +1,15 @@
+{% autoescape off %}{% for mailing in mailings %}{% if mailings|length > 1 %}{{ mailing.subject }}
+{% for _ in mailing.subject %}={% endfor %}
+
+{% endif %}{{ mailing.body }}
+
+{% if not forloop.last %}
+{% endif %}{% endfor %}--
+You get this because you signed up for {{ shop_name }}'s email news, {{ subscriber.get_frequency_display|lower }}.
+
+Change how often: {{ manage_url }}
+Unsubscribe: {{ unsubscribe_url }}
+
+{{ shop_name }} · {{ site_url }}
+{{ postal_address }}
+{% endautoescape %}

@@ -178,6 +178,20 @@ def after_paid(order):
     emails.owner_new_order(order)
     if order.payment_provider == "stripe":
         payment_providers.provider().record_tax(order)
+    queue_payment_fee(order)
+
+
+def queue_payment_fee(order):
+    """Ask Stripe for its fee on the order's payment, a few minutes on
+    (it is settled after the payment)."""
+    if order.payment_provider == "stripe" and order.payment_fee is None:
+        from datetime import timedelta
+
+        from apps import jobs
+
+        from .jobs import record_payment_fee
+
+        jobs.enqueue(record_payment_fee, order.pk, delay=timedelta(minutes=5), key=f"payment-fee:{order.pk}")
 
 
 def mark_shipped(order, tracking_number, carrier="USPS"):

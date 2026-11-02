@@ -98,6 +98,15 @@ services:
       OWNER_NEW_ORDER_EMAILS: ${OWNER_NEW_ORDER_EMAILS:-daily}
       SHIPPING_LABEL_FORMAT: ${SHIPPING_LABEL_FORMAT:-PDF}
       PACKAGE_LABEL_SIZE: ${PACKAGE_LABEL_SIZE:-4x2}
+      # Email list (docs/emaillist.md).  Empty values fall back to the
+      # defaults in config/settings.py.
+      EMAIL_LIST_EMAIL_HOST: ${EMAIL_LIST_EMAIL_HOST:-}
+      EMAIL_LIST_EMAIL_PORT: ${EMAIL_LIST_EMAIL_PORT:-587}
+      EMAIL_LIST_EMAIL_HOST_USER: ${EMAIL_LIST_EMAIL_HOST_USER:-}
+      EMAIL_LIST_EMAIL_HOST_PASSWORD: ${EMAIL_LIST_EMAIL_HOST_PASSWORD:-}
+      EMAIL_LIST_FROM_EMAIL: ${EMAIL_LIST_FROM_EMAIL:-}
+      EMAIL_LIST_ID: ${EMAIL_LIST_ID:-}
+      EMAIL_LIST_SEND_AT: ${EMAIL_LIST_SEND_AT:-10:00}
     volumes:
       - media:/app/var/media
     logging: *logging

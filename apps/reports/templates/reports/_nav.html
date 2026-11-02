@@ -1,0 +1,9 @@
+<nav aria-label="Reports">
+  <p class="small"><a href="{% url 'core:owner_dashboard' %}">Dashboard</a> ·
+    <a href="{% url 'reports:sales' %}"{% if request.resolver_match.url_name == "sales" %} aria-current="page"{% endif %}>Sales</a> ·
+    <a href="{% url 'reports:margin' %}"{% if request.resolver_match.url_name == "margin" %} aria-current="page"{% endif %}>Margin</a> ·
+    <a href="{% url 'reports:sales_tax' %}"{% if request.resolver_match.url_name == "sales_tax" %} aria-current="page"{% endif %}>NY sales tax</a> ·
+    <a href="{% url 'reports:estimated_tax' %}"{% if request.resolver_match.url_name == "estimated_tax" %} aria-current="page"{% endif %}>Estimated tax</a> ·
+    <a href="{% url 'reports:accounting' %}"{% if request.resolver_match.url_name == "accounting" %} aria-current="page"{% endif %}>Wave</a> ·
+    <a href="{% url 'purchasing:profit' %}">Profit per tea and order</a></p>
+</nav>

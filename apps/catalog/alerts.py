@@ -26,6 +26,8 @@ def organic_alert():
         ),
         url=reverse("admin:catalog_soldpackage_changelist") + "?organic__exact=1",
         level="urgent" if over else "warning",
+        kind="other",
+        key=f"catalog:organic:{'over' if over else 'near'}",
     )
 
 
@@ -48,6 +50,8 @@ def attention_items():
                 detail=names,
                 url=reverse("admin:catalog_sizeoption_changelist"),
                 level="urgent",
+                kind="stock",
+                key="catalog:unpackable",
             )
         )
     return items

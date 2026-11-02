@@ -20,6 +20,9 @@ def attention_items():
                 detail="AI-made designs for tea pages; none goes live until you approve it.",
                 url=reverse("storefront:variant_list"),
                 level="warning",
+                kind="approvals",
+                key="storefront:designs-waiting",
+                since=PageVariant.objects.waiting().order_by("created_at").values_list("created_at", flat=True).first(),
             )
         )
     bad = [product for product in shown_products() if product.copy_problems()]
@@ -31,6 +34,8 @@ def attention_items():
                 + ".  Health claims, herbal names or protected origins; open each product to see what.",
                 url=reverse("admin:catalog_product_changelist"),
                 level="urgent",
+                kind="problems",
+                key="storefront:wording",
             )
         )
     return items

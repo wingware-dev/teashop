@@ -1,0 +1,8 @@
+{% autoescape off %}Hello,
+
+Someone (we hope you) asked to add {{ subscriber.email }} to {{ shop_name }}'s email list.  You're already on it, {{ subscriber.get_frequency_display|lower }}, so nothing has changed.
+
+To change how often you hear from us, or to unsubscribe:
+
+{{ manage_url }}
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

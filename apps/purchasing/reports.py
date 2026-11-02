@@ -205,3 +205,112 @@ def stock_value():
         else:
             value += unit * lot.quantity_on_hand
     return money(value), uncosted
+
+
+# -- Per order: margin after shipping and payment fees -----------------------
+
+def payment_fee(order):
+    """(fee, estimated) for an order: what Stripe reported keeping, or an
+    estimate at its standard rate (settings.PAYMENT_FEE_PERCENT and
+    PAYMENT_FEE_FIXED) until it has, and for the stand-in payments."""
+    from django.conf import settings
+
+    if order.payment_fee is not None:
+        return order.payment_fee, False
+    if not order.payment_provider:
+        return ZERO, False
+    paid = order.amount_received if order.amount_received is not None else order.total
+    return money(paid * settings.PAYMENT_FEE_PERCENT / 100 + settings.PAYMENT_FEE_FIXED), True
+
+
+def postage_paid(orders):
+    """{order_id: postage} for the labels bought for these orders and not
+    voided.  Test labels carry no postage, so on the server they count
+    nothing."""
+    from django.conf import settings
+    from django.db.models import Sum
+
+    from apps.fulfillment.models import PostageLabel
+
+    labels = PostageLabel.objects.filter(parcel__order__in=orders, voided_at=None)
+    if settings.PRODUCTION:
+        labels = labels.filter(test_mode=False)
+    return {row["parcel__order"]: row["total"] or ZERO
+            for row in labels.values("parcel__order").annotate(total=Sum("postage"))}
+
+
+@dataclass
+class OrderProfit:
+    order: object
+    items: Decimal = ZERO  # what the items sold for, after discounts
+    shipping_charged: Decimal = ZERO
+    refunded: Decimal = ZERO  # given back, without the sales tax in it
+    goods_cost: Decimal = ZERO  # landed cost of what was packed for it
+    postage: Decimal = ZERO
+    fee: Decimal = ZERO
+    fee_estimated: bool = False
+    uncosted: int = 0
+
+    @property
+    def revenue(self):
+        return self.items + self.shipping_charged - self.refunded
+
+    @property
+    def margin(self):
+        return self.revenue - self.goods_cost - self.postage - self.fee
+
+    @property
+    def margin_percent(self):
+        return None if not self.revenue else (self.margin * 100 / self.revenue).quantize(Decimal("0.1"))
+
+
+def order_profit(start, end):
+    """[OrderProfit] for orders paid from start up to (not including) end,
+    newest first: item sales, shipping charged and refunds against the
+    landed cost of what was packed, the postage paid and Stripe's fee.
+    Refunds count here against their order, whenever issued (the period
+    reports count them when issued)."""
+    from django.db.models import Sum
+
+    from apps.checkout.nexus import TOOK_PAYMENT
+    from apps.checkout.models import Order
+    from apps.fulfillment.models import Refund
+
+    orders = list(Order.objects.filter(TOOK_PAYMENT, paid_at__gte=aware(start), paid_at__lt=aware(end))
+                  .prefetch_related("lines").order_by("-paid_at"))
+    if not orders:
+        return []
+    postage = postage_paid(orders)
+    refunds = {row["order"]: row["amount"] - row["tax"] for row in Refund.objects.filter(order__in=orders)
+               .values("order").annotate(amount=Sum("amount"), tax=Sum("tax_amount"))}
+    average = average_unit_costs()
+    packages = {}
+    for package in (SoldPackage.objects.filter(order_reference__in=[o.number for o in orders], reversed_at=None)
+                    .select_related("tea_lot__item").prefetch_related("size_option__bom_lines")):
+        packages.setdefault(package.order_reference, []).append(package)
+    rows = []
+    for order in orders:
+        row = OrderProfit(order)
+        row.items = sum((line.net_amount for line in order.lines.all()), ZERO)
+        row.shipping_charged = order.shipping_amount  # none on subscription deliveries: in the price
+        row.refunded = min(refunds.get(order.pk, ZERO), row.items + row.shipping_charged)
+        goods = Decimal(0)
+        for package in packages.get(order.number, []):
+            tea, _tariffs, packaging, complete = package_costs(package, average)
+            goods += tea + packaging
+            row.uncosted += 0 if complete else 1
+        row.goods_cost = money(goods)
+        row.postage = postage.get(order.pk, ZERO)
+        row.fee, row.fee_estimated = payment_fee(order)
+        rows.append(row)
+    return rows
+
+
+def order_totals(rows):
+    """The sum of [OrderProfit] as one OrderProfit (order None)."""
+    total = OrderProfit(None)
+    for row in rows:
+        for name in ("items", "shipping_charged", "refunded", "goods_cost", "postage", "fee", "uncosted"):
+            setattr(total, name, getattr(total, name) + getattr(row, name))
+        total.fee_estimated = total.fee_estimated or row.fee_estimated
+    return total

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Check your email · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  <h1>Check your email</h1>
+  <p>We sent a message to <strong>{{ email }}</strong>.  Open the link in it to confirm, and you're on the list.  Until you do, we send you nothing else.</p>
+  <p class="small muted">Nothing there after a few minutes?  Look in your spam or promotions folder, or <a href="{% url 'emaillist:sign_up' %}">try again</a>.</p>
+</div>
+{% endblock %}

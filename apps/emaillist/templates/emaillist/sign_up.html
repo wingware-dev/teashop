@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load checkout %}
+{% block title %}Email news · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  <h1>Email news</h1>
+  <p>New teas and harvests as they arrive, restocks, tea notes and the occasional offer.  You choose how often you hear from us: if we have more to say, we put it together in one email rather than send more.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "checkout/_protection.html" %}
+    {% field form.email %}
+    {% include "emaillist/_frequency.html" with field=form.frequency %}
+    <p class="small">{{ wording }}</p>
+    <div class="actions"><button type="submit">Sign me up</button></div>
+  </form>
+  <p class="small muted">We never share or sell your address.  See our <a href="{% url 'storefront:policy' 'privacy' %}">privacy policy</a>.</p>
+</div>
+{% endblock %}
+{% block extra_head %}{% if turnstile_site_key %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}{% endblock %}

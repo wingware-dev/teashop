@@ -1,0 +1,8 @@
+{# The "how often" radio buttons, in a fieldset so screen readers say the question with each choice. #}
+<fieldset{% if field.errors %} class="has-error" aria-describedby="{{ field.auto_id }}-error"{% endif %}>
+  <legend>{{ field.label }}</legend>
+  {% if field.errors %}<p class="error" id="{{ field.auto_id }}-error">{{ field.errors|join:" " }}</p>{% endif %}
+  {% for choice in field %}
+    <div class="field check">{{ choice.tag }}<label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label></div>
+  {% endfor %}
+</fieldset>

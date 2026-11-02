@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}You're on the list · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  <h1>You're on the list</h1>
+  <p>Thank you.  We'll write to <strong>{{ subscriber.email }}</strong> {{ subscriber.get_frequency_display|lower }}, and only when we have something to say.</p>
+  <p>Every email has a link to change how often or to unsubscribe.  You can also <a href="{% url 'emaillist:manage' subscriber.token %}">change it now</a>.</p>
+</div>
+{% endblock %}

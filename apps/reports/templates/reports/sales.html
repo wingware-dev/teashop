@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load reports %}
+{% block title %}Sales · Teashop{% endblock %}
+{% block content %}
+  <h1>Sales</h1>
+  {% include "reports/_nav.html" %}
+
+  <section class="card">
+    {% include "reports/_period_form.html" %}
+    <p>Net sales {{ total.net|usd }} from {{ total.orders }} order{{ total.orders|pluralize }} · Sales tax collected {{ total.tax|usd }}{% if total.refunded_tax %} (less {{ total.refunded_tax|usd }} refunded){% endif %}</p>
+    <p class="muted small">Sales count on the day the order was paid, refunds on the day they were given.  Money is without sales tax: net sales are the items after discounts, plus shipping charged, less refunds.</p>
+  </section>
+
+  <section class="card">
+    <h2>By {{ by }}</h2>
+    {% include "reports/_sales_table.html" with rows=rows label="Sales by period" first="Period" full=True %}
+  </section>
+
+  <section class="card">
+    <h2>By channel</h2>
+    {% include "reports/_sales_table.html" with rows=channels label="Sales by channel" first="Channel" full=True total=None %}
+  </section>
+
+  <section class="card">
+    <h2>By category</h2>
+    {% include "reports/_sales_table.html" with rows=categories label="Sales by category" first="Category" total=None %}
+    <p class="muted small">Shipping and refunds are for whole orders, so they are not split by category or product.</p>
+  </section>
+
+  <section class="card">
+    <h2>By product</h2>
+    {% include "reports/_sales_table.html" with rows=products label="Sales by product" first="Product" total=None %}
+    {% if more_products %}<p class="muted small">And {{ more_products }} more with smaller sales.</p>{% endif %}
+  </section>
+{% endblock %}

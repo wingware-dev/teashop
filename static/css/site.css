@@ -535,6 +535,8 @@ details.filters form { padding: 0 1rem 1rem; }
 .preview-bar .note { flex: 1 1 16rem; }
 .preview-bar p.small a { display: inline-block; padding: 0.5rem 0; }
 .problems { color: var(--danger); font-weight: 600; }
+/* The email list's preview of a plain-text mailing: wrapped, never wider than the page. */
+.email-preview { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.95rem; margin: 0; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; }
 
 /* -- Articles ------------------------------------------------------------ */
 
@@ -553,6 +555,10 @@ details.filters form { padding: 0 1rem 1rem; }
 .table-scroll { overflow-x: auto; }
 .status-failed { color: var(--danger); font-weight: 700; }
 ul.attention { padding-left: 1.25rem; }
+ul.attention li + li { margin-top: 0.4rem; }
+h3.attention-kind { font-size: 1rem; margin: 1rem 0 0.25rem; }
+form.period { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+form.period select { width: auto; }
 table.events { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 table.events th, table.events td { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border); }
 /* Figures in report tables: never broken across lines, lined up right. */

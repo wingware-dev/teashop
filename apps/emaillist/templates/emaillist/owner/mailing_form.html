@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load checkout %}
+{% block title %}{% if mailing %}Edit mailing{% else %}Write a mailing{% endif %} · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout">
+  <h1>{% if mailing %}Edit mailing{% else %}Write a mailing{% endif %}</h1>
+  <p><a href="{% url 'emaillist:owner_home' %}">Email list</a></p>
+  <p class="small muted">Saving keeps it as a draft: you see it as subscribers will, then approve it.  The unsubscribe link, the reason they get it and the shop's postal address are added at the foot.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+    {% field form.subject %}
+    {% field form.body %}
+    {% field form.send_until %}
+    <div class="actions"><button type="submit">Save and preview</button></div>
+  </form>
+</div>
+{% endblock %}

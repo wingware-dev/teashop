@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Email list · {{ shop_name }}{% endblock %}
+{% block content %}
+<h1>Email list</h1>
+<p><a href="{% url 'core:owner_dashboard' %}">Dashboard</a> · <a href="{% url 'admin:emaillist_subscriber_changelist' %}">Subscribers and consent records</a></p>
+
+{% if not postal_address %}
+  <p class="notice" role="alert"><strong>No mailing can go out yet:</strong> set the shop's postal address (SHOP_POSTAL_ADDRESS in .env, a registered PO box will do) and redeploy.  The law (CAN-SPAM) requires it in every marketing email.</p>
+{% endif %}
+
+<section class="card" aria-labelledby="list-title">
+  <h2 id="list-title">Subscribers</h2>
+  <p><strong>{{ subscribed }}</strong> subscribed{% if pending %}, {{ pending }} waiting to confirm{% endif %}.  In the last 30 days {{ joined_30 }} joined and {{ left_30 }} left.</p>
+  <ul class="plain-list">
+    {% for label, count in by_frequency %}<li>{{ label }}: {{ count }}</li>{% endfor %}
+  </ul>
+  <p class="small muted">The sign-up page is {{ sign_up_url }} (linked as "Email news" at the foot of every shop page).</p>
+</section>
+
+<section class="card" aria-labelledby="drafts-title">
+  <h2 id="drafts-title">Drafts waiting for your approval</h2>
+  {% if drafts %}
+    <ul class="plain-list">
+      {% for mailing in drafts %}<li><a href="{% url 'emaillist:mailing' mailing.pk %}">{{ mailing.subject }}</a> <span class="small muted">drafted {{ mailing.created_at|date:"M j" }}{% if mailing.created_by %} by {{ mailing.created_by }}{% endif %}</span></li>{% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">None.</p>
+  {% endif %}
+  <p><a class="button" href="{% url 'emaillist:mailing_new' %}">Write a mailing</a></p>
+</section>
+
+<section class="card" aria-labelledby="sent-title">
+  <h2 id="sent-title">Approved mailings</h2>
+  {% if approved %}
+    <div class="table-scroll" role="region" aria-label="Approved mailings" tabindex="0">
+      <table class="events">
+        <thead><tr><th scope="col">Subject</th><th scope="col">Approved</th><th scope="col" class="num">Sent</th><th scope="col" class="num">Still to get it</th></tr></thead>
+        <tbody>
+          {% for mailing, sent, waiting in approved %}
+            <tr><th scope="row"><a href="{% url 'emaillist:mailing' mailing.pk %}">{{ mailing.subject }}</a></th><td>{{ mailing.approved_at|date:"M j, Y" }}</td><td class="num">{{ sent }}</td><td class="num">{{ waiting }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">"Still to get it": subscribers whose chosen frequency holds it back for now.  It goes out with their next email, put together with anything else approved by then.</p>
+  {% else %}
+    <p class="muted">None yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
