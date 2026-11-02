@@ -1,8 +1,9 @@
 """Suggesting the box for a parcel from its packages' sizes and weight.
 
 The smallest box in stock that holds every package with room for filler
-(settings.BOX_FILL_FACTOR) and whose longest sides take the biggest
-package.  The owner can always choose another box, or one not on the list.
+(settings.BOX_FILL_FACTOR) and whose sides, longest first, are each at
+least the longest, middle and shortest sides of every package.  The
+owner can always choose another box, or one not on the list.
 """
 
 from dataclasses import dataclass, field
@@ -19,7 +20,9 @@ class Suggestion:
     box: BoxSize = None
     volume: Decimal = Decimal(0)  # cubic inches the packages need, with filler room
     grams: int = 0  # packages only
-    biggest: list = field(default_factory=list)  # the biggest package's sides, longest first
+    # Each package's longest, middle and shortest sides, the most of each (so
+    # a box with sides at least these, longest first, takes every package).
+    biggest: list = field(default_factory=list)
     note: str = ""
     # Boxes that hold it, smallest first (the suggestion is the first in stock).
     fitting: list = field(default_factory=list)
@@ -64,8 +67,7 @@ def suggest(size_quantities, boxes=None):
         sides = package_dimensions(size)
         volume += sides[0] * sides[1] * sides[2] * quantity
         result.grams += size.shipping_weight() * quantity
-        if sides > result.biggest:
-            result.biggest = sides
+        result.biggest = [max(pair) for pair in zip(result.biggest, sides)] if result.biggest else sides
     if not result.biggest:
         result.note = "Nothing to ship yet."
         return result
@@ -77,12 +79,12 @@ def suggest(size_quantities, boxes=None):
     if in_stock:
         result.box = in_stock[0]
         result.note = (f"The smallest box in stock that holds {result.volume:f} cubic inches "
-                       f"and the biggest package ({_sides(result.biggest)}).")
+                       f"and every package (up to {_sides(result.biggest)}).")
     elif result.fitting:
         result.box = result.fitting[0]
         result.note = "No box that fits is in stock: use another box, or restock this one."
     else:
-        result.note = (f"No box on your list holds it all ({result.volume:f} cubic inches, biggest package "
+        result.note = (f"No box on your list holds it all ({result.volume:f} cubic inches, packages up to "
                        f"{_sides(result.biggest)}): use a bigger box, or ship part now and the rest later.")
     return result
 

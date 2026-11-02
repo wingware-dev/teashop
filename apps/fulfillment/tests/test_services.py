@@ -17,9 +17,9 @@ from apps.catalog.models import SoldPackage
 from apps.checkout import tax as checkout_tax
 from apps.checkout.models import Order
 from apps.checkout.shipping import Address
-from apps.inventory.models import Item, StockMovement
+from apps.inventory.models import Item, Lot, StockMovement
 from apps.fulfillment import boxes, services, summary
-from apps.fulfillment.models import BoxSize, DelayNotice, Parcel, Pickup, Refund
+from apps.fulfillment.models import BoxSize, DelayNotice, PackageDimensions, Parcel, Pickup, Refund
 from apps.fulfillment.testing import TEST_SETTINGS, paid_order, shop, size
 
 
@@ -119,6 +119,25 @@ class BoxTests(FulfillmentTestCase):
         self.assertEqual(boxes.suggest([(self.assam, 2)]).box, small)
         tin = size("earl-grey-cornflower", 100)
         self.assertEqual(boxes.suggest([(tin, 6)]).box, BoxSize.objects.get(item__code="BOX-L"))
+
+    def test_every_package_must_fit_not_only_the_longest(self):
+        # A long, flat pouch and a shorter but thicker tin: the 1.5 in mailer
+        # takes the pouch but not the tin.
+        tin = size("earl-grey-cornflower", 100)
+        PackageDimensions.objects.create(size_option=self.assam, length_in=Decimal("6"), width_in=Decimal("4"),
+                                         height_in=Decimal("1.5"))
+        PackageDimensions.objects.create(size_option=tin, length_in=Decimal("3"), width_in=Decimal("2.75"),
+                                         height_in=Decimal("2.75"))
+        small = BoxSize.objects.get(item__code="BOX-S")
+        mailer_item = Item.objects.create(code="MAILER", name="Padded mailer", kind=Item.Kind.SHIPPING_BOX)
+        Lot.objects.create(item=mailer_item, quantity_received=20, supplier=small.item.lots.get().supplier)
+        mailer = BoxSize.objects.create(item=mailer_item, length_in=Decimal("9"), width_in=Decimal("6"),
+                                        height_in=Decimal("1.5"), empty_grams=20)
+        self.assertEqual(boxes.suggest([(self.assam, 1)]).box, mailer)
+        suggestion = boxes.suggest([(self.assam, 1), (tin, 1)])
+        self.assertEqual(suggestion.biggest, [Decimal("6"), Decimal("4"), Decimal("2.75")])
+        self.assertNotIn(mailer, suggestion.fitting)
+        self.assertEqual(suggestion.box, small)
 
     def test_nothing_fits(self):
         suggestion = boxes.suggest([(self.teapot, 9)])
