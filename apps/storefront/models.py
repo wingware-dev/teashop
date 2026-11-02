@@ -78,6 +78,7 @@ class PageVariant(models.Model):
             if name != "rationale":  # the rationale is only for the owner
                 problems += copy_rules.caffeine_free_problems(text, product.caffeine == Product.Caffeine.NONE, where)
                 problems += copy_rules.origin_problems(text, product.origin_certified, where)
+                problems += copy_rules.organic_problems(text, product.sold_as_organic, where)
             if problems:
                 errors[name] = problems
         return errors

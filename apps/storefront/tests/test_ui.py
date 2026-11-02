@@ -93,6 +93,13 @@ class ShopUITests(BrowserTestCase):
     def test_product_with_allergens(self):
         self.check_page("/products/vanilla-almond-black/", "product-allergens")
 
+    def test_organic_product(self):
+        product = Product.objects.get(slug="assam-second-flush")
+        product.sold_as_organic = True
+        product.save()
+        product.tea.lots.update(organic=True)
+        self.check_page(product.get_absolute_url(), "product-organic")
+
     def test_herbal_product(self):
         self.check_page("/products/chamomile-meadow/", "product-herbal")
 

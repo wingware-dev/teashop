@@ -114,6 +114,15 @@ class ProductCopyTests(TestCase):
         self.assertIn("name", caught.exception.message_dict)
         self.product(name="Darjeeling First Flush", slug="dj", origin_certified=True).full_clean()
 
+    def test_organic_wording_follows_the_exemption(self):
+        with self.assertRaises(ValidationError) as caught:
+            self.product(name="Organic Sencha", slug="os").full_clean()
+        self.assertIn("name", caught.exception.message_dict)
+        self.product(name="Organic Sencha", slug="os", sold_as_organic=True).full_clean()
+        with self.assertRaises(ValidationError) as caught:
+            self.product(summary="Certified organic", sold_as_organic=True).full_clean()
+        self.assertIn("summary", caught.exception.message_dict)
+
     def test_category_must_match_kind(self):
         with self.assertRaises(ValidationError) as caught:
             self.product(category=Category.objects.get(slug="teaware")).full_clean()

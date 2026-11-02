@@ -222,7 +222,7 @@ class Product(models.Model):
 
     def copy_problems(self):
         """{field: [problems]} with the words customers see: health claims,
-        herbal naming, caffeine-free, protected origins."""
+        herbal naming, caffeine-free, protected origins, organic."""
         errors = _copy_errors(self, self.TEXT_FIELDS)
 
         def add(field, problems):
@@ -237,6 +237,7 @@ class Product(models.Model):
             where = self._meta.get_field(name).verbose_name.capitalize()
             add(name, copy_rules.caffeine_free_problems(getattr(self, name), self.caffeine == self.Caffeine.NONE, where))
             add(name, copy_rules.origin_problems(getattr(self, name), self.origin_certified, where))
+            add(name, copy_rules.organic_problems(getattr(self, name), self.sold_as_organic, where))
         return errors
 
     def clean(self):

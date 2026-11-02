@@ -109,6 +109,22 @@ class ShopPagesTests(TestCase):
         self.assertContains(response, "In stock")
         self.assertContains(response, "Add to cart")
 
+    def test_organic_wording_only_for_products_sold_as_organic(self):
+        response = self.client.get("/products/silver-needle/")
+        self.assertNotContains(response, "Organic")
+        self.assertNotContains(response, "organic")
+
+        tea = Product.objects.get(slug="silver-needle")
+        tea.sold_as_organic = True
+        tea.save()
+        tea.tea.lots.update(organic=True)
+        response = self.client.get("/products/silver-needle/")
+        self.assertContains(response, '<span class="chip">Organic</span>', html=True)
+        self.assertContains(response, "<dt>Organic</dt><dd>Organic tea</dd>", html=True)
+        self.assertContains(response, "do not carry the USDA organic seal")
+        # The exemption allows "organic", never a claim to be certified.
+        self.assertNotRegex(response.content.decode(), r"(?i)certified[- ]organic|organic[- ]certified")
+
     def test_product_structured_data(self):
         data = structured_data(self.client.get("/products/assam-second-flush/"))
         product = next(d for d in data if d["@type"] == "Product")

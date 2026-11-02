@@ -74,6 +74,12 @@ class VariantWorkflowTests(TestCase):
         bad.refresh_from_db()
         self.assertEqual(bad.status, PageVariant.Status.DRAFT)
 
+    def test_organic_wording_in_variants(self):
+        self.assertIn("headline", variant(self.product, headline="Organic and grassy").copy_problems())
+        self.product.sold_as_organic = True
+        self.assertEqual(variant(self.product, headline="Organic and grassy").copy_problems(), {})
+        self.assertIn("story", variant(self.product, story="USDA organic leaf").copy_problems())
+
     def test_preview_shows_the_design_and_its_problems(self):
         bad = variant(self.product, palette="buttercup", layout="story", story="Detox in a cup")
         response = self.client.get(bad.get_absolute_url())

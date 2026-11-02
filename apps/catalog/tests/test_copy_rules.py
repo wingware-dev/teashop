@@ -70,6 +70,25 @@ class CaffeineFreeTests(SimpleTestCase):
         self.assertEqual(copy_rules.caffeine_free_problems("Bold and brisk", caffeine_is_none=False), [])
 
 
+class OrganicTests(SimpleTestCase):
+    def test_organic_only_when_sold_as_organic(self):
+        for text in ["Organic sencha", "Organically grown in Shizuoka"]:
+            with self.subTest(text=text):
+                self.assertTrue(copy_rules.organic_problems(text, sold_as_organic=False))
+                self.assertEqual(copy_rules.organic_problems(text, sold_as_organic=True), [])
+        self.assertEqual(copy_rules.organic_problems("Grassy and sweet", sold_as_organic=False), [])
+        self.assertEqual(copy_rules.organic_problems("", sold_as_organic=False), [])
+        self.assertEqual(copy_rules.organic_problems(None, sold_as_organic=False), [])
+
+    def test_certified_wording_and_seal_never_pass(self):
+        for text in ["Certified organic sencha", "Certified-organic leaf", "Organic certified", "Organically certified",
+                     "USDA Organic", "Carries the organic seal", "Certified 100% organic"]:
+            with self.subTest(text=text):
+                problems = copy_rules.organic_problems(text, sold_as_organic=True, where="Summary")
+                self.assertEqual(len(problems), 1, problems)
+                self.assertIn("Summary says", problems[0])
+
+
 @override_settings(CATALOG_PROTECTED_ORIGINS=["Darjeeling", "Assam Orthodox"])
 class ProtectedOriginTests(SimpleTestCase):
     def test_found_case_insensitively_as_whole_words(self):

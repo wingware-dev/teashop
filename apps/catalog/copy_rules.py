@@ -11,6 +11,10 @@ tea info articles and AI-made page variants.
 - "Caffeine-free" only for a product whose caffeine level is None.
 - Protected origin names (Darjeeling and the like) only for a product
   marked as certified genuine, with the certificate kept on the lot.
+- "Organic" only for a product marked as sold as organic, and never as
+  "certified organic", "USDA organic" or a seal: the shop repacks under
+  the USDA exemption for handlers with under $5,000 a year of organic
+  sales, which allows the plain word but not a claim to be certified.
 
 Each check returns a list of problems in plain words, empty when the text
 passes, so forms, the admin and the AI variant importer can all show them.
@@ -58,6 +62,14 @@ _HEALTH_RES = [(re.compile(pattern, re.IGNORECASE), label) for pattern, label in
 
 HERBAL_NAME_RE = re.compile(r"\b(herbal tea|herbal infusion|tisane)s?\b", re.IGNORECASE)
 CAFFEINE_FREE_RE = re.compile(r"\b(caffeine[- ]free|decaf(feinated)?|no caffeine|zero caffeine)\b", re.IGNORECASE)
+ORGANIC_RE = re.compile(r"\borganic(ally)?\b", re.IGNORECASE)
+# What an exempt (uncertified) handler may not say: that the product or the
+# shop is certified, or anything that stands for the USDA seal.
+CERTIFIED_ORGANIC_RE = re.compile(
+    r"\bcertified[- ]organic\b|\borganic(ally)?[- ]certified\b|\bcertified (as |100% |100 percent )?organic\b"
+    r"|\bUSDA\b|\borganic seal\b",
+    re.IGNORECASE,
+)
 
 
 def health_claims(text):
@@ -120,3 +132,19 @@ def origin_problems(text, certified, where="This text"):
             'tick "Origin certified" and keep the certificate with the lot, or describe it another way.'
         ]
     return []
+
+
+def organic_problems(text, sold_as_organic, where="This text"):
+    """'Organic' only for a product sold as organic, and never in a form
+    that claims certification or the USDA seal."""
+    problems = []
+    certified = CERTIFIED_ORGANIC_RE.search(text or "")
+    if certified:
+        problems.append(
+            f'{where} says "{certified.group(0)}".  The shop is not certified organic (it sells under the USDA '
+            'small-business exemption), so it may say "organic" but not "certified organic", "USDA" or the seal.'
+        )
+    organic = ORGANIC_RE.search(text or "")
+    if organic and not sold_as_organic:
+        problems.append(f'{where} says "{organic.group(0)}", but the product is not marked as sold as organic.')
+    return problems

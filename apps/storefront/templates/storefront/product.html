@@ -49,6 +49,7 @@
       <h1>{{ product.name }}</h1>
       {% if variant.headline %}<p class="headline">{{ variant.headline }}</p>{% endif %}
       {% if product.summary %}<p class="summary">{{ product.summary }}</p>{% endif %}
+      {% if product.kind == "tea" and product.sold_as_organic %}<p class="organic"><span class="chip">Organic</span></p>{% endif %}
       {% if product.kind == "tea" %}{% caffeine_meter product %}{% endif %}
     </div>
 
@@ -129,8 +130,13 @@
           {% if facts.countries %}<dt>Grown in</dt><dd>{{ facts.countries|join:", " }}</dd>{% endif %}
           {% if product.region %}<dt>Region</dt><dd><a href="{{ product.region.get_absolute_url }}">{{ product.region.name }}</a></dd>{% endif %}
           {% if product.origin_detail %}<dt>Garden</dt><dd>{{ product.origin_detail }}</dd>{% endif %}
+          {% if product.sold_as_organic %}<dt>Organic</dt><dd>Organic tea</dd>{% endif %}
         </dl>
-        {% if not facts.countries and not product.region and not product.origin_detail %}<p class="muted">Origin details to come.</p>{% endif %}
+        {% if not facts.countries and not product.region and not product.origin_detail and not product.sold_as_organic %}<p class="muted">Origin details to come.</p>{% endif %}
+        {% if product.sold_as_organic %}
+          {# USDA small-business exemption (7 CFR 205.101(a)(1), 205.310): "organic" is allowed, but not the seal or "certified organic". #}
+          <p class="small muted organic-note">We weigh and pack this tea ourselves in small batches.  USDA rules let a shop as small as ours do that without its own organic certification, so our packages do not carry the USDA organic seal.</p>
+        {% endif %}
       </section>
 
       <section class="fact" aria-labelledby="tasting-title">
