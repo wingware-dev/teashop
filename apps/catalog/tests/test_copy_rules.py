@@ -44,6 +44,12 @@ class HealthClaimTests(SimpleTestCase):
         self.assertTrue(claims[0].startswith('"detox"'))
         self.assertTrue(claims[1].startswith('"cures"'))
 
+    def test_match_inside_another_is_reported_once(self):
+        self.assertEqual(copy_rules.health_claims("Our tea boosts immunity."),
+                         ['"boosts immunity" (boosts a body function)'])
+        self.assertEqual(copy_rules.health_claims("Boosts your metabolism and immunity"),
+                         ['"Boosts your metabolism" (boosts a body function)', '"immunity" (immunity)'])
+
     def test_problem_message_names_the_field(self):
         problems = copy_rules.health_claim_problems("Heals everything", "Summary")
         self.assertEqual(len(problems), 1)

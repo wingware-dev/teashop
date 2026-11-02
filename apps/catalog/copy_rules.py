@@ -41,7 +41,7 @@ HEALTH_CLAIM_PATTERNS = [
     # "Palate-cleansing" describes taste, so it passes.
     (r"\bdetox(ify|ifying|ification|es)?\b|(?<!palate[- ])\bcleans(e|es|ing)\b", "detox or cleanse"),
     (r"\bimmun(e|ity)\b", "immunity"),
-    (r"\bboost(s|ing)?\s+(your\s+)?(metabolism|energy|immun\w*|health|mood)\b", "boosts metabolism, energy or mood"),
+    (r"\bboost(s|ing)?\s+(your\s+)?(metabolism|energy|immun\w*|health|mood)\b", "boosts a body function"),
     (r"\bmetabolism\b", "metabolism"),
     (r"\bweight[- ]loss\b|\blose weight\b|\bfat[- ]burn\w*\b|\bslimming\b", "weight loss"),
     (r"\banti[- ]?(inflammatory|oxidants?|cancer|aging|ageing|bacterial|viral|anxiety)\b", "anti-..."),
@@ -77,11 +77,21 @@ def health_claims(text):
     '"the words" (kind of claim)', in the order they appear."""
     if not text:
         return []
-    found = []
-    for regex, label in _HEALTH_RES:
+    matches = []
+    for order, (regex, label) in enumerate(_HEALTH_RES):
         for match in regex.finditer(text):
-            found.append((match.start(), f'"{match.group(0)}" ({label})'))
-    return [words for _, words in sorted(found)]
+            matches.append((match.start(), -match.end(), order, match.group(0), label))
+    # Longest match first at each start, so a match that falls inside one
+    # already reported ("immunity" in "boosts immunity") is dropped rather
+    # than warned about twice.
+    found = []
+    reported_end = -1
+    for start, neg_end, _, words, label in sorted(matches):
+        if -neg_end <= reported_end:
+            continue
+        found.append(f'"{words}" ({label})')
+        reported_end = -neg_end
+    return found
 
 
 def health_claim_problems(text, where="This text"):
