@@ -17,7 +17,7 @@
   {% for week in weeks %}
     {% for day, items in week %}
       {% if day %}
-        <li class="day{% if day == today %} today{% endif %}{% if not items %} empty{% endif %}">
+        <li class="day{% if day == today %} today{% endif %}{% if not items %} day-empty{% endif %}">
           <h2 class="date"><span class="weekday">{{ day|date:"D" }}</span> {{ day|date:"j" }}{% if day == today %} <span class="visually-hidden">(today)</span>{% endif %}</h2>
           {% if items %}
             <ul class="plain-list">
