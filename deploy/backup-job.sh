@@ -9,7 +9,7 @@
 # Exits with the job's own status, so systemd still sees failures.
 set -uo pipefail
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) backup-job: $*"; }
 

@@ -11,9 +11,10 @@
 # so and exits 0, so recording never turns a good deploy into a failed one.
 set -uo pipefail
 
-cd "$(dirname "$0")/.."
-
 log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) record-ops-event: $*"; }
+
+# Best effort here too: not finding the checkout means not recording.
+cd "$(dirname "$0")/.." || { log "cannot cd to the checkout; not recorded"; exit 0; }
 
 [ $# -ge 2 ] || { log "usage: $0 <kind> <succeeded|failed> [options]"; exit 2; }
 
