@@ -6,14 +6,14 @@
 <p><a href="{% url 'core:owner_dashboard' %}">Dashboard</a></p>
 
 <section aria-labelledby="ny-title">
-  <h2 id="ny-title">New York sales tax collected, {{ year }}</h2>
-  <p class="small muted">Tea is exempt; merch and accessories, with their share of shipping, are taxed.  File from these figures (quarterly or yearly, as NYS assigns).  They are net of refunds: a refund comes off the quarter it was issued in, not the one the order was paid in, as NY returns require, and takes back the taxable amount and tax of what it was for (none for tea; a refund not for particular items takes its share of the order's).</p>
+  <h2 id="ny-title">New York sales tax collected, by filing quarter</h2>
+  <p class="small muted">Tea is exempt; merch and accessories, with their share of shipping, are taxed.  These are New York's sales tax quarters (March to May, June to August, September to November, December to February), each due on the 20th of the month after.  For the return itself, with taxable sales by jurisdiction and the annual filer's year, see the <a href="{% url 'reports:sales_tax' %}">New York sales tax return</a> report.  The figures are net of refunds: a refund comes off the quarter it was issued in, not the one the order was paid in, as NY returns require, and takes back the taxable amount and tax of what it was for (none for tea; a refund not for particular items takes its share of the order's).</p>
   <div class="table-scroll" role="region" aria-label="New York sales tax by quarter" tabindex="0">
     <table class="events">
-      <thead><tr><th scope="col">Quarter</th><th scope="col" class="num">Orders</th><th scope="col" class="num">Refunded</th><th scope="col" class="num">Sales (with tax)</th><th scope="col" class="num">Taxable</th><th scope="col" class="num">Tax collected</th></tr></thead>
+      <thead><tr><th scope="col">Quarter</th><th scope="col">Due</th><th scope="col" class="num">Orders</th><th scope="col" class="num">Refunded</th><th scope="col" class="num">Sales (with tax)</th><th scope="col" class="num">Taxable</th><th scope="col" class="num">Tax collected</th></tr></thead>
       <tbody>
-        {% for label, figures in tax_rows %}
-          <tr><th scope="row">{{ label }}</th><td class="num">{{ figures.orders }}</td><td class="num">{% if figures.refunds %}{{ figures.refunded|money }} ({{ figures.refunds }}){% else %}—{% endif %}</td><td class="num">{{ figures.sales|money }}</td><td class="num">{{ figures.taxable|money }}</td><td class="num">{{ figures.tax|money }}</td></tr>
+        {% for period, figures in tax_rows %}
+          <tr><th scope="row">{{ period.label }}</th><td>{{ period.due|date:"M j, Y" }}</td><td class="num">{{ figures.orders }}</td><td class="num">{% if figures.refunds %}{{ figures.refunded|money }} ({{ figures.refunds }}){% else %}—{% endif %}</td><td class="num">{{ figures.sales|money }}</td><td class="num">{{ figures.taxable|money }}</td><td class="num">{{ figures.tax|money }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

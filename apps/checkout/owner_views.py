@@ -14,5 +14,5 @@ from . import nexus
 def sales_by_state(request):
     today = timezone.localdate()
     return render(request, "checkout/owner/sales_by_state.html", {
-        "rows": nexus.report(today), "tax_rows": nexus.ny_tax_by_quarter(today.year, today), "year": today.year,
+        "rows": nexus.report(today), "tax_rows": nexus.ny_tax_by_quarter(today), "year": today.year,
     })

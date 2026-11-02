@@ -18,7 +18,7 @@ for tea), when it was issued (refund_shares).
 
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.apps import apps
@@ -103,17 +103,51 @@ def sales_by_state(year):
     return {state: (sales[state], orders[state]) for state in sales}
 
 
-def ny_tax_by_quarter(year, today=None):
-    """[(label, figures)] for each quarter of year begun by today: New York
-    orders paid in the quarter, and their sales (with tax), taxable amount
-    and tax collected, less the refunds issued in the quarter."""
+@dataclass(frozen=True)
+class Period:
+    """A sales tax filing period: start up to (not including) end."""
+    start: date
+    end: date
+    label: str
+    due: date
+
+    @property
+    def last_day(self):
+        return self.end - timedelta(days=1)
+
+
+def ny_quarter(day):
+    """The New York sales tax quarter holding day.  New York's quarters run
+    March to May, June to August, September to November and December to
+    February, each due on the 20th of the month after; an annual filer's
+    year runs March to February."""
+    month = day.month
+    start_month = 12 if month in (12, 1, 2) else (month - 3) // 3 * 3 + 3
+    start = date(day.year - 1 if month in (1, 2) else day.year, start_month, 1)
+    end = date(start.year + 1, start.month - 9, 1) if start.month > 9 else date(start.year, start.month + 3, 1)
+    last = end - timedelta(days=1)
+    return Period(start, end, f"{start:%b %Y} to {last:%b %Y}", end.replace(day=20))
+
+
+def ny_quarters(today=None, count=6):
+    """The last `count` New York sales tax quarters to today, newest first."""
     today = today or timezone.localdate()
+    periods, day = [], today
+    for _ in range(count):
+        period = ny_quarter(day)
+        periods.append(period)
+        day = period.start - timedelta(days=1)
+    return periods
+
+
+def ny_tax_by_quarter(today=None, count=4):
+    """[(Period, figures)] for the last `count` New York sales tax quarters
+    to today, oldest first: New York orders paid in the quarter, and their
+    sales (with tax), taxable amount and tax collected, less the refunds
+    issued in the quarter."""
     rows = []
-    for quarter in range(4):
-        start = date(year, quarter * 3 + 1, 1)
-        end = date(year + 1, 1, 1) if quarter == 3 else date(year, quarter * 3 + 4, 1)
-        if start > today:
-            break
+    for period in reversed(ny_quarters(today, count)):
+        start, end = period.start, period.end
         figures = Order.objects.filter(TOOK_PAYMENT, ship_state="NY", paid_at__date__gte=start,
                                        paid_at__date__lt=end).aggregate(
             orders=Count("pk"), sales=Sum("total"), taxable=Sum("taxable_amount"), tax=Sum("tax_amount"))
@@ -126,7 +160,7 @@ def ny_tax_by_quarter(year, today=None):
             figures["sales"] -= share.amount
             figures["taxable"] -= share.taxable
             figures["tax"] -= share.tax
-        rows.append((f"{year} Q{quarter + 1}", figures))
+        rows.append((period, figures))
     return rows
 
 

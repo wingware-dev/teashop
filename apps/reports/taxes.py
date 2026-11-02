@@ -18,7 +18,7 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from apps.checkout.models import Order
-from apps.checkout.nexus import TOOK_PAYMENT, refund_shares
+from apps.checkout.nexus import TOOK_PAYMENT, Period, ny_quarter, ny_quarters, refund_shares  # noqa: F401
 
 from . import sales
 
@@ -29,44 +29,8 @@ aware = sales.aware
 
 # -- New York sales tax --------------------------------------------------------
 
-@dataclass(frozen=True)
-class Period:
-    start: date
-    end: date  # the day after the last
-    label: str
-    due: date
-
-    @property
-    def last_day(self):
-        return self.end - timedelta(days=1)
-
-
-def _add_months(day, months):
-    return sales.purchasing.add_months(day, months)
-
-
-def ny_quarter(day):
-    """The New York sales tax quarter (Mar-May, Jun-Aug, Sep-Nov, Dec-Feb)
-    holding day."""
-    month = day.month
-    start_month = 12 if month in (12, 1, 2) else (month - 3) // 3 * 3 + 3
-    year = day.year - 1 if month in (1, 2) else day.year
-    start = date(year, start_month, 1)
-    end = _add_months(start, 3)
-    last = end - timedelta(days=1)
-    return Period(start, end, f"{start:%b %Y} to {last:%b %Y}", end.replace(day=20))
-
-
-def ny_quarters(today=None, count=6):
-    """The last `count` New York sales tax quarters to today, newest first."""
-    today = today or timezone.localdate()
-    periods, day = [], today
-    for _ in range(count):
-        period = ny_quarter(day)
-        periods.append(period)
-        day = period.start - timedelta(days=1)
-    return periods
-
+# New York's sales tax periods live in checkout (nexus.py), whose own
+# sales-tax table uses them too.
 
 @dataclass
 class Jurisdiction:
