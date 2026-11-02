@@ -1,6 +1,6 @@
 """Sample day-to-day business for a development database, on top of the
 demo catalog (demo.py): suppliers and deliveries, packaging and shipping
-supplies, box sizes and a scale, orders at each stage, a subscription,
+supplies, box sizes, package dimensions and a scale, orders at each stage, a subscription,
 email-list subscribers with a draft mailing, a support conversation and
 marketing ideas.
 
@@ -19,7 +19,7 @@ from django.utils import timezone
 from apps.catalog.models import Product, SizeOption
 from apps.checkout.models import Customer, Order, OrderLine, Subscription, SubscriptionPlan
 from apps.emaillist.models import ConsentEvent, Mailing, Subscriber
-from apps.fulfillment.models import BoxSize, Scale
+from apps.fulfillment.models import BoxSize, PackageDimensions, Scale
 from apps.inventory.models import Item, Lot, Receipt, Supplier
 from apps.marketing.models import Campaign, Idea
 from apps.support.models import Conversation, Draft, Message
@@ -56,6 +56,17 @@ BOXES = [
     ("BOX-8X6X4", "8", "6", "4", 120, 2500, 2),
     ("BOX-12X9X6", "12", "9", "6", 260, 9000, 4),
 ]
+
+# Outside size of one packed package of the demo teas' sizes, for the
+# box suggestion: (package, net grams) -> (length, width, height) in inches.
+PACKAGE_DIMENSIONS = {
+    ("pouch", 25): ("5", "3.5", "1.25"),
+    ("pouch", 30): ("5", "3.5", "1.5"),
+    ("pouch", 50): ("6", "4", "1.5"),
+    ("tin", 25): ("2.75", "2.75", "3"),
+    ("tin", 50): ("3", "3", "4"),
+    ("tin", 100): ("3.25", "3.25", "5.5"),
+}
 
 CUSTOMERS = [
     dict(email="maya.okafor@example.com", ship_name="Maya Okafor", ship_street1="14 Elm Street",
@@ -149,6 +160,18 @@ def _supplies(suppliers):
         defaults=dict(name="Bench scale", make_model="Demo Scales PB-3000", ntep_certificate="00-000",
                       registration="DEMO-WM-1234", sealed_on=today - timedelta(days=120),
                       inspection_due=today + timedelta(days=245)))
+
+
+def _package_dimensions():
+    """Measured sizes for the demo teas' pouches and tins; sizes the owner
+    made, or already measured, are left alone."""
+    sizes = SizeOption.objects.filter(product__slug__in=[tea["slug"] for tea in demo.TEAS], dimensions=None)
+    for size in sizes:
+        measured = PACKAGE_DIMENSIONS.get((size.package, size.net_grams))
+        if measured is None:
+            continue
+        length, width, height = (Decimal(d) for d in measured)
+        PackageDimensions.objects.create(size_option=size, length_in=length, width_in=width, height_in=height)
 
 
 def _deliveries(suppliers):
@@ -332,6 +355,7 @@ def load(owner=None):
     now = timezone.now()
     suppliers = _suppliers()
     _supplies(suppliers)
+    _package_dimensions()
     _deliveries(suppliers)
     customers = _customers()
     for spec in ORDERS:
