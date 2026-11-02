@@ -48,7 +48,19 @@ def ship_status(order, today=None):
     return "ok", f"Ship by {order.ship_by:%a %b %-d}"
 
 
-def _row(order, today):
+def shipped_status(order):
+    """("late" | "ok", text) for a shipped order: whether it went out after
+    its promised ship date, which only shipped_at can tell."""
+    if not order.ship_by or not order.shipped_at:
+        return "ok", ""
+    shipped_on = timezone.localdate(order.shipped_at)
+    if shipped_on <= order.ship_by:
+        return "ok", ""
+    days = (shipped_on - order.ship_by).days
+    return "late", f"Shipped late: promised {order.ship_by:%a %b %-d} ({days} day{'s' if days != 1 else ''} after)"
+
+
+def _row(order, today, shipped=False):
     """What the queue shows for one order."""
     active = services.active_parcels(order)
     packed = needed = 0
@@ -61,7 +73,7 @@ def _row(order, today):
                 allergens.update(services.allergens_of(services.likely_lot(row.size)))
             for package in row.packed:
                 allergens.update(services.allergens_of(package.sold_package.tea_lot))
-    status, text = ship_status(order, today)
+    status, text = shipped_status(order) if shipped else ship_status(order, today)
     return {
         "order": order, "status": status, "status_text": text, "packed": packed, "needed": needed,
         "allergens": sorted(allergens),
@@ -83,7 +95,8 @@ def queue(request):
     show = request.GET.get("show", "to_pack")
     if show == "shipped":
         orders = Order.objects.filter(status=Order.Status.SHIPPED, shipped_at__gte=timezone.now() - timedelta(days=14))
-        rows = [_row(order, today) for order in orders.order_by("-shipped_at").prefetch_related("lines")[:100]]
+        rows = [_row(order, today, shipped=True)
+                for order in orders.order_by("-shipped_at").prefetch_related("lines")[:100]]
     else:
         orders = Order.objects.filter(
             Q(status=Order.Status.PAID) | Q(parcels__status__in=Parcel.ACTIVE_STATUSES, status=Order.Status.SHIPPED)

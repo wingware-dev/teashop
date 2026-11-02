@@ -7,6 +7,7 @@ from decimal import Decimal
 from django.core import mail
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.checkout.models import Order
 from apps.core.testing import login_verified, make_owner
@@ -44,6 +45,20 @@ class OwnerPagesTests(FulfillmentTestCase):
         self.assertNotIn(waiting, [row["order"] for row in to_pack.context["rows"]])
         backordered = self.client.get(reverse("fulfillment:queue") + "?show=backordered")
         self.assertEqual([row["order"] for row in backordered.context["rows"]], [waiting])
+
+    def test_shipped_tab_judges_lateness_by_the_ship_date(self):
+        now = timezone.now()
+        on_time = paid_order([(self.assam, 1)], ship_by=date.today() - timedelta(days=3))
+        late = paid_order([(self.assam, 1)], ship_by=date.today() - timedelta(days=3))
+        Order.objects.filter(pk=on_time.pk).update(status=Order.Status.SHIPPED, shipped_at=now - timedelta(days=4))
+        Order.objects.filter(pk=late.pk).update(status=Order.Status.SHIPPED, shipped_at=now - timedelta(days=1))
+        page = self.client.get(reverse("fulfillment:queue") + "?show=shipped")
+        rows = {row["order"]: row for row in page.context["rows"]}
+        self.assertEqual((rows[on_time]["status"], rows[on_time]["status_text"]), ("ok", ""))
+        self.assertEqual(rows[late]["status"], "late")
+        self.assertTrue(rows[late]["status_text"].startswith("Shipped late: promised"))
+        self.assertIn("(2 days after)", rows[late]["status_text"])
+        self.assertNotContains(page, "Late: promised")
 
     def test_packing_list_puts_allergen_teas_last(self):
         paid_order([(self.vanilla, 2), (self.assam, 3)])
