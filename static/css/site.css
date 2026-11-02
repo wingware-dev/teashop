@@ -180,6 +180,8 @@ img { max-width: 100%; height: auto; }
 .muted { color: var(--muted); }
 .small { font-size: 0.875rem; }
 .inline { display: inline; }
+/* A gauge (<meter>) as wide as its text, not the browser's ~80px. */
+meter.gauge { display: block; width: 100%; max-width: 24rem; height: 1.25rem; }
 
 .container { max-width: var(--page); margin: 0 auto; padding: 1.25rem; }
 .container.narrow { max-width: 28rem; }

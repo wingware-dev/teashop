@@ -248,10 +248,19 @@ class OwnerPageTests(TestCase):
         AIUsage.objects.create(agent="support-agent", model="claude-x", cost=Decimal("2.5"), live=True)
         AuditEvent.objects.create(actor_type="agent", actor_label="support-agent", action="support.drafted",
                                   timestamp=timezone.now())
+        AuditEvent.objects.create(actor_type="agent", actor_label="support-agent", action="agents.ai_call",
+                                  message="claude-x: 10 in, 5 out", timestamp=timezone.now())
+        AuditEvent.objects.create(actor_type="system", actor_label="system", action="reports.email_sent",
+                                  message="overdue: 1 item", timestamp=timezone.now())
         page = self.client.get(reverse("agents:owner_home"))
         self.assertContains(page, "$2.50")
         self.assertContains(page, "of the <strong>$10.00</strong> monthly cap")
+        self.assertContains(page, '<meter id="spend-meter" class="gauge"')
         self.assertContains(page, "support.drafted")
+        # Details start with the message when there is no object, without a stray " · ".
+        self.assertContains(page, "<td>claude-x: 10 in, 5 out</td>")
+        # Only what agents did is listed.
+        self.assertNotContains(page, "reports.email_sent")
 
     def test_needs_owner(self):
         self.assertEqual(self.client.get(reverse("agents:owner_home")).status_code, 302)

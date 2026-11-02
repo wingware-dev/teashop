@@ -14,7 +14,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps import jobs
-from apps.audit import acting_as_agent
+from apps.audit import Actor, acting_as, acting_as_agent
 from apps.audit.models import AuditEvent
 from apps.jobs import alerts, queue
 from apps.jobs.models import Job, Schedule
@@ -101,11 +101,18 @@ class EnqueueTests(QueueTestCase):
             jobs.enqueue(print, "hello")
 
     def test_audit_events_credited_to_whoever_queued_it(self):
+        with acting_as(Actor(type="user", user_id=7, label="owner")):
+            records_something.enqueue()
+        jobs.run_due()
+        event = AuditEvent.objects.get(action="tests.did_something")
+        self.assertEqual((event.actor_type, event.actor_label), ("user", "owner"))
+
+    def test_jobs_an_agent_queues_run_as_the_system(self):
         with acting_as_agent("support-agent"):
             records_something.enqueue()
         jobs.run_due()
         event = AuditEvent.objects.get(action="tests.did_something")
-        self.assertEqual(event.actor_label, "support-agent")
+        self.assertEqual((event.actor_type, event.actor_label), ("system", "system"))
 
     def test_job_rows_stay_out_of_the_audit_log(self):
         remember.enqueue(1)

@@ -7,7 +7,7 @@
 <section class="card" aria-labelledby="spend-title">
   <h2 id="spend-title">Spending this month</h2>
   <p><strong>${{ spent|floatformat:2 }}</strong> of the <strong>${{ cap|floatformat:2 }}</strong> monthly cap ({{ percent }}%); ${{ remaining|floatformat:2 }} left.</p>
-  <p><label for="spend-meter">Share of the cap used</label><br><meter id="spend-meter" min="0" max="{{ cap|floatformat:2 }}" low="{{ cap|floatformat:2 }}" value="{{ spent|floatformat:2 }}">{{ percent }}%</meter></p>
+  <p><label for="spend-meter">Share of the cap used</label><meter id="spend-meter" class="gauge" min="0" max="{{ cap|floatformat:2 }}" low="{{ cap|floatformat:2 }}" value="{{ spent|floatformat:2 }}">{{ percent }}%</meter></p>
   <p class="small muted">When the cap is reached the agents stop calling the AI until the month ends, and hand their work to you.  Change it with AGENTS_MONTHLY_CAP in .env.  Model: {{ model }}, at ${{ prices.0 }} per million input tokens and ${{ prices.1 }} per million output tokens (check these against Anthropic's price list).</p>
 </section>
 
@@ -38,7 +38,7 @@
         <thead><tr><th scope="col">When</th><th scope="col">Agent</th><th scope="col">Action</th><th scope="col">Details</th></tr></thead>
         <tbody>
           {% for event in events %}
-            <tr><td>{{ event.timestamp|date:"M j, g:i a" }}</td><td>{{ event.actor_label }}</td><td>{{ event.action }}</td><td>{{ event.object_repr }}{% if event.message %} · {{ event.message|truncatechars:160 }}{% endif %}</td></tr>
+            <tr><td>{{ event.timestamp|date:"M j, g:i a" }}</td><td>{{ event.actor_label }}</td><td>{{ event.action }}</td><td>{{ event.object_repr }}{% if event.object_repr and event.message %} · {% endif %}{{ event.message|truncatechars:160 }}</td></tr>
           {% endfor %}
         </tbody>
       </table>

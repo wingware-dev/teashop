@@ -38,10 +38,21 @@ def acting_as(actor):
 
 
 def acting_as_agent(name):
-    """Attribute everything done inside the block to the named AI agent."""
+    """Attribute what is done inside the block to the named AI agent: the
+    changes its tools make, and the messages and drafts it sends.  Not
+    what the shop does on the side: jobs queued in the block run as the
+    system (apps.jobs), and lazily created settings singletons are made
+    with acting_as_system()."""
     if not name:
         raise ValueError("An agent needs a name for the audit log")
     return acting_as(Actor(type="agent", label=name))
+
+
+def acting_as_system():
+    """Attribute what is done inside the block to the system, whoever is
+    acting around it: for housekeeping nobody decided on, such as creating
+    a settings row the first time it is read."""
+    return acting_as(SYSTEM)
 
 
 def actor_for_request(request, ip_address):

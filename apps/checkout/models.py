@@ -17,6 +17,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.audit.context import acting_as_system
 from apps.catalog.models import SizeOption
 
 from .places import SHIPPING_STATES, STATE_NAMES
@@ -78,7 +79,13 @@ class CheckoutSettings(models.Model):
 
     @classmethod
     def current(cls):
-        return cls.objects.get_or_create(pk=1)[0]
+        found = cls.objects.filter(pk=1).first()
+        if found is not None:
+            return found
+        # Made on first read, perhaps inside an agent's lookup: the shop's
+        # housekeeping, not something the agent did.
+        with acting_as_system():
+            return cls.objects.get_or_create(pk=1)[0]
 
     def clean(self):
         if self.vacation_mode and not (self.vacation_message or self.vacation_ships_from):

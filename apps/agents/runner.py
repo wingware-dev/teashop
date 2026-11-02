@@ -10,9 +10,9 @@ results, until it calls a tool marked final (an agent's way of saying what
 it decided: reply, escalate, draft) or answers in plain text, or runs out
 of turns.  Around each step:
 
-- the whole run is credited to the agent in the audit log
-  (apps.audit.acting_as_agent): any model change it makes, and the jobs it
-  queues;
+- the run is credited to the agent in the audit log
+  (apps.audit.acting_as_agent): the model changes its tools make and what
+  it sends; jobs queued during the run run later as the system;
 - before each call, budget.check() refuses one that would pass the
   monthly cap (BudgetExceeded); after it, budget.record() keeps the cost
   and the audit log gets "agents.ai_call";

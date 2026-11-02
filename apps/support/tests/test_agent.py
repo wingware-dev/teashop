@@ -11,6 +11,7 @@ from apps.agents import ai
 from apps.agents.ai import ScriptedClient, tool_use_block
 from apps.agents.models import AIUsage
 from apps.audit.models import AuditEvent
+from apps.checkout.models import CheckoutSettings
 from apps.support import agent, services
 from apps.support.alerts import attention_items
 from apps.support.models import Category, CategoryMode, Conversation, Draft, Message
@@ -59,6 +60,24 @@ class WatchModeTests(TestCase):
         actions = set(AuditEvent.objects.filter(actor_type="agent", actor_label=agent.AGENT)
                       .values_list("action", flat=True))
         self.assertTrue({"agents.ai_call", "agents.tool_call", "agents.decided", "support.drafted"} <= actions)
+
+    def test_only_what_the_agent_did_is_credited_to_it(self):
+        placed = order()
+        CheckoutSettings.objects.all().delete()  # so its lookup creates the settings row
+        conversation = chat(f"Hi, where is my order {placed.number}?")
+        self.assertEqual(conversation.status, Conversation.Status.DRAFTED)
+        by_agent = AuditEvent.objects.filter(actor_type="agent")
+        # Its draft is its own...
+        self.assertTrue(by_agent.filter(object_type="support.draft", action="create").exists())
+        self.assertTrue(by_agent.filter(action="support.drafted").exists())
+        # ...but not the settings row its lookup made, nor the owner's
+        # reminder email from the job it queued.
+        self.assertTrue(CheckoutSettings.objects.exists())
+        self.assertFalse(by_agent.filter(object_type="checkout.checkoutsettings").exists())
+        self.assertTrue(AuditEvent.objects.filter(object_type="checkout.checkoutsettings", action="create",
+                                                  actor_type="system").exists())
+        self.assertTrue(AuditEvent.objects.filter(action="reports.email_sent").exists())
+        self.assertFalse(by_agent.filter(action__endswith=".email_sent").exists())
 
     def test_order_of_someone_else_is_not_shown(self):
         placed = order(email="grace@example.com")

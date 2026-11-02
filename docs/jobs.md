@@ -88,7 +88,8 @@ check that record first when sending twice would hurt.  A job whose
 object is gone should return, not raise.
 
 What a job records in the audit log is credited to whoever queued it (the
-signed-in owner, an agent, a customer's request), as if it ran then.
+signed-in owner, a customer's request), as if it ran then; a job an AI
+agent queues runs as the system, since the agent did not decide on it.
 
 ## Schedules (daily and periodic jobs)
 

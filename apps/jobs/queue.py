@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.module_loading import import_string
 
 from apps.audit import Actor, acting_as, current_actor, record
+from apps.audit.context import SYSTEM
 
 from .models import Job, Schedule
 
@@ -104,7 +105,7 @@ def enqueue(job_function, *args, run_at=None, delay=None, key="", **kwargs):
     if run_at is None:
         run_at = now + delay if delay else now
     queued = Job.objects.create(name=job_function.name, args=list(args), kwargs=kwargs, key=key, run_at=run_at,
-                                max_attempts=job_function.max_attempts, actor=_actor_to_json(current_actor()))
+                                max_attempts=job_function.max_attempts, actor=_actor_to_json(_job_actor()))
     if settings.JOBS_EAGER and run_at <= now:
         _run(queued, job_function)
     return queued
@@ -296,6 +297,14 @@ def retry_now(queryset):
     "Run again" action).  Returns how many."""
     return queryset.filter(status=Job.Status.FAILED).update(
         status=Job.Status.QUEUED, attempts=0, run_at=timezone.now(), finished_at=None)
+
+
+def _job_actor():
+    """Who a job queued now runs as: whoever queued it, except that a job
+    an AI agent queues (an email, a reminder) runs later as the system,
+    since the agent did not decide on it."""
+    actor = current_actor()
+    return SYSTEM if actor.type == "agent" else actor
 
 
 def _actor_to_json(actor):

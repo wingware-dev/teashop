@@ -72,12 +72,17 @@ def draft_post(idea):
   `outcome.input` its input), stops with plain text (`stopped="text"`), or
   runs out of turns (`stopped="turns"`).  Final tools are how the agent
   says what it decided; your code then checks and acts on it.
-- Everything inside `run()` is credited to the agent in the audit log
-  (`acting_as_agent`): model changes, jobs it queues, and its own events:
+- What the agent does on purpose inside `run()` is credited to it in the
+  audit log (`acting_as_agent`): its tools' model changes, the messages
+  and drafts it sends, and its own events:
   `agents.ai_call` (tokens and cost), `agents.tool_call` (with the input),
   `agents.tool_refused`, `agents.decided`, `agents.gave_up`.  Record your
   agent's own actions (`record("marketing.drafted", obj=post)`) inside
-  `acting_as_agent(AGENT)` too.
+  `acting_as_agent(AGENT)` too.  Not credited to it: jobs queued during
+  the run (they run later as the system) and settings rows created the
+  first time they are read (wrap such lazy creation in
+  `acting_as_system()`).  The owner's AI agents page lists only events
+  credited to an agent.
 - A tool's input comes from the model, so treat it as untrusted: check it
   in the tool (the support agent's order lookup needs the order number
   *and* the email on it).  `Tool.validate()` already refuses missing,
