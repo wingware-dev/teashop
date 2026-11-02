@@ -98,6 +98,16 @@ services:
       OWNER_NEW_ORDER_EMAILS: ${OWNER_NEW_ORDER_EMAILS:-daily}
       SHIPPING_LABEL_FORMAT: ${SHIPPING_LABEL_FORMAT:-PDF}
       PACKAGE_LABEL_SIZE: ${PACKAGE_LABEL_SIZE:-4x2}
+      # Owner dashboard, Wave and estimated tax (docs/reports.md).
+      ATTENTION_DEADLINES: ${ATTENTION_DEADLINES:-}
+      ATTENTION_DAILY_AT: ${ATTENTION_DAILY_AT:-08:00}
+      WAVE_CLIENT: ${WAVE_CLIENT:-fake}
+      WAVE_TOKEN: ${WAVE_TOKEN:-}
+      WAVE_BUSINESS_ID: ${WAVE_BUSINESS_ID:-}
+      WAVE_ACCOUNTS: ${WAVE_ACCOUNTS:-}
+      WAVE_START_DATE: ${WAVE_START_DATE:-}
+      ESTIMATED_TAX_FEDERAL_RATE: ${ESTIMATED_TAX_FEDERAL_RATE:-0.12}
+      ESTIMATED_TAX_STATE_RATE: ${ESTIMATED_TAX_STATE_RATE:-0.055}
       # Email list (docs/emaillist.md).  Empty values fall back to the
       # defaults in config/settings.py.
       EMAIL_LIST_EMAIL_HOST: ${EMAIL_LIST_EMAIL_HOST:-}
