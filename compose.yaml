@@ -63,6 +63,36 @@ services:
       ORGANIC_SALES_ALERT: ${ORGANIC_SALES_ALERT:-4000}
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      # Checkout (docs/checkout.md).  Settings with a default in
+      # config/settings.py repeat it here, since an empty value would
+      # replace it there.
+      SITE_URL: ${SITE_URL:-https://${SITE_DOMAIN}}
+      SHOP_CONTACT_EMAIL: ${SHOP_CONTACT_EMAIL:-hello@example.com}
+      SHOP_POSTAL_ADDRESS: ${SHOP_POSTAL_ADDRESS:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-${SHOP_NAME:-Teashop} <orders@example.com>}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      OWNER_NOTIFY_EMAIL: ${OWNER_NOTIFY_EMAIL:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_ALLOW_LIVE: ${STRIPE_ALLOW_LIVE:-false}
+      EASYPOST_API_KEY: ${EASYPOST_API_KEY:-}
+      EASYPOST_ALLOW_LIVE: ${EASYPOST_ALLOW_LIVE:-false}
+      SHIP_FROM_NAME: ${SHIP_FROM_NAME:-${SHOP_NAME:-Teashop}}
+      SHIP_FROM_STREET1: ${SHIP_FROM_STREET1:-}
+      SHIP_FROM_STREET2: ${SHIP_FROM_STREET2:-}
+      SHIP_FROM_CITY: ${SHIP_FROM_CITY:-}
+      SHIP_FROM_STATE: ${SHIP_FROM_STATE:-NY}
+      SHIP_FROM_ZIP: ${SHIP_FROM_ZIP:-}
+      SHIP_FROM_PHONE: ${SHIP_FROM_PHONE:-}
+      TAX_PROVIDER: ${TAX_PROVIDER:-table}
+      SALES_TAX_STATES: ${SALES_TAX_STATES:-NY}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      CSP_REPORT_URI: ${CSP_REPORT_URI:-}
     volumes:
       - media:/app/var/media
     logging: *logging
