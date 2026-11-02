@@ -1,0 +1,36 @@
+/* The support chat and the owner's support pages. */
+
+.ai-notice { border-left: 4px solid var(--c-cornflower); background: var(--c-cornflower-tint); }
+
+.ai-badge {
+  display: inline-block;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--c-cornflower-ink);
+  color: var(--c-cornflower-ink);
+  background: var(--c-cornflower-tint);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chat-log { list-style: none; margin: 1.25rem 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.chat-msg {
+  max-width: 90%;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.chat-msg.from-customer { align-self: flex-end; background: var(--c-moss-tint); }
+.chat-msg.from-agent { border-left: 4px solid var(--c-cornflower); }
+.chat-msg.from-owner { border-left: 4px solid var(--c-bark); }
+.chat-who { margin: 0 0 0.25rem; font-size: 0.9rem; color: var(--muted); }
+.chat-who strong { color: var(--text); }
+.chat-body { margin: 0; }
+
+.draft-box { border-left: 4px solid var(--c-buttercup); }
+.reason { margin: 0.5rem 0; }
+.support-list li { padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+.support-list li:last-child { border-bottom: 0; }

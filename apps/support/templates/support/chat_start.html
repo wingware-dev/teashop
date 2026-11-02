@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static checkout %}
+{% block title %}Chat with us · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/support.css' %}">{% if turnstile_site_key %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  <h1>Chat with us</h1>
+  <p class="notice ai-notice" role="note"><span><strong>{{ ai_label }}:</strong> {{ chat_notice }}</span></p>
+  <p>Ask about an order (have its number ready), how to brew one of our teas, or shipping times.  For anything else (returns, a damaged parcel, wholesale) a person at the shop will answer, usually within a day.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "checkout/_protection.html" %}
+    {% field form.email %}
+    {% field form.name %}
+    {% field form.message %}
+    <div class="actions"><button type="submit">Start the chat</button></div>
+  </form>
+  <p class="small muted">Rather email?  Write to <a href="mailto:{{ support_email }}">{{ support_email }}</a>.  What you write is kept with your conversation and read by the AI service that runs the assistant; see our <a href="{% url 'storefront:policy' 'privacy' %}">privacy policy</a>.</p>
+</div>
+{% endblock %}

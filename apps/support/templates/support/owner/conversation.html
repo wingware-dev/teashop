@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static checkout %}
+{% block title %}Support: {{ conversation.email }} · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/support.css' %}">{% endblock %}
+{% block content %}
+<div class="narrow-form">
+  <h1>{{ conversation.get_channel_display }} with {{ conversation.name|default:conversation.email }}</h1>
+  <p><a href="{% url 'support:owner_inbox' %}">Customer support</a></p>
+  <p>{{ conversation.email }} · {{ conversation.get_status_display }}{% if conversation.category %} · {{ conversation.get_category_display }}{% endif %}{% if conversation.order %} · <a href="{% url 'admin:checkout_order_change' conversation.order.pk %}">Order {{ conversation.order.number }}</a>{% endif %}</p>
+  {% if conversation.subject %}<p><strong>Subject:</strong> {{ conversation.subject }}</p>{% endif %}
+  {% if conversation.status == "escalated" %}<p class="notice reason" role="note"><span><strong>Why it came to you:</strong> {{ conversation.escalation_reason }}</span></p>{% endif %}
+
+  <ol class="chat-log" aria-label="Messages">
+    {% for message in chat_messages %}{% include "support/_message.html" with customer_label=conversation.email ai_label="AI assistant" %}{% endfor %}
+  </ol>
+
+  <section class="card{% if draft %} draft-box{% endif %}" aria-labelledby="reply-title">
+    <h2 id="reply-title">{% if draft %}The assistant's draft: edit and send{% else %}Your reply{% endif %}</h2>
+    {% if draft %}<p class="small muted">{{ draft.get_category_display }}.  Change it as you like: the assistant learns your wording from your edits, and drafts you send unchanged count towards letting it answer these alone.  It goes out from you, without the AI label.</p>{% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.draft }}
+      {% field form.body %}
+      <div class="actions"><button type="submit">Send{% if conversation.channel == "chat" %} (in the chat and by email){% else %} by email{% endif %}</button></div>
+    </form>
+    <div class="actions">
+      {% if draft %}
+        <form method="post" action="{% url 'support:owner_discard_draft' conversation.pk %}" class="inline">{% csrf_token %}<button type="submit" class="secondary">Discard the draft</button></form>
+      {% endif %}
+      {% if conversation.status != "closed" %}
+        <form method="post" action="{% url 'support:owner_close' conversation.pk %}" class="inline">{% csrf_token %}<button type="submit" class="secondary">Close without replying</button></form>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

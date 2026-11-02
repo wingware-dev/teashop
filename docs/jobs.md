@@ -17,7 +17,9 @@ What runs on it now: every email in `apps/checkout/emails.py` and
 (`apps/checkout/jobs.py`), the email list's daily send and each mailing
 email (`apps/emaillist/jobs.py`, `sending.py`), the owner's daily and
 overdue reminders, the nightly summary for Wave (`apps/reports/jobs.py`),
-reading Stripe's fee for each payment (`apps/checkout/jobs.py`) and a
+reading Stripe's fee for each payment (`apps/checkout/jobs.py`), the
+support agent's run for each customer message, reading the support inbox
+and support replies by email (`apps/support/jobs.py`, `emails.py`) and a
 nightly purge of old job rows.
 
 ## Declaring and queueing a job

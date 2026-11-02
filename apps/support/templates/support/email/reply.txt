@@ -1,0 +1,8 @@
+{% autoescape off %}{{ body }}
+
+-- 
+{{ shop_name }}
+{% if chat_url %}Your chat with us: {{ chat_url }}
+{% endif %}Reply to this email to write to us ({{ support_email }}).
+{% if postal_address %}{{ postal_address }}
+{% endif %}{% endautoescape %}

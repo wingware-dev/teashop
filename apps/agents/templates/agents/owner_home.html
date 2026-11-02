@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}AI agents · {{ shop_name }}{% endblock %}
+{% block content %}
+<h1>AI agents</h1>
+<p><a href="{% url 'core:owner_dashboard' %}">Dashboard</a> · <a href="{% url 'admin:agents_aiusage_changelist' %}">Every AI call</a></p>
+
+<section class="card" aria-labelledby="spend-title">
+  <h2 id="spend-title">Spending this month</h2>
+  <p><strong>${{ spent|floatformat:2 }}</strong> of the <strong>${{ cap|floatformat:2 }}</strong> monthly cap ({{ percent }}%); ${{ remaining|floatformat:2 }} left.</p>
+  <p><label for="spend-meter">Share of the cap used</label><br><meter id="spend-meter" min="0" max="{{ cap|floatformat:2 }}" low="{{ cap|floatformat:2 }}" value="{{ spent|floatformat:2 }}">{{ percent }}%</meter></p>
+  <p class="small muted">When the cap is reached the agents stop calling the AI until the month ends, and hand their work to you.  Change it with AGENTS_MONTHLY_CAP in .env.  Model: {{ model }}, at ${{ prices.0 }} per million input tokens and ${{ prices.1 }} per million output tokens (check these against Anthropic's price list).</p>
+</section>
+
+<section class="card" aria-labelledby="agents-title">
+  <h2 id="agents-title">Agents</h2>
+  {% if agents %}
+    <div class="table-scroll" role="region" aria-label="Agents" tabindex="0">
+      <table class="events">
+        <thead><tr><th scope="col">Agent</th><th scope="col">AI</th><th scope="col" class="num">Calls this month</th><th scope="col" class="num">Cost</th></tr></thead>
+        <tbody>
+          {% for name, live, row in agents %}
+            <tr><th scope="row">{{ name }}</th><td>{% if live %}Claude API (live){% else %}Stand-in (no AI service, free){% endif %}</td><td class="num">{{ row.calls|default:0 }}</td><td class="num">${{ row.cost|default:0|floatformat:2 }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">No agent has run this month.</p>
+  {% endif %}
+  <p class="small muted">Agents use a free stand-in until you name them in AGENTS_LIVE and set ANTHROPIC_API_KEY (docs/agents.md).</p>
+</section>
+
+<section class="card" aria-labelledby="events-title">
+  <h2 id="events-title">What the agents did lately</h2>
+  {% if events %}
+    <div class="table-scroll" role="region" aria-label="Agent actions" tabindex="0">
+      <table class="events">
+        <thead><tr><th scope="col">When</th><th scope="col">Agent</th><th scope="col">Action</th><th scope="col">Details</th></tr></thead>
+        <tbody>
+          {% for event in events %}
+            <tr><td>{{ event.timestamp|date:"M j, g:i a" }}</td><td>{{ event.actor_label }}</td><td>{{ event.action }}</td><td>{{ event.object_repr }}{% if event.message %} · {{ event.message|truncatechars:160 }}{% endif %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">Nothing yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

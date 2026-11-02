@@ -104,6 +104,7 @@
       <nav aria-label="Policies">
         <h2>Help</h2>
         <ul>
+          {% if shop_visible %}<li><a href="{% url 'support:chat_start' %}">Chat with us</a></li>{% endif %}
           <li><a href="{% url 'storefront:policy' 'shipping' %}">Shipping</a></li>
           <li><a href="{% url 'storefront:policy' 'returns' %}">Returns and refunds</a></li>
           <li><a href="{% url 'storefront:policy' 'subscriptions' %}">Subscription terms</a></li>

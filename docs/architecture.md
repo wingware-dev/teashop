@@ -17,6 +17,8 @@ be built side by side with few conflicts:
 | `fulfillment` | 5 | Order queue, packing records, labels, postage, refunds, pickups; see `docs/fulfillment.md` |
 | `reports` | 6 | Sales, margin, NY sales-tax and estimated-tax reports, the daily summary for Wave, the reminder emails for "Needs your attention"; see `docs/reports.md` |
 | `emaillist` | 8 | The marketing email list: opt-in with confirmation, consent records, per-subscriber frequency limits, mailings you approve; see `docs/emaillist.md` |
+| `agents` | 9 | What every AI agent shares: the AI client and its stand-ins, the monthly spending cap, the "AI assistant" label, untrusted-input handling, output checks, the audited tool loop; see `docs/agents.md` |
+| `support` | 9 | Customer support: the chat, the support inbox, the support agent with watch mode and escalations; see `docs/support.md` |
 
 Names for later phases are suggestions; pick what fits.  To add an app:
 
@@ -61,6 +63,8 @@ deadline before a reminder email; `key` must stay the same while the item
 is the same thing (no counts in it), as the item's clock is kept under it;
 `since` is when it began waiting, if known.  See `docs/reports.md`.  inventory (low stock, best-by dates, lots on hold)
 and catalog (organic sales limit, sizes that can't be packed) do this.
+support registers kind "support" items (escalations and drafts to check),
+so their reminder goes out at once.
 `register_shortcut(title, url_name)` adds a link to the dashboard's
 Shortcuts card the same way (purchasing adds its reorder, losses and
 profit pages).

@@ -1,0 +1,4 @@
+<li class="chat-msg from-{{ message.sender }}" id="msg-{{ message.pk }}">
+  <p class="chat-who"><strong>{% if message.sender == "customer" %}{{ customer_label|default:"You" }}{% elif message.sender == "agent" %}{{ shop_name }}{% else %}{{ shop_name }}{% endif %}</strong>{% if message.is_ai %} <span class="ai-badge">{{ ai_label }}</span>{% endif %} <time datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"M j, g:i a" }}</time></p>
+  <div class="chat-body">{% if message.sender == "customer" %}{{ message.body|linebreaksbr }}{% else %}{{ message.body|urlize|linebreaksbr }}{% endif %}</div>
+</li>

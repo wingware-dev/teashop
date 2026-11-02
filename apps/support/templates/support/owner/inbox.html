@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Customer support · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/support.css' %}">{% endblock %}
+{% block content %}
+<h1>Customer support</h1>
+<p><a href="{% url 'core:owner_dashboard' %}">Dashboard</a> · <a href="{% url 'agents:owner_home' %}">AI spending and agent actions</a> · <a href="{% url 'support:chat_start' %}">The customers' chat page</a></p>
+{% if not inbox_on %}<p class="notice" role="note"><span>The support inbox is not connected: only the chat reaches the assistant.  Emails to {{ support_email }} wait in your mailbox.  To connect it, set SUPPORT_INBOX=imap and the SUPPORT_IMAP_* settings (docs/support.md).</span></p>{% endif %}
+
+<section class="card" aria-labelledby="waiting-title">
+  <h2 id="waiting-title">Waiting for you</h2>
+  {% if escalated %}
+    <ul class="plain-list support-list">
+      {% for conversation in escalated %}
+        <li><a href="{{ conversation.get_absolute_url }}">{{ conversation.email }}{% if conversation.subject %}: {{ conversation.subject }}{% endif %}</a> <span class="small muted">{{ conversation.get_channel_display }}, since {{ conversation.escalated_at|date:"M j, g:i a" }}</span><br><span class="small">{{ conversation.escalation_reason }}</span></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Nobody is waiting for you.</p>
+  {% endif %}
+</section>
+
+<section class="card" aria-labelledby="drafts-title">
+  <h2 id="drafts-title">Drafts to check and send</h2>
+  {% if drafted %}
+    <ul class="plain-list support-list">
+      {% for conversation in drafted %}
+        <li><a href="{{ conversation.get_absolute_url }}">{{ conversation.email }}{% if conversation.subject %}: {{ conversation.subject }}{% endif %}</a> <span class="small muted">{{ conversation.get_category_display }}, {{ conversation.get_channel_display|lower }}</span></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No drafts waiting.</p>
+  {% endif %}
+</section>
+
+<section class="card" aria-labelledby="modes-title">
+  <h2 id="modes-title">What the assistant answers alone</h2>
+  <p>In watch mode the assistant drafts and you edit and send; it learns your wording from your edits.  Once at least {{ ready_percent }}% of its last {{ min_drafts }} drafts in a category went out with no or small edits, you can let it answer that category alone.  Everything else always comes to you.</p>
+  <div class="table-scroll" role="region" aria-label="Categories" tabindex="0">
+    <table class="events">
+      <thead><tr><th scope="col">Category</th><th scope="col">Now</th><th scope="col">Drafts sent unchanged</th><th scope="col">Change</th></tr></thead>
+      <tbody>
+        {% for category, alone, ready in categories %}
+          <tr>
+            <th scope="row">{{ category.label }}</th>
+            <td>{% if alone %}Answers alone{% else %}Watch mode{% endif %}</td>
+            <td>{% if ready.decided %}{{ ready.approved }} of the last {{ ready.decided }}{% if ready.needed %} ({{ ready.needed }} more needed){% endif %}{% else %}None decided yet{% endif %}</td>
+            <td>
+              <form method="post" action="{% url 'support:owner_category' category %}" class="inline">
+                {% csrf_token %}
+                {% if alone %}
+                  <input type="hidden" name="answers_alone" value="0"><button type="submit" class="secondary">Back to watch mode</button>
+                {% elif ready.ready %}
+                  <input type="hidden" name="answers_alone" value="1"><button type="submit">Let it answer alone</button>
+                {% else %}
+                  <span class="small muted">Not ready yet</span>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="recent-title">
+  <h2 id="recent-title">Recent conversations</h2>
+  {% if recent %}
+    <div class="table-scroll" role="region" aria-label="Recent conversations" tabindex="0">
+      <table class="events">
+        <thead><tr><th scope="col">Last activity</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col">About</th></tr></thead>
+        <tbody>
+          {% for conversation in recent %}
+            <tr><td>{{ conversation.last_activity_at|date:"M j, g:i a" }}</td><td><a href="{{ conversation.get_absolute_url }}">{{ conversation.email }}</a></td><td>{{ conversation.get_status_display }}</td><td>{{ conversation.get_category_display|default:"—" }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">None yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

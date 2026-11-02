@@ -100,6 +100,8 @@ LOCAL_APPS = [
     "apps.fulfillment",
     "apps.emaillist",
     "apps.reports",
+    "apps.agents",
+    "apps.support",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -290,6 +292,11 @@ AUDIT_EXCLUDED_MODELS = {
     "jobs.schedule",
     # The dashboard queue's clock; reminders sent are recorded as emails.
     "core.attentionrecord",
+    # Recorded as "agents.ai_call" with its cost.
+    "agents.aiusage",
+    # Messages hold the customer's words; "support.*" events record each
+    # one received and sent.
+    "support.message",
 }
 # Fields whose changes alone don't make an event ("*" applies to every model).
 AUDIT_IGNORED_FIELDS = {
@@ -552,6 +559,53 @@ EMAIL_LIST_SEND_AT = env_str("EMAIL_LIST_SEND_AT") or "10:00"
 EMAIL_LIST_CONFIRM_WITHIN = timedelta(days=7)
 # Sign-up form submissions allowed per visitor address per hour.
 EMAIL_LIST_RATE_LIMIT = env_int("EMAIL_LIST_RATE_LIMIT", 10)
+
+# --- AI agents (apps/agents, docs/agents.md) ----------------------------------
+# Agents use a free stand-in that calls no AI service, unless named here
+# (comma-separated, e.g. AGENTS_LIVE=support-agent): those call the Claude
+# API with ANTHROPIC_API_KEY, which is billed by Anthropic per token.
+AGENTS_LIVE = env_list("AGENTS_LIVE")
+ANTHROPIC_API_KEY = env_str("ANTHROPIC_API_KEY")
+if AGENTS_LIVE and not ANTHROPIC_API_KEY:
+    raise ImproperlyConfigured("AGENTS_LIVE is set: set ANTHROPIC_API_KEY too, or empty AGENTS_LIVE")
+AGENTS_MODEL = env_str("AGENTS_MODEL") or "claude-haiku-5-5"
+# Dollars per million input and output tokens for AGENTS_MODEL, as
+# "input,output".  Check them against Anthropic's price list.
+_agent_prices = env_list("AGENTS_PRICE_PER_MTOK", ["1", "5"])
+if len(_agent_prices) != 2:
+    raise ImproperlyConfigured("AGENTS_PRICE_PER_MTOK must be 'input,output', e.g. 1,5")
+AGENTS_PRICE_PER_MTOK = (Decimal(_agent_prices[0]), Decimal(_agent_prices[1]))
+# The most all agents together may spend on AI in a calendar month
+# (dollars).  At the cap they stop calling the AI and hand work to you.
+AGENTS_MONTHLY_CAP = Decimal(env_str("AGENTS_MONTHLY_CAP") or "50")
+
+# --- Customer support (apps/support, docs/support.md) -------------------------
+# The support inbox the agent reads: "" (none: chat only) or "imap", with
+# the mailbox's IMAP settings.  Customers write to SUPPORT_EMAIL (default
+# SHOP_CONTACT_EMAIL), which replies come from.
+SUPPORT_INBOX = env_str("SUPPORT_INBOX")
+if SUPPORT_INBOX not in ("", "imap"):
+    raise ImproperlyConfigured("SUPPORT_INBOX must be empty or 'imap'")
+SUPPORT_IMAP_HOST = env_str("SUPPORT_IMAP_HOST")
+SUPPORT_IMAP_PORT = env_int("SUPPORT_IMAP_PORT", 993)
+SUPPORT_IMAP_USER = env_str("SUPPORT_IMAP_USER")
+SUPPORT_IMAP_PASSWORD = env_str("SUPPORT_IMAP_PASSWORD")
+SUPPORT_IMAP_FOLDER = env_str("SUPPORT_IMAP_FOLDER") or "INBOX"
+if SUPPORT_INBOX == "imap" and not (SUPPORT_IMAP_HOST and SUPPORT_IMAP_USER and SUPPORT_IMAP_PASSWORD):
+    raise ImproperlyConfigured("SUPPORT_INBOX=imap needs SUPPORT_IMAP_HOST, SUPPORT_IMAP_USER and SUPPORT_IMAP_PASSWORD")
+SUPPORT_EMAIL = env_str("SUPPORT_EMAIL") or SHOP_CONTACT_EMAIL
+# How often the inbox is read.
+SUPPORT_POLL_MINUTES = env_int("SUPPORT_POLL_MINUTES", 2)
+# Watch mode: a category is ready to answer on its own once this many of
+# its latest drafts have been decided and at least SUPPORT_READY_RATE of
+# them went out with no or small edits.  You turn it on.
+SUPPORT_READY_MIN_DRAFTS = env_int("SUPPORT_READY_MIN_DRAFTS", 20)
+SUPPORT_READY_RATE = float(env_str("SUPPORT_READY_RATE") or "0.9")
+# Chat messages allowed per visitor address per hour, and agent runs per
+# customer (email address) per day; past it, messages go to you unread by
+# the agent (floods and mail loops cost nothing).
+SUPPORT_CHAT_RATE_LIMIT = env_int("SUPPORT_CHAT_RATE_LIMIT", 30)
+SUPPORT_AGENT_RUNS_PER_DAY = env_int("SUPPORT_AGENT_RUNS_PER_DAY", 15)
 
 # --- Logging: everything to stdout, Docker rotates the files ----------------
 LOG_LEVEL = env_str("DJANGO_LOG_LEVEL", "INFO")
