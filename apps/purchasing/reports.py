@@ -162,7 +162,7 @@ def profitability(start, end):
     the total.  Returns (by_tea, by_size, total), each row a ProfitRow."""
     average = average_unit_costs()
     packages = (
-        SoldPackage.objects.filter(packed_at__gte=aware(start), packed_at__lt=aware(end))
+        SoldPackage.objects.filter(packed_at__gte=aware(start), packed_at__lt=aware(end), reversed_at=None)
         .select_related("size_option__product__tea", "tea_lot__item")
         .prefetch_related("size_option__bom_lines")
     )

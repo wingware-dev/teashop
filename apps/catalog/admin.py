@@ -139,8 +139,9 @@ class SoldPackageAdmin(admin.ModelAdmin):
     """Packages packed for orders, read-only: the link from a customer
     order to a tea lot, and the organic sales total."""
 
-    list_display = ["packed_at", "order_reference", "size_option", "lot_link", "tea_grams", "amount", "organic"]
-    list_filter = ["organic", "size_option__product"]
+    list_display = ["packed_at", "order_reference", "size_option", "lot_link", "tea_grams", "amount", "organic",
+                    "reversed_at"]
+    list_filter = ["organic", ("reversed_at", admin.EmptyFieldListFilter), "size_option__product"]
     search_fields = ["order_reference", "tea_lot__code", "size_option__sku", "size_option__product__name"]
     date_hierarchy = "packed_at"
     list_select_related = ["size_option__product", "tea_lot"]
@@ -156,7 +157,8 @@ class SoldPackageAdmin(admin.ModelAdmin):
         return False
 
     def get_fields(self, request, obj=None):
-        return ["packed_at", "order_reference", "size_option", "tea_lot", "tea_grams", "amount", "organic", "label_preview"]
+        return ["packed_at", "order_reference", "size_option", "tea_lot", "tea_grams", "amount", "organic",
+                "reversed_at", "reversal_note", "label_preview"]
 
     @admin.display(description="Label")
     def label_preview(self, package):

@@ -14,7 +14,9 @@ and California's (Bus. & Prof. Code 17600-17606):
   every subscription email, no sign-in needed (cancel()).
 
 Billing is Stripe's: each renewal's paid invoice arrives by webhook and
-becomes a delivery order (record_payment()).
+becomes a delivery order (record_payment()).  When a renewal fails, the
+email links to the card page, where the customer saves a new card and the
+renewal is retried on it (update_card()).
 """
 
 import logging
@@ -107,6 +109,39 @@ def payment_failed(subscription):
     subscription.save(update_fields=["status"])
     record("checkout.subscription_payment_failed", obj=subscription)
     emails.subscription_payment_failed(subscription)
+
+
+def can_update_card(subscription):
+    """Whether the card page can change this subscription's card: it is
+    live, and billed by the payment provider configured now."""
+    if not subscription.is_live:
+        return False
+    if subscription.payment_provider == "stripe":
+        return bool(subscription.stripe_customer_id and subscription.stripe_subscription_id
+                    and payment_providers.provider().name == "stripe")
+    return payment_providers.provider().name == subscription.payment_provider
+
+
+def start_card_update(subscription):
+    """The PaymentStart for saving a new card (a SetupIntent).  Raises
+    payments.PaymentError if Stripe can't be reached."""
+    return payment_providers.provider().start_card_update(subscription)
+
+
+def update_card(subscription, setup_id):
+    """Finish a card change: the new card becomes the subscription's, and
+    an unpaid renewal is retried on it.  Returns a payments.CardUpdate
+    result.  Raises payments.PaymentError if Stripe can't be reached."""
+    provider = payment_providers.provider()
+    result = provider.finish_card_update(subscription, setup_id)
+    if result in (payment_providers.CardUpdate.PAID, payment_providers.CardUpdate.SAVED,
+                  payment_providers.CardUpdate.DECLINED):
+        record("checkout.subscription_card_updated", obj=subscription, message=f"{setup_id}: {result}")
+    if result == payment_providers.CardUpdate.PAID and provider.name == "fake":
+        # Stands in for Stripe's invoice.paid webhook after the retry.
+        number = subscription.orders.count() + 1
+        record_payment(subscription, first=False, invoice_id=f"fake_in_{subscription.pk}_{number}")
+    return result
 
 
 def cancel(subscription, by="customer"):

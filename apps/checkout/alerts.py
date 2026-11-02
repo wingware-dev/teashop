@@ -15,6 +15,8 @@ from .models import CheckoutSettings, Order, Subscription
 def attention_items():
     items = []
     orders_url = reverse("admin:checkout_order_changelist")
+    # The fulfillment app's order queue (phase 5).
+    queue_url = reverse("fulfillment:queue")
     today = timezone.localdate()
     to_ship = Order.objects.filter(status=Order.Status.PAID)
     late = to_ship.filter(ship_by__lt=today).count()
@@ -23,12 +25,12 @@ def attention_items():
         items.append(Attention(
             f"Orders past their promised ship date: {late}",
             "The FTC Mail Order Rule says: ship now, or tell each customer the new date and offer to cancel and "
-            "refund.", f"{orders_url}?status__exact=paid", "urgent"))
+            "refund (\"Send a delay notice\" on the order).", queue_url, "urgent"))
     if due:
         items.append(Attention(f"Orders to ship by tomorrow: {due}", "Promised ship dates are close.",
-                               f"{orders_url}?status__exact=paid", "warning"))
+                               queue_url, "warning"))
     elif to_ship.exists():
-        items.append(Attention(f"Orders to pack: {to_ship.count()}", "", f"{orders_url}?status__exact=paid", "warning"))
+        items.append(Attention(f"Orders to pack: {to_ship.count()}", "", queue_url, "warning"))
 
     unsent = Order.objects.filter(status__in=Order.PAID_STATUSES, confirmation_sent_at=None, subscription=None,
                                   paid_at__lt=timezone.now() - timedelta(minutes=10)).count()

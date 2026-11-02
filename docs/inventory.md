@@ -130,4 +130,5 @@ Each packed package's page shows its label facts: name, net weight in oz
 and g (ounces rounded down), "Grown in ...", ingredients, "Contains: ..."
 allergens, lot code, best-by date and the packer's address, which comes
 from `LABEL_PACKER_ADDRESS` in `.env`.  Missing facts are listed as
-problems.  Printing labels comes with the fulfillment dashboard.
+problems.  The packing pages print them (`docs/fulfillment.md`); a package
+with problems won't print.

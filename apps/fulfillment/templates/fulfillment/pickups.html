@@ -1,0 +1,49 @@
+{% extends "fulfillment/_layout.html" %}
+{% load checkout %}
+{% block title %}USPS pickups · {{ shop_name }}{% endblock %}
+{% block page %}
+<h1>USPS pickups</h1>
+<p class="small muted">USPS collects labelled parcels from your door for free, on its usual round.</p>
+
+{% for pickup in upcoming %}
+  <section class="ff-card" aria-labelledby="pickup-{{ pickup.pk }}-title">
+    <h2 id="pickup-{{ pickup.pk }}-title">{{ pickup.pickup_date|date:"l, F j" }}</h2>
+    <p>Confirmation <strong>{{ pickup.confirmation }}</strong> · {{ pickup.location }}{% if pickup.instructions %} · {{ pickup.instructions }}{% endif %} · {{ pickup.labels.count }} parcel{{ pickup.labels.count|pluralize }}</p>
+    <div class="actions">
+      {% if waiting %}
+        <form method="post" action="{% url 'fulfillment:pickup_action' pickup.pk %}" class="ff-inline-form">
+          {% csrf_token %}<input type="hidden" name="action" value="add">
+          <button type="submit">Add the {{ waiting|length }} waiting parcel{{ waiting|length|pluralize }}</button>
+        </form>
+      {% endif %}
+      <form method="post" action="{% url 'fulfillment:pickup_action' pickup.pk %}" class="ff-inline-form">
+        {% csrf_token %}<input type="hidden" name="action" value="cancel">
+        <button type="submit" class="secondary">Cancel this pickup</button>
+      </form>
+    </div>
+  </section>
+{% endfor %}
+
+<section class="ff-card" aria-labelledby="waiting-title">
+  <h2 id="waiting-title">Parcels waiting for a pickup: {{ waiting|length }}</h2>
+  {% if waiting %}
+    <ul class="small">{% for label in waiting %}<li><a href="{% url 'fulfillment:order' label.parcel.order.number %}">{{ label.parcel.order.number }}</a>: {{ label.service }}, {{ label.tracking_number }}{% if label.test_mode %} (test label){% endif %}</li>{% endfor %}</ul>
+    <form method="post">
+      {% csrf_token %}
+      {% field form.day %}
+      {% field form.location %}
+      {% field form.instructions %}
+      <button type="submit">Book the pickup</button>
+    </form>
+  {% else %}
+    <p class="muted">None.  Parcels show here once their labels are bought.</p>
+  {% endif %}
+</section>
+
+{% if past %}
+<section class="ff-card" aria-labelledby="past-title">
+  <h2 id="past-title">Earlier pickups</h2>
+  <ul class="small">{% for pickup in past %}<li>{{ pickup.pickup_date|date:"M j, Y" }}: {{ pickup.get_status_display }}{% if pickup.confirmation %}, {{ pickup.confirmation }}{% endif %}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+{% endblock %}

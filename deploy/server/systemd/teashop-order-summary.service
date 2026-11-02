@@ -1,0 +1,10 @@
+[Unit]
+Description=Teashop daily new-order summary for the owner (and Mail Order Rule reminders)
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/srv/teashop
+ExecStart=/usr/bin/docker compose exec -T web python manage.py send_order_summary

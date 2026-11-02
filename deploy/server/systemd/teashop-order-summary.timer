@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily teashop new-order summary at 6pm New York time
+
+[Timer]
+OnCalendar=*-*-* 18:00:00 America/New_York
+Persistent=true
+
+[Install]
+WantedBy=timers.target

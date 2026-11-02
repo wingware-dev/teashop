@@ -36,7 +36,8 @@ fixed shipping rates, and a "Pay (test)" button that moves no money.
   (use the **test** keys first).  Add a webhook endpoint at
   `https://<your domain>/checkout/stripe-webhook/` for
   `payment_intent.succeeded`, `invoice.paid`, `invoice.payment_failed`,
-  `customer.subscription.updated` and `customer.subscription.deleted`, and
+  `setup_intent.succeeded`, `customer.subscription.updated` and
+  `customer.subscription.deleted`, and
   put its signing secret in `STRIPE_WEBHOOK_SECRET`.  For Apple Pay,
   register your domain under Settings → Payment method domains.  Live keys
   are refused until you set `STRIPE_ALLOW_LIVE=true`.
@@ -72,7 +73,8 @@ To try the Stripe code without an account, run stripe-mock
 - **Nexus thresholds:** each state's economic-nexus threshold, seeded
   from a 2025 summary; check a state's rule when the dashboard warns.
 - **Orders:** entering a tracking number marks the order shipped and
-  emails the customer (phase 5's fulfillment pages will buy the labels).
+  emails the customer.  Normally the packing pages (/owner/fulfillment/,
+  `docs/fulfillment.md`) buy the label, which does this.
 - **Subscription plans / subscriptions / customers.**
 
 The dashboard's "Sales by state and sales tax" page shows New York tax
@@ -102,6 +104,10 @@ collected by quarter and sales into each state against its threshold.
   dashboard flags a reminder that is late.
 - Every subscription email has a one-step cancel link (no sign-in); so
   does the account page.  Cancelling stops all future charges.
+- When a renewal payment fails, the email links to a card page
+  (`/subscriptions/card/<token>/`, no sign-in, also on the account page):
+  Stripe's card form saves a new card (a SetupIntent), it becomes the
+  subscription's card, and the unpaid renewal is charged to it at once.
 - No free trials.  A plan's price change applies to new subscribers only;
   to raise an existing subscriber's price, email them first.
 - Deliveries are tea only (no sales tax), shipping included in the price.
@@ -137,10 +143,12 @@ add them; `CSP_REPORT_URI` collects such reports.
 
 ## For other phases
 
-- Fulfillment (phase 5) works from `Order` (status `paid`, `ship_by`,
-  `shipping_rate_id` and `shipping_shipment_id` for buying the label) and
-  calls `apps.checkout.orders.mark_shipped(order, tracking)`, which emails
-  the customer.  Packing still goes through `catalog.services.pack()` with
-  the order number as the reference.  Refunds and cancellations are phase 5.
+- Fulfillment (phase 5, `docs/fulfillment.md`) works from `Order` (status
+  `paid`, `ship_by`) and calls `apps.checkout.orders.mark_shipped(order,
+  tracking)`, which emails the customer.  It buys each label for the
+  parcel actually packed (the rate quoted at checkout was for an
+  estimated weight).  Refunds go through `payments.provider().refund()`.
+- New-order emails to the owner come once a day in fulfillment's 6pm
+  summary unless `OWNER_NEW_ORDER_EMAILS=each`.
 - Sizes have an optional `shipping_grams` (catalog); without it the
   weight is estimated from the tea and package.

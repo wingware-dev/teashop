@@ -106,6 +106,64 @@ def welcome(request, token):
     return render(request, "checkout/subscriptions/welcome.html", {"subscription": subscription})
 
 
+def _card_page(request, subscription, **context):
+    return render(request, "checkout/subscriptions/card.html", {
+        "subscription": subscription, "can_update": subscriptions.can_update_card(subscription), **context})
+
+
+@require_GET
+def card(request, token):
+    """Pay with a different card: the link in the renewal-failed email (and
+    the account page) leads here.  Stripe's Payment Element saves the card
+    (a SetupIntent), and Stripe sends the customer on to card_done.  Like
+    cancelling, it needs no sign-in, and works while the shop is closed."""
+    subscription = get_object_or_404(Subscription, token=token)
+    if not subscriptions.can_update_card(subscription):
+        return _card_page(request, subscription)
+    try:
+        started = subscriptions.start_card_update(subscription)
+    except payments.PaymentError as exc:
+        return _card_page(request, subscription, error=str(exc))
+    provider = payments.provider()
+    return _card_page(request, subscription, provider=provider.name, publishable_key=provider.publishable_key,
+                      client_secret=started.client_secret, intent="setup",
+                      return_url=request.build_absolute_uri(reverse("checkout:subscription_card_done", args=[token])),
+                      pay_label="Save card" + (" and pay" if subscription.status == Subscription.Status.PAST_DUE else ""),
+                      fake_action=reverse("checkout:subscription_card_fake", args=[token]),
+                      fake_note="This button stands in for saving a new card.")
+
+
+def _finish_card(request, subscription, setup_id):
+    try:
+        result = subscriptions.update_card(subscription, setup_id)
+    except payments.PaymentError as exc:
+        return _card_page(request, subscription, error=str(exc))
+    subscription.refresh_from_db()
+    return _card_page(request, subscription, result=result)
+
+
+@require_GET
+def card_done(request, token):
+    """Where Stripe sends the customer once the new card is confirmed (or
+    refused): ?setup_intent=seti_... names the SetupIntent."""
+    subscription = get_object_or_404(Subscription, token=token)
+    setup_id = request.GET.get("setup_intent", "")
+    if not setup_id.startswith("seti_") or not subscriptions.can_update_card(subscription):
+        return redirect("checkout:subscription_card", token=token)
+    return _finish_card(request, subscription, setup_id)
+
+
+@require_POST
+def card_fake(request, token):
+    """The stand-in for Stripe's card form on a laptop."""
+    if payments.provider().name != "fake":
+        raise Http404("Not available")
+    subscription = get_object_or_404(Subscription, token=token)
+    if not subscriptions.can_update_card(subscription):
+        return redirect("checkout:subscription_card", token=token)
+    return _finish_card(request, subscription, f"fake_seti_{subscription.pk}")
+
+
 @require_http_methods(["GET", "POST"])
 def cancel(request, token):
     """One-step online cancellation: the link in every subscription email

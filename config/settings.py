@@ -94,6 +94,7 @@ LOCAL_APPS = [
     "apps.storefront",
     "apps.purchasing",
     "apps.checkout",
+    "apps.fulfillment",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -142,6 +143,19 @@ if not DATABASE_URL:
     VAR_DIR.mkdir(exist_ok=True)
 DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=60, conn_health_checks=True)}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Cache ------------------------------------------------------------------
+# In the database, so the checkout rate limits (apps/checkout/protection.py)
+# are shared by all gunicorn workers and survive restarts.  migrate creates
+# the table (apps/checkout/apps.py runs createcachetable after it).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "teashop_cache",
+        # Room for a burst of addresses without culling live counts.
+        "OPTIONS": {"MAX_ENTRIES": 20000},
+    }
+}
 
 # --- Authentication: owner login with two-factor, brute-force lockout -------
 AUTHENTICATION_BACKENDS = [
@@ -342,6 +356,11 @@ else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # Where new-order and problem notices for the owner go (empty: none).
 OWNER_NOTIFY_EMAIL = env_str("OWNER_NOTIFY_EMAIL")
+# New-order notices: "daily" (one summary from the send_order_summary job,
+# at 6pm by its timer) or "each" (an email per order as it is paid).
+OWNER_NEW_ORDER_EMAILS = env_str("OWNER_NEW_ORDER_EMAILS", "daily")
+if OWNER_NEW_ORDER_EMAILS not in ("daily", "each"):
+    raise ImproperlyConfigured("OWNER_NEW_ORDER_EMAILS must be 'daily' or 'each'")
 
 # --- Checkout (apps/checkout, docs/checkout.md) -----------------------------
 # Payments: Stripe's Payment Element (cards, Apple Pay, Google Pay, Link and
@@ -370,7 +389,8 @@ EASYPOST_API_KEY = env_str("EASYPOST_API_KEY")
 SHIPPING_PROVIDER = env_str("SHIPPING_PROVIDER", "easypost" if EASYPOST_API_KEY else "fake")
 if SHIPPING_PROVIDER not in ("easypost", "fake"):
     raise ImproperlyConfigured("SHIPPING_PROVIDER must be 'easypost' or 'fake'")
-if EASYPOST_API_KEY and not EASYPOST_API_KEY.startswith("EZTK") and not env_bool("EASYPOST_ALLOW_LIVE", False):
+EASYPOST_ALLOW_LIVE = env_bool("EASYPOST_ALLOW_LIVE", False)
+if EASYPOST_API_KEY and not EASYPOST_API_KEY.startswith("EZTK") and not EASYPOST_ALLOW_LIVE:
     raise ImproperlyConfigured("A production EasyPost key is set: set EASYPOST_ALLOW_LIVE=true to buy real postage")
 # Where parcels ship from (the rates depend on it).
 SHIP_FROM = {
@@ -422,6 +442,25 @@ CHECKOUT_MIN_FORM_SECONDS = 2
 # Most of one size in a cart, and most lines.
 CART_MAX_QUANTITY = 12
 CART_MAX_LINES = 30
+
+# --- Fulfillment (apps/fulfillment, docs/fulfillment.md) ---------------------
+# Shipping labels are bought through EasyPost (the key above); with a test
+# key (EZTK...) they are test labels that cost nothing and never ship.
+# Label format for the 4x6 thermal printer: "PDF" (print from the browser)
+# or "ZPL" (Zebra-language printers that take raw files).
+SHIPPING_LABEL_FORMAT = env_str("SHIPPING_LABEL_FORMAT", "PDF").upper()
+if SHIPPING_LABEL_FORMAT not in ("PDF", "ZPL"):
+    raise ImproperlyConfigured("SHIPPING_LABEL_FORMAT must be 'PDF' or 'ZPL'")
+# The package (pouch or tin) label, in inches, "width x height".
+PACKAGE_LABEL_SIZE = env_str("PACKAGE_LABEL_SIZE", "4x2")
+# Outside sizes (inches: length, width, height) of a packed package whose
+# size has no dimensions of its own (Fulfillment -> Package dimensions).
+PACKAGE_DIMENSIONS_IN = {"tin": (3.0, 3.0, 4.5), "pouch": (5.5, 3.5, 1.5), "box": (4.0, 4.0, 4.0), "": (6.0, 6.0, 4.0)}
+# Room for filler: a box must hold the packages' volume times this.
+BOX_FILL_FACTOR = 1.3
+# The Mail Order Rule: a delay longer than this past the promised date
+# needs the customer's express consent, not just silence.
+MAIL_ORDER_IMPLIED_CONSENT_DAYS = 30
 
 # --- Logging: everything to stdout, Docker rotates the files ----------------
 LOG_LEVEL = env_str("DJANGO_LOG_LEVEL", "INFO")

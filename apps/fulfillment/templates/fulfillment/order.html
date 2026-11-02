@@ -1,0 +1,212 @@
+{% extends "fulfillment/_layout.html" %}
+{% load checkout storefront %}
+{% block title %}Order {{ order.number }} · Packing · {{ shop_name }}{% endblock %}
+{% block page %}
+<header class="ff-order-head">
+  <h1>Order {{ order.number }}</h1>
+  <p class="ff-meta">
+    <span class="ff-badge">{{ order.get_status_display }}</span>
+    {% if order.status == "paid" and status_text %}<span class="ff-badge ff-badge-{{ status }}">{{ status_text }}</span>{% endif %}
+    {% if order.subscription_id %}<span class="ff-badge">Subscription delivery</span>{% endif %}
+  </p>
+  <p class="small">{{ order.email }} · paid {{ order.paid_at|date:"M j, g:i a" }} · {{ order.shipping_service }} ({% if order.shipping_amount %}{{ order.shipping_amount|money }}{% else %}free shipping{% endif %})</p>
+</header>
+
+{% if to_print %}
+  <section id="print" class="ff-card ff-print" aria-labelledby="print-title" tabindex="-1">
+    <h2 id="print-title">Print the package label</h2>
+    <p>{% for package in to_print %}{{ package.sold_package.size_option }}, lot {{ package.sold_package.tea_lot.code }}, {{ package.measured_grams }} g{% if not forloop.last %}; {% endif %}{% endfor %}</p>
+    <p><a class="button" href="{% url 'fulfillment:package_labels' to_print.0.parcel_id %}?packages={% for package in to_print %}{{ package.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">Print label</a></p>
+  </section>
+{% endif %}
+
+{% if order.status == "paid" and status == "late" or order.status == "paid" and status == "due" %}
+  <p class="ff-alert{% if status == 'late' %} urgent{% endif %}"><strong>{% if status == "late" %}Past the promised ship date.{% else %}Due to ship {{ status_text|cut:"Ship by "|lower }}.{% endif %}</strong>  If it can't ship in time, the Mail Order Rule says tell the customer the new date and offer to cancel: <a href="#delay">send a delay notice</a>.</p>
+{% endif %}
+
+<section class="ff-card" aria-labelledby="ship-to-title">
+  <h2 id="ship-to-title">Ship to</h2>
+  <address>{% for line in order.address_lines %}{{ line }}<br>{% endfor %}{% if order.ship_phone %}{{ order.ship_phone }}{% endif %}</address>
+  {% if not order.address_verified %}<p class="status-failed">The post office could not confirm this address.</p>{% endif %}
+  {% if active %}<p><a href="{% url 'fulfillment:address' order.number %}">Change the address</a></p>{% endif %}
+</section>
+
+{% for p in parcels %}
+  {% with parcel=p.parcel %}
+  <section class="ff-card ff-parcel" id="parcel-{{ parcel.pk }}" aria-labelledby="parcel-{{ parcel.pk }}-title">
+    <h2 id="parcel-{{ parcel.pk }}-title">{% if parcels|length > 1 %}Parcel {{ forloop.counter }}: {% endif %}{{ parcel.get_kind_display }} <span class="ff-badge">{{ parcel.get_status_display }}</span></h2>
+    {% if parcel.reason %}<p class="small muted">{{ parcel.reason }}{% if parcel.expected_on %}; stock expected {{ parcel.expected_on|date:"M j" }}{% endif %}</p>{% endif %}
+
+    <ul class="ff-lines">
+      {% for line in p.lines %}
+        {% with row=line.row %}
+        <li class="ff-line{% if row.done %} ff-done{% endif %}">
+          <h3>{{ row.line.quantity }} × {{ row.order_line.product_name }}{% if row.order_line.size_name %}, {{ row.order_line.size_name }}{% endif %}</h3>
+          <p class="small">{% if row.open_count %}{{ row.packed|length }} packed{% else %}{{ row.packed|length }} of {{ row.line.quantity }} packed{% endif %}{% if row.size and row.size.net_grams %} · {{ row.size.net_grams }} g each{% endif %}{% if row.size and row.size.sku %} · {{ row.size.sku }}{% endif %}</p>
+
+          {% if row.packed %}
+            <ul class="ff-packed">
+              {% for package in row.packed %}
+                <li>
+                  <span>{{ package.sold_package.size_option.name }}{% if package.sold_package.tea_lot_id %}: <strong>{{ package.measured_grams }} g</strong>, lot {{ package.sold_package.tea_lot.code }}, scale {{ package.scale_serial }} (sealed {{ package.scale_sealed_on|date:"Y-m-d" }}){% if package.label_printed_at %} · label printed{% else %} · <span class="status-failed">label not printed</span>{% endif %}{% endif %}</span>
+                  {% if parcel.is_active and not p.label %}
+                    <form method="post" action="{% url 'fulfillment:unpack' package.pk %}" class="ff-inline-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="unpack-note" value="Packed by mistake">
+                      <input type="hidden" name="unpack-reusable" value="on">
+                      <button type="submit" class="link">Unpack<span class="visually-hidden"> {{ package.sold_package.size_option }} {{ forloop.counter }}</span></button>
+                    </form>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          {% if parcel.is_active and not p.label and not row.done or parcel.is_active and not p.label and row.open_count %}
+            {% with form=line.form %}
+            <form method="post" action="{{ line.url }}" class="ff-pack-form">
+              {% csrf_token %}
+              {% if line.allergens %}
+                <div class="ff-alert urgent" role="note">
+                  <p><strong>Allergens: contains {{ line.allergens|join:", " }}.</strong>  Pack this after the other teas, with its own scoop, and clean the bench and scale afterwards.</p>
+                  {% field form.allergens_confirmed %}
+                </div>
+              {% endif %}
+              {% if form.size %}{% field form.size %}{% endif %}
+              {% if form.measured_grams %}
+                <div class="field-row">
+                  {% field form.measured_grams %}
+                  {% field form.scale %}
+                </div>
+                {% if line.lot %}<p class="small muted">From lot {{ line.lot.code }}{% if line.lot.best_by %}, best by {{ line.lot.best_by|date:"M j, Y" }}{% endif %}, unless you choose another.</p>{% elif form.lot %}<p class="status-failed">No single usable lot holds a package: back-order it, or choose a lot.</p>{% endif %}
+                {% if form.lot %}<details class="ff-more"><summary>Choose another lot</summary>{% field form.lot %}</details>{% endif %}
+              {% endif %}
+              <button type="submit">{% if form.measured_grams %}Pack and print label{% else %}Packed{% endif %}<span class="visually-hidden">: {{ row.order_line.product_name }} {{ row.order_line.size_name }}</span></button>
+            </form>
+            {% endwith %}
+          {% endif %}
+        </li>
+        {% endwith %}
+      {% endfor %}
+    </ul>
+
+    {% if p.tea_packed %}
+      <p><a class="button secondary" href="{% url 'fulfillment:package_labels' parcel.pk %}">Print all package labels ({{ p.tea_packed|length }})</a></p>
+    {% endif %}
+
+    {% if p.label %}
+      <div class="ff-label">
+        <h3>Shipping label</h3>
+        <p>{{ p.label.service }} · tracking <strong>{{ p.label.tracking_number }}</strong> · {{ p.label.postage|money }} · {{ p.label.box_text }} · {{ p.label.weight_grams }} g{% if p.label.test_mode %} · <strong class="status-failed">Test label: do not mail</strong>{% endif %}{% if p.label.pickup %} · pickup {{ p.label.pickup.pickup_date|date:"M j" }}{% endif %}</p>
+        <div class="actions">
+          <a class="button" href="{% url 'fulfillment:shipping_label' p.label.pk %}">Print shipping label (4×6)</a>
+          <form method="post" action="{% url 'fulfillment:void_label' p.label.pk %}" class="ff-inline-form">
+            {% csrf_token %}<button type="submit" class="secondary">Void label</button>
+          </form>
+        </div>
+      </div>
+    {% elif p.label_form %}
+      {% with form=p.label_form suggestion=p.suggestion %}
+      <form method="post" action="{% url 'fulfillment:buy_label' parcel.pk %}" class="ff-label-form">
+        {% csrf_token %}
+        <h3>Box and label</h3>
+        <p class="ff-suggestion small">{% if suggestion.box %}Suggested: <strong>{{ suggestion.box.item.name }}</strong> ({{ suggestion.box.dimensions_text }}).  {% endif %}{{ suggestion.note }}</p>
+        {% field form.box %}
+        <details class="ff-more"{% if not suggestion.box %} open{% endif %}>
+          <summary>Another box</summary>
+          {% field form.box_description %}
+          <div class="field-row">{% field form.length_in %}{% field form.width_in %}{% field form.height_in %}</div>
+        </details>
+        <div class="field-row">{% field form.weight %}{% field form.unit %}</div>
+        {% field form.service %}
+        {% if not p.all_packed %}{% field form.ship_partial %}{% endif %}
+        <button type="submit"{% if not p.any_packed %} disabled{% endif %}>Buy label and ship</button>
+        {% if not p.any_packed %}<p class="small muted">Pack the order first.</p>{% endif %}
+        <p class="small muted">The customer gets the tracking number by email as soon as the label is bought.</p>
+      </form>
+      {% endwith %}
+    {% endif %}
+
+    {% if p.past_labels %}
+      <p class="small muted">Voided labels: {% for label in p.past_labels %}{{ label.tracking_number }} ({{ label.void_status|default:"voided" }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+
+    {% if parcel.status == "backordered" %}
+      <form method="post" action="{% url 'fulfillment:backorder' parcel.pk %}">
+        {% csrf_token %}<input type="hidden" name="resume" value="1">
+        <button type="submit" class="secondary">Stock is in: pack it now</button>
+      </form>
+    {% elif p.backorder_form %}
+      <details class="ff-more">
+        <summary>Back-order this parcel</summary>
+        <form method="post" action="{% url 'fulfillment:backorder' parcel.pk %}">
+          {% csrf_token %}
+          {% field p.backorder_form.expected_on %}
+          {% field p.backorder_form.reason %}
+          <button type="submit" class="secondary">Mark back-ordered</button>
+        </form>
+      </details>
+    {% endif %}
+  </section>
+  {% endwith %}
+{% endfor %}
+
+{% if order.status == "paid" %}
+<section class="ff-card" id="delay" aria-labelledby="delay-title" tabindex="-1">
+  <h2 id="delay-title">Can't ship in time?</h2>
+  <p class="small">The FTC Mail Order Rule: before the promised date ({{ order.ship_by|date:"l, F j" }}), tell the customer the new date and offer to cancel for a full refund.  For a first delay of up to 30 days, saying nothing means they agree; a longer delay, or a second one, needs their yes.</p>
+  {% for notice in notices %}
+    <p class="small">Notice sent {{ notice.sent_at|date:"M j"|default:"(email failed)" }}: new date {{ notice.new_ship_by|date:"M j" }} — {{ notice.get_response_display }}{% if notice.awaiting_consent %}, answer needed by {{ notice.answer_by|date:"M j" }}{% endif %}.</p>
+  {% endfor %}
+  <form method="post" action="{% url 'fulfillment:delay_notice' order.number %}">
+    {% csrf_token %}
+    {% field delay_form.new_ship_by %}
+    {% field delay_form.reason %}
+    <button type="submit" class="secondary">Send a delay notice</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="ff-card" id="money" aria-labelledby="money-title" tabindex="-1">
+  <h2 id="money-title">Refunds and cancelling</h2>
+  <p>Paid {{ order.amount_received|default:order.total|money }}{% if refunded %}, refunded {{ refunded|money }}{% endif %}.  {% if refundable %}{{ refundable|money }} can still be refunded.{% endif %}</p>
+  {% if refunds %}
+    <ul class="small">{% for refund in refunds %}<li>{{ refund.created_at|date:"M j" }}: {{ refund.amount|money }}, {{ refund.get_kind_display|lower }}: {{ refund.reason }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if refundable and order.status != "pending" %}
+    <details class="ff-more">
+      <summary>Refund part or all</summary>
+      <form method="post" action="{% url 'fulfillment:refund' order.number %}">
+        {% csrf_token %}
+        {% field refund_form.amount %}
+        {% field refund_form.reason %}
+        <button type="submit" class="secondary">Refund</button>
+      </form>
+    </details>
+  {% endif %}
+  {% if can_cancel %}
+    <details class="ff-more">
+      <summary>Cancel the order</summary>
+      <form method="post" action="{% url 'fulfillment:cancel' order.number %}">
+        {% csrf_token %}
+        <p class="small">Refunds everything paid ({{ refundable|money }}), puts anything packed back in stock and emails the customer.</p>
+        {% field cancel_form.reason %}
+        {% field cancel_form.reusable %}
+        <button type="submit" class="secondary">Cancel and refund</button>
+      </form>
+    </details>
+  {% endif %}
+  {% if can_reship %}
+    <p><a href="{% url 'fulfillment:reship' order.number %}">Lost or damaged?  Send it again</a></p>
+  {% endif %}
+</section>
+
+{% if events %}
+<section class="ff-card" aria-labelledby="history-title">
+  <h2 id="history-title">History</h2>
+  <ul class="small ff-history">
+    {% for event in events %}<li>{{ event.timestamp|date:"M j, g:i a" }}: {{ event.action }}{% if event.message %}: {{ event.message|truncatechars:140 }}{% endif %} <span class="muted">({{ event.actor_label|default:event.actor_type }})</span></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

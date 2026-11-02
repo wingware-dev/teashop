@@ -1,0 +1,21 @@
+{% extends "fulfillment/_layout.html" %}
+{% load checkout %}
+{% block title %}Change the address · Order {{ order.number }} · {{ shop_name }}{% endblock %}
+{% block page %}
+<h1>Change the address for order {{ order.number }}</h1>
+<p class="small muted">Now: {{ order.address_lines|join:", " }}.  The new address is checked with the post office before it is saved.</p>
+<form method="post" class="ff-card">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="form-errors">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+  {% field form.name %}
+  {% field form.street1 %}
+  {% field form.street2 %}
+  <div class="field-row">{% field form.city %}{% field form.state %}{% field form.zip %}</div>
+  {% field form.phone %}
+  {% field form.accept_unverified %}
+  <div class="actions">
+    <button type="submit">Save the new address</button>
+    <a href="{% url 'fulfillment:order' order.number %}">Back to the order</a>
+  </div>
+</form>
+{% endblock %}

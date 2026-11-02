@@ -561,3 +561,8 @@ class Subscription(AddressFields):
 
     def cancel_url(self):
         return reverse("checkout:subscription_cancel", args=[self.token])
+
+    def card_url(self):
+        """The page for paying with a different card (no sign-in, like the
+        cancel link)."""
+        return reverse("checkout:subscription_card", args=[self.token])

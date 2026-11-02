@@ -13,7 +13,7 @@ be built side by side with few conflicts:
 | `catalog` | 2, 3 | Products, size options, categories, regions, collections, photos, copy rules |
 | `storefront` | 3 | Public pages (including the home page), page designs, tea notes, sitemap; see `docs/storefront.md` |
 | `checkout` | 4 | Cart, orders, Stripe, shipping rates, tax, accounts, subscriptions; see `docs/checkout.md` |
-| `fulfillment` | 5 | Order queue, labels, tracking |
+| `fulfillment` | 5 | Order queue, packing records, labels, postage, refunds, pickups; see `docs/fulfillment.md` |
 
 Names for later phases are suggestions; pick what fits.  To add an app:
 
@@ -79,7 +79,8 @@ See `docs/inventory.md` for how the owner uses them.  For other phases:
   stock, picks the tea lot (oldest best-by first, one lot per package)
   and returns a `SoldPackage`; `label_for(package)` gives the label facts.
   The order reference on its movements is what recall tracing
-  (`apps.inventory.tracing`) reports.
+  (`apps.inventory.tracing`) reports.  `reverse_package(package, note)`
+  undoes a pack (cancellations, mistakes) with "returned" movements.
 - Storefront can show `SizeOption.packages_available()` for stock.
 - Supplier documents use the `private` storage (`PRIVATE_MEDIA_ROOT`),
   which Caddy refuses to serve; the owner downloads them through

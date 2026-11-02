@@ -17,7 +17,7 @@
           <li class="card">
             <h3>{{ subscription.plan.name }}</h3>
             <p>{{ subscription.get_status_display }}.  {{ subscription.price|money }} {{ subscription.plan.interval_text }}{% if subscription.is_live and subscription.current_period_end %}; next renewal {{ subscription.current_period_end|date:"F j, Y" }}{% endif %}.</p>
-            {% if subscription.is_live %}<p><a class="button secondary" href="{{ subscription.cancel_url }}">Cancel this subscription<span class="visually-hidden"> ({{ subscription.plan.name }})</span></a></p>{% endif %}
+            {% if subscription.is_live %}<p><a class="button secondary" href="{{ subscription.card_url }}">Update card<span class="visually-hidden"> ({{ subscription.plan.name }})</span></a> <a class="button secondary" href="{{ subscription.cancel_url }}">Cancel this subscription<span class="visually-hidden"> ({{ subscription.plan.name }})</span></a></p>{% endif %}
           </li>
         {% endfor %}
       </ul>

@@ -122,7 +122,9 @@ class CheckoutTests(CheckoutTestCase):
         self.assertFalse(Cart.objects.exists())
         subjects = [m.subject for m in mail.outbox]
         self.assertIn(f"Your Teashop order {order.number}", subjects)
-        self.assertIn(f"New order {order.number}: ${order.total:,.2f}", subjects)
+        # The owner hears of new orders in the 6pm summary, not one by one.
+        self.assertNotIn(f"New order {order.number}: ${order.total:,.2f}", subjects)
+        self.assertIsNone(order.owner_notified_at)
         confirmation = next(m for m in mail.outbox if m.to == ["ada@example.com"])
         self.assertIn(order.get_absolute_url(), confirmation.body)
         self.assertIn("Sales tax (8% on", confirmation.body)

@@ -1,0 +1,40 @@
+{% extends "fulfillment/_layout.html" %}
+{% block title %}Orders to pack · {{ shop_name }}{% endblock %}
+{% block page %}
+<h1>Orders to pack</h1>
+
+<p class="ff-tabs" role="group" aria-label="Show">
+  <a href="?show=to_pack" class="button{% if show != 'to_pack' %} secondary{% endif %}"{% if show == "to_pack" %} aria-current="page"{% endif %}>To pack</a>
+  <a href="?show=backordered" class="button{% if show != 'backordered' %} secondary{% endif %}"{% if show == "backordered" %} aria-current="page"{% endif %}>Back-ordered</a>
+  <a href="?show=shipped" class="button{% if show != 'shipped' %} secondary{% endif %}"{% if show == "shipped" %} aria-current="page"{% endif %}>Shipped</a>
+</p>
+
+{% if show == "to_pack" %}
+  {% if counts.late %}<p class="ff-alert urgent"><strong>{{ counts.late }} order{{ counts.late|pluralize }} past the promised ship date.</strong>  The Mail Order Rule: ship today, or send each customer a delay notice (on the order's page) with the new date and the offer to cancel.</p>{% endif %}
+  {% if waiting_pickup %}<p class="ff-alert"><a href="{% url 'fulfillment:pickups' %}">{{ waiting_pickup }} labelled parcel{{ waiting_pickup|pluralize }} waiting for a USPS pickup</a></p>{% endif %}
+{% endif %}
+
+{% if rows %}
+  <ol class="ff-queue">
+    {% for row in rows %}
+      <li class="ff-card ff-{{ row.status }}">
+        <h2><a href="{% url 'fulfillment:order' row.order.number %}">{{ row.order.number }}</a> <span class="ff-name">{{ row.order.ship_name|default:row.order.email }}</span></h2>
+        <p class="ff-meta">
+          {% if row.status_text %}<span class="ff-badge ff-badge-{{ row.status }}">{{ row.status_text }}</span>{% endif %}
+          {% if row.reship %}<span class="ff-badge">Reship</span>{% endif %}
+          {% if row.backordered %}<span class="ff-badge">Back-ordered</span>{% endif %}
+          {% if row.awaiting_consent %}<span class="ff-badge ff-badge-due">Waiting for the customer's answer</span>{% endif %}
+          {% if row.allergens %}<span class="ff-badge ff-badge-allergen">Contains {{ row.allergens|join:", " }}: pack last</span>{% endif %}
+          {% if row.order.subscription_id %}<span class="ff-badge">Subscription</span>{% endif %}
+        </p>
+        <p class="small">
+          {% if show == "shipped" %}Shipped {{ row.order.shipped_at|date:"M j" }}, {{ row.order.tracking_number }}
+          {% else %}{{ row.items }} item{{ row.items|pluralize }}{% if row.needed %}, {{ row.packed }} of {{ row.needed }} packed{% endif %} · {{ row.order.shipping_service }} · {{ row.order.ship_city }}, {{ row.order.ship_state }}{% endif %}
+        </p>
+      </li>
+    {% endfor %}
+  </ol>
+{% else %}
+  <p class="muted">{% if show == "shipped" %}Nothing shipped in the last two weeks.{% elif show == "backordered" %}Nothing is back-ordered.{% else %}Nothing to pack.  New orders show here as soon as they are paid.{% endif %}</p>
+{% endif %}
+{% endblock %}

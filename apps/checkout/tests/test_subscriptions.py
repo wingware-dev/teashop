@@ -13,7 +13,7 @@ from django.core.management import call_command
 from django.test import override_settings
 from django.utils import timezone
 
-from apps.checkout import subscriptions, webhooks
+from apps.checkout import payments, subscriptions, webhooks
 from apps.checkout.models import Order, Subscription, SubscriptionPlan
 from apps.checkout.payments import StripePayments
 
@@ -188,3 +188,165 @@ class RenewalTests(CheckoutTestCase):
         self.assertEqual((started.id, started.client_secret, started.customer_id), ("sub_9", "secret", "cus_1"))
         self.plan.refresh_from_db()
         self.assertEqual(self.plan.stripe_product_id, "prod_1")
+
+
+def stripe_object(data):
+    """A stand-in for a Stripe object: the shop reads them through to_dict()."""
+    found = mock.Mock(**{k: v for k, v in data.items() if k != "to_dict"})
+    found.to_dict.return_value = data
+    return found
+
+
+class CardUpdateTests(CheckoutTestCase):
+    """A subscriber whose renewal failed saves a new card on the shop's own
+    card page (a Stripe SetupIntent), and the renewal is retried on it."""
+
+    def setUp(self):
+        super().setUp()
+        self.plan = make_plan()
+        self.client.post(self.plan.get_absolute_url(), form_data(**ADDRESS, consent="on"))
+        token = Subscription.objects.get().token
+        self.client.post(f"/subscriptions/pay/{token}/test/")
+        self.subscription = Subscription.objects.get()
+        mail.outbox.clear()
+
+    def stripe_billed(self, status=Subscription.Status.PAST_DUE):
+        self.subscription.payment_provider = "stripe"
+        self.subscription.stripe_subscription_id = "sub_1"
+        self.subscription.stripe_customer_id = "cus_1"
+        self.subscription.status = status
+        self.subscription.save()
+
+    def stripe_mock(self, intent_status="succeeded", subscription_id=None, customer="cus_1",
+                    default_card=None, invoice_status="open"):
+        client = mock.Mock()
+        client.v1.setup_intents.create.return_value = mock.Mock(id="seti_1", client_secret="seti_1_secret")
+        client.v1.setup_intents.retrieve.return_value = stripe_object({
+            "id": "seti_1", "status": intent_status, "customer": customer, "payment_method": "pm_new",
+            "metadata": {"subscription": str(subscription_id or self.subscription.pk), "purpose": "card_update"}})
+        client.v1.subscriptions.retrieve.return_value = stripe_object({
+            "id": "sub_1", "default_payment_method": default_card,
+            "latest_invoice": {"id": "in_7", "status": invoice_status}})
+        client.v1.invoices.pay.return_value = mock.Mock(status="paid")
+        return client
+
+    def test_failed_renewal_email_links_to_the_card_page(self):
+        self.subscription.status = Subscription.Status.ACTIVE
+        subscriptions.payment_failed(self.subscription)
+        body = mail.outbox[0].body
+        self.assertIn(f"/subscriptions/card/{self.subscription.token}/", body)
+        self.assertIn(self.subscription.cancel_url(), body)
+
+    def test_stand_in_card_pays_the_missed_renewal_without_signing_in(self):
+        subscriptions.payment_failed(self.subscription)
+        anonymous = self.client_class()
+        page = anonymous.get(self.subscription.card_url())
+        self.assertContains(page, "Update your card")
+        self.assertContains(page, "Save card and pay (test)")
+        page = anonymous.post(f"/subscriptions/card/{self.subscription.token}/test/")
+        self.assertContains(page, "Thank you: your card is updated")
+        self.subscription.refresh_from_db()
+        self.assertEqual(self.subscription.status, Subscription.Status.ACTIVE)
+        self.assertEqual(Order.objects.filter(subscription=self.subscription).count(), 2)
+
+    def test_active_subscription_changes_card_without_a_charge(self):
+        page = self.client.get(self.subscription.card_url())
+        self.assertContains(page, "Nothing is charged today")
+        page = self.client.post(f"/subscriptions/card/{self.subscription.token}/test/")
+        self.assertContains(page, "Your card is updated")
+        self.assertEqual(Order.objects.filter(subscription=self.subscription).count(), 1)
+
+    def test_no_card_form_for_a_cancelled_subscription(self):
+        subscriptions.cancel(self.subscription)
+        page = self.client.get(self.subscription.card_url())
+        self.assertContains(page, "There is no card to update")
+        self.assertNotContains(page, "payment-form")
+        self.client.post(f"/subscriptions/card/{self.subscription.token}/test/")
+        self.assertEqual(Order.objects.filter(subscription=self.subscription).count(), 1)
+
+    def test_stripe_billed_subscription_needs_stripe_configured(self):
+        self.stripe_billed()
+        page = self.client.get(self.subscription.card_url())
+        self.assertContains(page, "We can't change this subscription's card online")
+        self.assertNotContains(page, "payment-form")
+
+    @override_settings(STRIPE_SECRET_KEY="sk_test_x", STRIPE_PUBLISHABLE_KEY="pk_test_x", PAYMENT_PROVIDER="stripe")
+    def test_stripe_card_page_shows_the_payment_element_for_a_setup_intent(self):
+        self.stripe_billed()
+        client = self.stripe_mock()
+        with mock.patch("apps.checkout.payments.stripe_client", return_value=client):
+            page = self.client.get(self.subscription.card_url())
+        html = page.content.decode()
+        self.assertIn('data-client-secret="seti_1_secret"', html)
+        self.assertIn('data-intent="setup"', html)
+        self.assertIn(f"/subscriptions/card/{self.subscription.token}/done/", html)
+        params = client.v1.setup_intents.create.call_args.kwargs["params"]
+        self.assertEqual(params["customer"], "cus_1")
+        self.assertEqual(params["usage"], "off_session")
+        self.assertEqual(params["metadata"], {"subscription": str(self.subscription.pk), "purpose": "card_update"})
+
+    @override_settings(STRIPE_SECRET_KEY="sk_test_x", STRIPE_PUBLISHABLE_KEY="pk_test_x", PAYMENT_PROVIDER="stripe")
+    def test_stripe_return_page_sets_the_card_and_retries_the_renewal(self):
+        self.stripe_billed()
+        client = self.stripe_mock()
+        with mock.patch("apps.checkout.payments.stripe_client", return_value=client):
+            page = self.client.get(f"/subscriptions/card/{self.subscription.token}/done/?setup_intent=seti_1")
+        self.assertContains(page, "Thank you: your card is updated")
+        client.v1.subscriptions.update.assert_called_once_with("sub_1", params={"default_payment_method": "pm_new"})
+        client.v1.customers.update.assert_called_once_with(
+            "cus_1", params={"invoice_settings": {"default_payment_method": "pm_new"}})
+        client.v1.invoices.pay.assert_called_once_with("in_7", params={"payment_method": "pm_new"})
+
+    def test_stripe_repeat_changes_nothing(self):
+        self.stripe_billed(Subscription.Status.ACTIVE)
+        client = self.stripe_mock(default_card="pm_new", invoice_status="paid")
+        result = StripePayments(client).finish_card_update(self.subscription, "seti_1")
+        self.assertEqual(result, payments.CardUpdate.SAVED)
+        client.v1.subscriptions.update.assert_not_called()
+        client.v1.invoices.pay.assert_not_called()
+
+    def test_stripe_setup_intent_for_another_subscription_is_refused(self):
+        self.stripe_billed()
+        for client in (self.stripe_mock(subscription_id=self.subscription.pk + 1), self.stripe_mock(customer="cus_2")):
+            result = StripePayments(client).finish_card_update(self.subscription, "seti_1")
+            self.assertEqual(result, payments.CardUpdate.FAILED)
+            client.v1.subscriptions.update.assert_not_called()
+
+    def test_stripe_unconfirmed_card_is_not_used(self):
+        self.stripe_billed()
+        for status, expected in (("requires_payment_method", payments.CardUpdate.FAILED),
+                                 ("processing", payments.CardUpdate.PROCESSING)):
+            client = self.stripe_mock(intent_status=status)
+            self.assertEqual(StripePayments(client).finish_card_update(self.subscription, "seti_1"), expected)
+            client.v1.subscriptions.update.assert_not_called()
+
+    def test_stripe_declined_retry(self):
+        import stripe
+
+        self.stripe_billed()
+        client = self.stripe_mock()
+        client.v1.invoices.pay.side_effect = stripe.CardError("Your card was declined.", None, "card_declined")
+        self.assertEqual(StripePayments(client).finish_card_update(self.subscription, "seti_1"),
+                         payments.CardUpdate.DECLINED)
+        client.v1.subscriptions.update.assert_called_once()
+
+    def test_stripe_unreachable_becomes_a_customer_message(self):
+        import stripe
+
+        self.stripe_billed()
+        client = self.stripe_mock()
+        client.v1.setup_intents.create.side_effect = stripe.APIConnectionError("down")
+        with self.assertRaises(payments.PaymentError):
+            StripePayments(client).start_card_update(self.subscription)
+
+    @override_settings(STRIPE_SECRET_KEY="sk_test_x", PAYMENT_PROVIDER="stripe")
+    def test_setup_intent_webhook_finishes_the_change(self):
+        self.stripe_billed()
+        client = self.stripe_mock()
+        obj = {"id": "seti_1", "metadata": {"subscription": str(self.subscription.pk), "purpose": "card_update"}}
+        with mock.patch("apps.checkout.payments.stripe_client", return_value=client):
+            webhooks.handle({"type": "setup_intent.succeeded", "data": {"object": obj}})
+            webhooks.handle({"type": "setup_intent.succeeded",
+                             "data": {"object": {"id": "seti_2", "metadata": {}}}})
+        client.v1.setup_intents.retrieve.assert_called_once_with("seti_1")
+        client.v1.invoices.pay.assert_called_once()

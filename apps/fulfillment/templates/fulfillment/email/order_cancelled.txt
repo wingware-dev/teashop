@@ -1,0 +1,9 @@
+{% load storefront checkout %}{% autoescape off %}Hello {{ order.ship_name|default:"there" }},
+
+Your order {{ order.number }} is cancelled{% if reason %}: {{ reason }}{% else %}.{% endif %}
+
+{% if refund_amount %}We have refunded {{ refund_amount|money }} to the card or account you paid with.  Banks usually show it within 5 to 10 days.
+{% endif %}
+{% include "checkout/email/_order_lines.txt" %}
+Your order: {{ status_url }}
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

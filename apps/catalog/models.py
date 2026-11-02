@@ -477,6 +477,11 @@ class SoldPackage(models.Model):
     amount = models.DecimalField(max_digits=8, decimal_places=2, help_text="What the customer paid for this package")
     organic = models.BooleanField(default=False, help_text="Sold as organic")
     packed_at = models.DateTimeField(default=timezone.now, db_index=True)
+    reversed_at = models.DateTimeField(
+        null=True, blank=True, editable=False,
+        help_text="Unpacked (a cancellation or a mistaken pack): its tea and packaging went back to stock",
+    )
+    reversal_note = models.CharField(max_length=300, blank=True, editable=False)
 
     class Meta:
         ordering = ["-packed_at", "-pk"]

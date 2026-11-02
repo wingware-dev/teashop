@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load storefront %}
+{% block title %}Update your card · {{ shop_name }}{% endblock %}
+{% block content %}
+<div class="checkout narrow-form">
+  {% if result == "paid" %}
+    <h1>Thank you: your card is updated</h1>
+    <p class="notice">{% motif "bird" %}<span>The missed payment of {{ subscription.price|money }} went through on your new card, and future renewals use it too.  Your next delivery ships within a few working days.</span></p>
+  {% elif result == "saved" %}
+    <h1>Your card is updated</h1>
+    <p class="notice">{% motif "bird" %}<span>{% if subscription.status == "past_due" %}We saved your new card.  The missed payment of {{ subscription.price|money }} will be tried on it again over the next few days, and your next delivery ships once it goes through.{% else %}Future renewals of your {{ subscription.plan.name }} subscription use your new card.{% endif %}</span></p>
+  {% elif result == "declined" %}
+    <h1>Your bank declined the payment</h1>
+    <p>We saved your new card, but the missed payment of {{ subscription.price|money }} did not go through on it.  Please <a href="{{ subscription.card_url }}">try a different card</a>, or write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+  {% elif result == "processing" %}
+    <h1>Your bank is checking the card</h1>
+    <p>That can take a few minutes.  We use the new card as soon as your bank confirms it.  Reload this page later to see whether it went through.</p>
+  {% elif result == "failed" %}
+    <h1>Your card was not saved</h1>
+    <p>Nothing changed.  Please <a href="{{ subscription.card_url }}">try again</a>, or write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+  {% elif error %}
+    <h1>Update your card</h1>
+    <p class="error" role="alert">{{ error }}</p>
+    <p><a href="{{ subscription.card_url }}">Try again</a>, or write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+  {% elif can_update %}
+    <h1>Update your card</h1>
+    <p><strong>{{ subscription.plan.name }}</strong>, {{ subscription.price|money }} {{ subscription.plan.interval_text }}, for {{ subscription.email }}.</p>
+    {% if subscription.status == "past_due" %}
+      <p>Your last renewal payment did not go through.  Enter a new card and we charge the {{ subscription.price|money }} renewal to it now; future renewals use it too.</p>
+    {% else %}
+      <p>Future renewals use the card you enter here.  Nothing is charged today.</p>
+    {% endif %}
+    {% include "checkout/_payment_form.html" %}
+  {% elif subscription.is_live %}
+    <h1>Update your card</h1>
+    <p>We can't change this subscription's card online.  Please write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> and we will help.</p>
+  {% else %}
+    <h1>Subscription {{ subscription.get_status_display|lower }}</h1>
+    <p>There is no card to update: this subscription is not renewing, so nothing will be charged.  <a href="{% url 'checkout:plans' %}">See our tea subscriptions</a>.</p>
+  {% endif %}
+  {% if subscription.is_live and not result %}
+    <p class="small muted">Rather stop?  <a href="{{ subscription.cancel_url }}">Cancel this subscription</a> in one step.</p>
+  {% endif %}
+</div>
+{% endblock %}

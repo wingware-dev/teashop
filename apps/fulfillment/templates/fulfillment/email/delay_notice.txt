@@ -1,0 +1,18 @@
+{% autoescape off %}Hello {{ order.ship_name|default:"there" }},
+
+We are sorry: your order {{ order.number }} will not ship by {{ notice.old_ship_by|date:"l, F j" }}, the date we promised.
+
+Why: {{ notice.reason }}
+
+We now expect to ship it by {{ notice.new_ship_by|date:"l, F j, Y" }}.
+
+You can choose:
+  - to wait for it, or
+  - to cancel the order and get a full refund of everything you paid, at once.
+
+{% if notice.needs_consent %}Please tell us which you would like.  If we have not heard from you by {{ notice.answer_by|date:"F j" }}, we will cancel the order and refund you in full.
+{% else %}If you are happy to wait, you need do nothing.  To cancel instead, use the link below at any time before the order ships.
+{% endif %}
+Your choice: {{ answer_url }}
+{% include "checkout/email/_order_lines.txt" %}
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

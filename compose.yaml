@@ -93,6 +93,10 @@ services:
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       CSP_REPORT_URI: ${CSP_REPORT_URI:-}
+      # Fulfillment (docs/fulfillment.md).
+      OWNER_NEW_ORDER_EMAILS: ${OWNER_NEW_ORDER_EMAILS:-daily}
+      SHIPPING_LABEL_FORMAT: ${SHIPPING_LABEL_FORMAT:-PDF}
+      PACKAGE_LABEL_SIZE: ${PACKAGE_LABEL_SIZE:-4x2}
     volumes:
       - media:/app/var/media
     logging: *logging

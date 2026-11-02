@@ -1,0 +1,19 @@
+{% load storefront checkout %}{% autoescape off %}New orders since the last summary: {{ summary.new_orders|length }}
+{% for order in summary.new_orders %}
+{{ order.number }}  {{ order.total|money }}  {{ order.ship_name|default:order.email }}, {{ order.ship_city }} {{ order.ship_state }}{% if order.subscription_id %} (subscription){% endif %}
+  Ship by {{ order.ship_by|date:"D, M j" }}{% for line in order.lines.all %}
+  {{ line.quantity }} × {{ line.product_name }}{% if line.size_name %}, {{ line.size_name }}{% endif %}{% endfor %}
+{% endfor %}
+Orders to pack: {{ summary.to_pack|length }}
+{% if summary.late %}
+PAST THE PROMISED SHIP DATE (Mail Order Rule: ship now, or send a delay notice with the new date and the offer to cancel):
+{% for order in summary.late %}  {{ order.number }}, promised {{ order.ship_by|date:"M j" }}
+{% endfor %}{% endif %}{% if summary.due %}
+Due to ship by tomorrow:
+{% for order in summary.due %}  {{ order.number }}, by {{ order.ship_by|date:"D, M j" }}
+{% endfor %}{% endif %}{% if summary.awaiting_consent %}
+Delay notices waiting for the customer's answer (cancel and refund if none comes by the old date):
+{% for notice in summary.awaiting_consent %}  {{ notice.order.number }}, answer needed by {{ notice.answer_by|date:"M j" }}
+{% endfor %}{% endif %}
+Pack and ship: {{ queue_url }}
+{% endautoescape %}

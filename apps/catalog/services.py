@@ -71,6 +71,70 @@ def pack(size_option, order_reference, *, amount=None, lot=None, tea_grams=None)
         )
 
 
+def reverse_package(package, note="", *, reusable=True):
+    """Undo pack() for a package that won't ship: a cancelled order or a
+    mistaken pack.  The tea goes back on its lot and the packaging on the
+    lots it came from, as 'returned' adjustments with the order reference,
+    and the package is marked reversed, so it no longer counts as a sale
+    (profit, organic sales).
+
+    reusable=False: the tea or packaging can't go back on the shelf (the
+    pouch was sealed, tea spilled); they are returned and then written off
+    as damaged, so the loss report shows them.
+
+    Returns the movements.  Raises ValueError if already reversed."""
+    with transaction.atomic():
+        package = SoldPackage.objects.select_for_update().get(pk=package.pk)
+        if package.reversed_at:
+            raise ValueError(f"{package} was already unpacked.")
+        reference = package.order_reference
+        text = (note or "Unpacked")[:300]
+        returned = StockMovement.Reason.RETURNED
+        movements = []
+
+        def give_back(lot, quantity):
+            movements.append(inventory.post_movement(
+                lot, quantity, StockMovement.Kind.ADJUSTMENT, reason=returned, reference=reference, note=text))
+            if not reusable:
+                movements.append(inventory.post_movement(
+                    lot, -quantity, StockMovement.Kind.ADJUSTMENT, reason=StockMovement.Reason.DAMAGED,
+                    reference=reference, note=f"Not reusable: {text}"[:300]))
+
+        if package.tea_lot_id and package.tea_grams:
+            give_back(package.tea_lot, package.tea_grams)
+        for line in package.size_option.bom_lines.select_related("item"):
+            remaining = line.quantity
+            # The lots this order's packaging came from, newest first, less
+            # what earlier reversals of the same order already gave back.
+            sales = StockMovement.objects.filter(
+                lot__item=line.item, reference=reference, kind=StockMovement.Kind.SALE).select_related("lot")
+            given = {}
+            for row in StockMovement.objects.filter(lot__item=line.item, reference=reference,
+                                                    kind=StockMovement.Kind.ADJUSTMENT, reason=returned):
+                given[row.lot_id] = given.get(row.lot_id, 0) + row.quantity
+            for sale in sales.order_by("-created_at", "-pk"):
+                if not remaining:
+                    break
+                taken = -sale.quantity
+                back = min(taken, given.get(sale.lot_id, 0))
+                given[sale.lot_id] = given.get(sale.lot_id, 0) - back
+                take = min(taken - back, remaining)
+                if take > 0:
+                    give_back(sale.lot, take)
+                    remaining -= take
+            if remaining:
+                # Not found under this reference (packed by hand?): back on
+                # the item's oldest usable lot.
+                lot = line.item.usable_lots().first() or line.item.lots.order_by("-received_on", "-pk").first()
+                if lot is None:
+                    raise inventory.StockError(f"{line.item} has no lot to put {remaining} back on.")
+                give_back(lot, remaining)
+        package.reversed_at = timezone.now()
+        package.reversal_note = text
+        package.save(update_fields=["reversed_at", "reversal_note"])
+        return movements
+
+
 def ounces(grams):
     """Net weight in ounces to two places, rounded down so the label never
     claims more than is in the package."""
@@ -143,5 +207,5 @@ def organic_sales(year=None):
     """Sales of packages sold as organic in a calendar year (default: this
     year), for the limit on selling organic without certification."""
     year = year or timezone.localdate().year
-    total = SoldPackage.objects.filter(organic=True, packed_at__year=year).aggregate(total=Sum("amount"))["total"]
+    total = SoldPackage.objects.filter(organic=True, packed_at__year=year, reversed_at=None).aggregate(total=Sum("amount"))["total"]
     return total or Decimal("0.00")

@@ -1,0 +1,11 @@
+{% autoescape off %}Hello {{ order.ship_name|default:"there" }},
+
+{% if reason %}{{ reason }}
+
+{% endif %}We have sent your order {{ order.number }} again, at no cost to you, with {{ label.carrier }}.
+
+Tracking number: {{ label.tracking_number }}
+{% if tracking_url %}Track it: {{ tracking_url }}
+{% endif %}
+Your order: {{ status_url }}
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

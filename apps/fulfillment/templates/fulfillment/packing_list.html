@@ -1,0 +1,24 @@
+{% extends "fulfillment/_layout.html" %}
+{% block title %}Packing list · {{ shop_name }}{% endblock %}
+{% block page %}
+<h1>Packing list</h1>
+<p class="muted">Everything still to pack, {{ today|date:"l, F j" }}, by tea.  Weigh out and pack from the lot shown (the oldest best-by first); each package's own page records its weight and prints its label.</p>
+
+{% if not rows %}
+  <p>Nothing to pack.</p>
+{% else %}
+  {% if plain %}
+  <section aria-labelledby="plain-title">
+    <h2 id="plain-title">Pack first</h2>
+    {% include "fulfillment/_packing_table.html" with groups=plain label="Teas to pack first" %}
+  </section>
+  {% endif %}
+  {% if allergen %}
+  <section aria-labelledby="allergen-title" class="ff-allergen-section">
+    <h2 id="allergen-title">Pack last: allergen teas</h2>
+    <p class="ff-alert urgent"><strong>These teas contain allergens.</strong>  Pack them after everything else, with their own scoop, and clean the bench and scale afterwards, so nothing carries over into other teas.</p>
+    {% include "fulfillment/_packing_table.html" with groups=allergen label="Allergen teas to pack last" %}
+  </section>
+  {% endif %}
+{% endif %}
+{% endblock %}

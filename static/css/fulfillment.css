@@ -1,0 +1,75 @@
+/* The packing pages (apps/fulfillment): made for a phone at the packing
+   bench first.  Big targets, one column, the design tokens of site.css. */
+
+.ff-nav ul { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; }
+.ff-nav a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.25rem; font-weight: 600; }
+.ff-nav a[aria-current="page"] { color: var(--text); text-decoration: none; box-shadow: inset 0 -3px 0 var(--accent); }
+
+.ff-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.ff-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.ff-card h2 { font-size: 1.25rem; margin: 0 0 0.4rem; }
+.ff-card h3 { font-size: 1.05rem; margin: 0 0 0.2rem; }
+.ff-card:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.ff-queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); }
+.ff-queue .ff-card { margin: 0; border-left: 6px solid var(--border); }
+.ff-queue .ff-late { border-left-color: var(--danger); }
+.ff-queue .ff-due { border-left-color: var(--c-buttercup); }
+.ff-queue h2 a { text-decoration: none; }
+.ff-queue h2 a::after { content: " ›"; }
+.ff-name { display: block; font-family: var(--font-text); font-size: 0.95rem; font-weight: 500; color: var(--muted); }
+
+.ff-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.25rem 0; }
+.ff-badge {
+  display: inline-block;
+  padding: 0.05rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: var(--font-text);
+}
+.ff-badge-late { border-color: var(--danger); color: var(--danger); background: var(--surface); }
+.ff-badge-due { border-color: var(--c-buttercup); background: var(--c-buttercup-tint); color: var(--c-buttercup-ink); }
+.ff-badge-allergen { border-color: var(--c-poppy); background: var(--c-poppy-tint); color: var(--c-poppy-ink); }
+
+.ff-alert { border: 1px solid var(--border); border-left: 6px solid var(--c-cornflower); border-radius: 0.4rem; background: var(--surface); padding: 0.6rem 0.8rem; margin: 0 0 1rem; }
+.ff-alert.urgent { border-left-color: var(--danger); }
+.ff-alert p { margin: 0 0 0.5rem; }
+.ff-alert .field { margin-bottom: 0; }
+
+.ff-lines { list-style: none; margin: 0; padding: 0; }
+.ff-line { border-top: 1px solid var(--border); padding: 0.75rem 0; }
+.ff-line:first-child { border-top: none; padding-top: 0.25rem; }
+.ff-done h3::before { content: "✓ "; color: var(--brand-ink); }
+.ff-packed { margin: 0.25rem 0 0.5rem; padding-left: 1.25rem; font-size: 0.9rem; }
+.ff-packed li { margin-bottom: 0.25rem; }
+.ff-inline-form { display: inline; margin-left: 0.5rem; }
+.ff-inline-form button.link { min-height: 2.75rem; padding: 0 0.25rem; }
+.ff-pack-form { margin-top: 0.5rem; }
+.ff-pack-form button, .ff-label-form button[type="submit"] { width: 100%; }
+.ff-more { margin: 0.5rem 0; }
+.ff-more > summary { cursor: pointer; font-weight: 600; color: var(--brand-ink); min-height: 2.75rem; display: flex; align-items: center; }
+.ff-label-form, .ff-label { border-top: 2px solid var(--border); margin-top: 0.75rem; padding-top: 0.75rem; }
+.ff-suggestion { border-left: 4px solid var(--c-cornflower); padding-left: 0.6rem; }
+.ff-print { border: 2px solid var(--brand); }
+.ff-history { padding-left: 1.25rem; }
+.ff-order-head h1 { margin-bottom: 0.25rem; }
+
+@media (min-width: 48rem) {
+  .ff-pack-form button, .ff-label-form button[type="submit"] { width: auto; }
+}
+
+@media print {
+  .site-header, .site-footer, .ff-nav, .skip-link { display: none; }
+  .ff-card { border: none; padding: 0; }
+}

@@ -1,7 +1,7 @@
 {% load static storefront %}
 {# Stripe's Payment Element (cards, Apple Pay, Google Pay, Link...), or the stand-in on a laptop. #}
 {% if provider == "stripe" %}
-  <form id="payment-form" class="payment-form" data-stripe-key="{{ publishable_key }}" data-client-secret="{{ client_secret }}" data-return-url="{{ return_url }}">
+  <form id="payment-form" class="payment-form" data-stripe-key="{{ publishable_key }}" data-client-secret="{{ client_secret }}" data-return-url="{{ return_url }}" data-intent="{{ intent|default:'payment' }}">
     <div id="payment-element" class="payment-element"><p class="muted">Loading the secure payment form…</p></div>
     <p id="payment-message" class="error" role="alert" hidden></p>
     <button type="submit" id="pay-button" disabled>{{ pay_label }}</button>
@@ -12,7 +12,7 @@
 {% else %}
   <form method="post" action="{{ fake_action }}" class="payment-form">
     {% csrf_token %}
-    <p class="notice">{% motif "bee" %}<span><strong>Test mode.</strong> Stripe is not set up here, so no payment form is shown and no money moves.  This button marks it paid.</span></p>
+    <p class="notice">{% motif "bee" %}<span><strong>Test mode.</strong> Stripe is not set up here, so no payment form is shown and no money moves.  {{ fake_note|default:"This button marks it paid." }}</span></p>
     <button type="submit">{{ pay_label }} (test)</button>
   </form>
 {% endif %}

@@ -132,6 +132,37 @@ class CheckoutUITests(BrowserTestCase):
         self.check_current(page, "subscription-cancelled")
         self.assertEqual(Subscription.objects.get().status, Subscription.Status.CANCELLED)
 
+    def test_card_update_after_a_failed_renewal(self):
+        from django.utils import timezone
+
+        from apps.checkout import subscriptions
+
+        plan = SubscriptionPlan.objects.create(
+            name="Tea of the month", slug="tea-of-the-month", price=Decimal("24.00"), interval_months=1,
+            description="Two 50 g pouches of teas we are excited about, a different pair each month.")
+        subscription = Subscription.objects.create(
+            plan=plan, email="ada@example.com", price=plan.price, interval_months=1, terms_text=plan.renewal_terms(),
+            consented_at=timezone.now(), status=Subscription.Status.ACTIVE, payment_provider="fake",
+            ship_name="Ada Lovelace", ship_street1="12 Main St", ship_city="Albany", ship_state="NY", ship_zip="12207")
+        subscriptions.payment_failed(subscription)
+        link = re.search(r"https?://\S+(/subscriptions/card/\S+/)", mail.outbox[-1].body).group(1)
+        for viewport, theme in COMBOS:
+            page = self.new_page(viewport, theme)
+            page.goto(self.url(link))
+            page.get_by_role("heading", name="Update your card").wait_for()
+            self.check_current(page, "subscription-card")
+            if viewport == "phone":
+                page.get_by_role("button", name="Save card and pay (test)").click()
+                page.get_by_role("heading", name="Thank you: your card is updated").wait_for()
+            else:
+                page.get_by_role("button", name="Save card (test)").click()
+                page.get_by_role("heading", name="Your card is updated").wait_for()
+            self.check_current(page, "subscription-card-updated")
+            subscription.refresh_from_db()
+            self.assertEqual(subscription.status, Subscription.Status.ACTIVE)
+        subscriptions.cancel(subscription)
+        self.check_page(link, "subscription-card-cancelled", viewports=["phone"], themes=["light"])
+
     def test_policy_pages(self):
         for slug in ("privacy", "terms", "returns", "shipping", "subscriptions", "accessibility"):
             self.check_page(f"/policies/{slug}/", f"policy-{slug}")

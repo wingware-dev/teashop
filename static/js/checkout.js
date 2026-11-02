@@ -35,14 +35,19 @@
     event.preventDefault();
     button.disabled = true;
     showMessage("");
-    stripe.confirmPayment({
+    // data-intent="setup": saving a card for later (a SetupIntent, on the
+    // subscription card page), not paying now.
+    var setup = form.dataset.intent === "setup";
+    var confirm = setup ? stripe.confirmSetup : stripe.confirmPayment;
+    confirm.call(stripe, {
       elements: elements,
       confirmParams: { return_url: form.dataset.returnUrl }
     }).then(function (result) {
-      // Only reached when the payment fails or needs the customer again;
+      // Only reached when the card is refused or needs the customer again;
       // on success Stripe goes to return_url.
       if (result.error) {
-        showMessage(result.error.message || "The payment did not go through.  Please try again.");
+        showMessage(result.error.message || (setup ? "The card could not be saved." :
+          "The payment did not go through.") + "  Please try again.");
       }
       button.disabled = false;
     });

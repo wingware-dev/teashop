@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Offline · {{ shop_name }}{% endblock %}
+{% block content %}
+<h1>No connection</h1>
+<p>Packing and labels need the internet: they change stock and buy postage, so nothing is done offline.  When the connection is back:</p>
+<p><a class="button" href="{% url 'fulfillment:queue' %}">Orders to pack</a></p>
+{% endblock %}

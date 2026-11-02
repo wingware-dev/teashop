@@ -90,7 +90,8 @@ step "Backup, restore-test and subscription-reminder timers"
 install -m 644 "$APP_DIR"/deploy/server/systemd/teashop-*.service "$APP_DIR"/deploy/server/systemd/teashop-*.timer \
     /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now teashop-backup.timer teashop-restore-test.timer teashop-subscription-reminders.timer
+systemctl enable --now teashop-backup.timer teashop-restore-test.timer teashop-subscription-reminders.timer \
+    teashop-order-summary.timer
 systemctl list-timers 'teashop-*' --no-pager
 
 step "Done"

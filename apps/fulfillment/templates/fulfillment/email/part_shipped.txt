@@ -1,0 +1,14 @@
+{% autoescape off %}Hello {{ order.ship_name|default:"there" }},
+
+Part of your order {{ order.number }} is on its way with {{ label.carrier }}.
+
+Tracking number: {{ label.tracking_number }}
+{% if tracking_url %}Track it: {{ tracking_url }}
+{% endif %}
+Still to come, as soon as it is in stock:
+{% for line in rest %}  {{ line.quantity }} × {{ line.order_line.product_name }}{% if line.order_line.size_name %}, {{ line.order_line.size_name }}{% endif %}
+{% endfor %}
+You pay nothing more for the second parcel.  We will email you when it ships.
+
+Your order: {{ status_url }}
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

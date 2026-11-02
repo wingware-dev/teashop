@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load storefront checkout %}
+{% block title %}Your order {{ order.number }} · {{ shop_name }}{% endblock %}
+{% block content %}
+<h1>Your order {{ order.number }}</h1>
+{% if order.status == "cancelled" %}
+  <p>Your order is cancelled{% if notice.response == "cancelled" %}, as you asked{% endif %}.  Everything you paid has been refunded to the card or account you paid with; banks usually show it within 5 to 10 days.</p>
+{% elif order.status == "shipped" %}
+  <p>Good news: your order has shipped.  The tracking number is in your email and on <a href="{{ order.get_absolute_url }}">your order's page</a>.</p>
+{% elif notice.response == "consented" %}
+  <p>Thank you for waiting.  We expect to ship your order by <strong>{{ notice.new_ship_by|date:"l, F j, Y" }}</strong>, and will email you the tracking number when it goes.</p>
+  <p>Changed your mind?  You can still cancel for a full refund until it ships.</p>
+  <form method="post">{% csrf_token %}<input type="hidden" name="choice" value="cancel"><button type="submit" class="secondary">Cancel my order and refund me</button></form>
+{% else %}
+  <p>We are sorry: we could not ship your order by {{ notice.old_ship_by|date:"F j" }} as promised.  {{ notice.reason }}</p>
+  <p>We now expect to ship it by <strong>{{ notice.new_ship_by|date:"l, F j, Y" }}</strong>.</p>
+  {% if notice.needs_consent %}<p>Please tell us what you would like.  If we have not heard from you by {{ notice.answer_by|date:"F j" }}, we will cancel the order and refund you in full.</p>{% else %}<p>If you are happy to wait, you need do nothing.</p>{% endif %}
+  {% if can_answer %}
+    <div class="actions">
+      <form method="post">{% csrf_token %}<input type="hidden" name="choice" value="wait"><button type="submit">I'll wait</button></form>
+      <form method="post">{% csrf_token %}<input type="hidden" name="choice" value="cancel"><button type="submit" class="secondary">Cancel my order and refund {{ refundable|money }}</button></form>
+    </div>
+  {% endif %}
+{% endif %}
+<p><a href="{{ order.get_absolute_url }}">Your order's page</a></p>
+{% endblock %}

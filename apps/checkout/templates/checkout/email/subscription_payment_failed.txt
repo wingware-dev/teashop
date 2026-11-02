@@ -2,6 +2,9 @@
 
 The renewal payment of {{ subscription.price|money }} for your {{ subscription.plan.name }} subscription did not go through.  Stripe, our payment processor, will try again over the next few days; the next delivery ships once a payment succeeds.
 
-If your card has changed, write to {{ contact_email }} and we will help.  To stop the subscription instead, cancel in one step:
+If your card has changed or expired, enter a new one here and we will charge the renewal to it right away:
+{{ card_url }}
+
+Questions?  Write to {{ contact_email }} and we will help.  To stop the subscription instead, cancel in one step:
 {{ cancel_url }}
 {% include "checkout/email/_footer.txt" %}{% endautoescape %}

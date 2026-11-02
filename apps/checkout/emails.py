@@ -63,7 +63,10 @@ def order_shipped(order):
 
 
 def owner_new_order(order):
-    if not settings.OWNER_NOTIFY_EMAIL:
+    """An email to the owner for this order now, if they chose one per
+    order (OWNER_NEW_ORDER_EMAILS=each); by default new orders go in the
+    6pm summary instead (fulfillment's send_order_summary)."""
+    if not settings.OWNER_NOTIFY_EMAIL or settings.OWNER_NEW_ORDER_EMAILS != "each":
         return False
     from django.urls import reverse
 
@@ -117,5 +120,6 @@ def subscription_cancelled(subscription):
 
 def subscription_payment_failed(subscription):
     return _send(f"Your {settings.SHOP_NAME} subscription renewal did not go through", "subscription_payment_failed",
-                 {"subscription": subscription, "cancel_url": absolute(subscription.cancel_url())},
+                 {"subscription": subscription, "cancel_url": absolute(subscription.cancel_url()),
+                  "card_url": absolute(subscription.card_url())},
                  subscription.email, subscription)

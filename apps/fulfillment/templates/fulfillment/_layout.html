@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load static %}
+{% block extra_head %}
+  <link rel="manifest" href="{% url 'fulfillment:manifest' %}">
+  <meta name="theme-color" content="#3d6b3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Packing">
+  <link rel="apple-touch-icon" href="{% static 'img/packing-icon-180.png' %}">
+  <link rel="stylesheet" href="{% static 'css/fulfillment.css' %}">
+  <script src="{% static 'js/fulfillment.js' %}" defer data-sw="{% url 'fulfillment:service_worker' %}" data-scope="{% url 'fulfillment:queue' %}"></script>
+{% endblock %}
+{% block body_class %}fulfillment{% endblock %}
+{% block content %}
+  <nav class="ff-nav" aria-label="Packing and shipping">
+    <ul>
+      <li><a href="{% url 'fulfillment:queue' %}"{% if request.resolver_match.url_name == "queue" %} aria-current="page"{% endif %}>Orders</a></li>
+      <li><a href="{% url 'fulfillment:packing_list' %}"{% if request.resolver_match.url_name == "packing_list" %} aria-current="page"{% endif %}>Packing list</a></li>
+      <li><a href="{% url 'fulfillment:pickups' %}"{% if request.resolver_match.url_name == "pickups" %} aria-current="page"{% endif %}>Pickups</a></li>
+      <li><a href="{% url 'core:owner_dashboard' %}">Dashboard</a></li>
+    </ul>
+  </nav>
+  {% block page %}{% endblock %}
+{% endblock %}

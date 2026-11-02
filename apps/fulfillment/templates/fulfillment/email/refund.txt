@@ -1,0 +1,8 @@
+{% load storefront checkout %}{% autoescape off %}Hello {{ order.ship_name|default:"there" }},
+
+We have refunded {{ refund.amount|money }} for your order {{ order.number }}: {{ refund.reason }}
+
+It goes back to the card or account you paid with.  Banks usually show it within 5 to 10 days.
+
+Your order: {{ status_url }}
+{% include "checkout/email/_footer.txt" %}{% endautoescape %}

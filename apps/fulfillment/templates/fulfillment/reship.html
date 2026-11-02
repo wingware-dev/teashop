@@ -1,0 +1,19 @@
+{% extends "fulfillment/_layout.html" %}
+{% load checkout %}
+{% block title %}Send again · Order {{ order.number }} · {{ shop_name }}{% endblock %}
+{% block page %}
+<h1>Send order {{ order.number }} again</h1>
+<p class="small muted">For a parcel lost in the post or arriving damaged.  The new parcel is packed and labelled like any other; the customer pays nothing.  (To give money back instead, refund on the order's page.)</p>
+<form method="post" class="ff-card">
+  {% csrf_token %}
+  <fieldset>
+    <legend>What to send</legend>
+    {% for bound in form.line_fields %}{% field bound %}{% endfor %}
+  </fieldset>
+  {% field form.reason %}
+  <div class="actions">
+    <button type="submit">Start the reship</button>
+    <a href="{% url 'fulfillment:order' order.number %}">Back to the order</a>
+  </div>
+</form>
+{% endblock %}

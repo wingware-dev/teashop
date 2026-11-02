@@ -5,7 +5,8 @@ Each event is checked against STRIPE_WEBHOOK_SECRET and handled once
 (WebhookEvent).  An event that fails to be handled answers 500, so Stripe
 sends it again later.  In Stripe's dashboard, send these events to
 /checkout/stripe-webhook/: payment_intent.succeeded, invoice.paid,
-invoice.payment_failed, customer.subscription.updated and
+invoice.payment_failed, setup_intent.succeeded (a new card from the
+subscription card page), customer.subscription.updated and
 customer.subscription.deleted.
 """
 
@@ -83,6 +84,16 @@ def handle(event):
                 amount=Decimal(obj.get("amount_paid") or 0) / 100)
         else:
             subscriptions.payment_failed(subscription)
+    elif kind == "setup_intent.succeeded":
+        # A new card from the card page, in case the customer never got back
+        # to the return page (which does the same, so this is often a repeat).
+        metadata = obj.get("metadata") or {}
+        subscription = Subscription.objects.filter(pk=metadata.get("subscription")).first() \
+            if metadata.get("purpose") == "card_update" and str(metadata.get("subscription", "")).isdigit() else None
+        if subscription is None or not subscriptions.can_update_card(subscription):
+            log.info("SetupIntent %s is not a card change for a live subscription", obj.get("id"))
+            return
+        subscriptions.update_card(subscription, obj["id"])
     elif kind in ("customer.subscription.updated", "customer.subscription.deleted"):
         subscription = Subscription.objects.filter(stripe_subscription_id=obj["id"]).first()
         if subscription:
