@@ -1,7 +1,7 @@
 """The fulfillment pages through the test client: the owner packs, labels
 and ships; the customer answers a delay notice."""
 
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 from django.core import mail
@@ -47,11 +47,17 @@ class OwnerPagesTests(FulfillmentTestCase):
         self.assertEqual([row["order"] for row in backordered.context["rows"]], [waiting])
 
     def test_shipped_tab_judges_lateness_by_the_ship_date(self):
-        now = timezone.now()
-        on_time = paid_order([(self.assam, 1)], ship_by=date.today() - timedelta(days=3))
-        late = paid_order([(self.assam, 1)], ship_by=date.today() - timedelta(days=3))
-        Order.objects.filter(pk=on_time.pk).update(status=Order.Status.SHIPPED, shipped_at=now - timedelta(days=4))
-        Order.objects.filter(pk=late.pk).update(status=Order.Status.SHIPPED, shipped_at=now - timedelta(days=1))
+        # Shipped at noon local time on calendar days, as the view judges by
+        # local dates (24 hours back is not always yesterday: DST).
+        today = timezone.localdate()
+
+        def noon(days_ago):
+            return timezone.make_aware(datetime.combine(today - timedelta(days=days_ago), time(12)))
+
+        on_time = paid_order([(self.assam, 1)], ship_by=today - timedelta(days=3))
+        late = paid_order([(self.assam, 1)], ship_by=today - timedelta(days=3))
+        Order.objects.filter(pk=on_time.pk).update(status=Order.Status.SHIPPED, shipped_at=noon(4))
+        Order.objects.filter(pk=late.pk).update(status=Order.Status.SHIPPED, shipped_at=noon(1))
         page = self.client.get(reverse("fulfillment:queue") + "?show=shipped")
         rows = {row["order"]: row for row in page.context["rows"]}
         self.assertEqual((rows[on_time]["status"], rows[on_time]["status_text"]), ("ok", ""))
