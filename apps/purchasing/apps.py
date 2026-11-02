@@ -15,3 +15,5 @@ class PurchasingConfig(AppConfig):
         attention.register_shortcut("Reorder: suggested purchase orders", "purchasing:reorder")
         attention.register_shortcut("Losses and samples by month", "purchasing:losses")
         attention.register_shortcut("Profit per tea and per size", "purchasing:profit")
+        attention.register_shortcut("Stock counts", "admin:purchasing_stockcount_changelist",
+                                    "Stock: receiving, lots and suppliers")

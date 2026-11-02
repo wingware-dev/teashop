@@ -48,7 +48,7 @@ def owner_dashboard(request):
             "ops": ops_status(),
             "attention_groups": attention.grouped(entries),
             "overdue_count": sum(1 for entry in entries if entry.overdue),
-            "shortcuts": attention.shortcuts(),
+            "shortcut_groups": attention.shortcut_groups(),
             "recent_events": recent_events,
             "admin_url": "/" + settings.ADMIN_URL,
             "version": settings.GIT_SHA,

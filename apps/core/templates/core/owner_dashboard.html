@@ -60,8 +60,14 @@
     <ul>
       <li><a href="{{ admin_url }}">Back office (admin)</a></li>
       <li><a href="{% url 'two_factor:profile' %}">Two-factor settings and backup codes</a></li>
-      {% for title, url in shortcuts %}<li><a href="{{ url }}">{{ title }}</a></li>{% endfor %}
+      {% for group, links in shortcut_groups %}{% if not group %}{% for title, url in links %}<li><a href="{{ url }}">{{ title }}</a></li>{% endfor %}{% endif %}{% endfor %}
     </ul>
+    {% for group, links in shortcut_groups %}
+      {% if group %}
+        <h3 class="shortcut-group">{{ group }}</h3>
+        <ul>{% for title, url in links %}<li><a href="{{ url }}">{{ title }}</a></li>{% endfor %}</ul>
+      {% endif %}
+    {% endfor %}
   </section>
 
   <section class="card">

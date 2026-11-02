@@ -22,3 +22,18 @@ class AttentionTests(SimpleTestCase):
                 items = attention.collect()
         self.assertEqual([item.title for item in items], ["now", "later"])
         self.assertIn("boom", "\n".join(logs.output))
+
+    def test_shortcut_groups_keep_order_add_queries_and_skip_bad_urls(self):
+        with mock.patch.object(attention, "_shortcuts", []):
+            attention.register_shortcut("Lots", "admin:inventory_lot_changelist", "Stock")
+            attention.register_shortcut("Health", "ops:owner_home")
+            attention.register_shortcut("Boxes", "admin:inventory_item_changelist", "Stock", query="kind__exact=box")
+            attention.register_shortcut("Lots", "admin:inventory_lot_changelist", "Stock")  # registered once
+            attention.register_shortcut("Gone", "no:such_url", "Stock")
+            with self.assertLogs("apps.core.attention", level="ERROR"):
+                groups = attention.shortcut_groups()
+        self.assertEqual([group for group, _links in groups], ["", "Stock"])
+        self.assertEqual([title for title, _url in groups[0][1]], ["Health"])
+        stock = groups[1][1]
+        self.assertEqual([title for title, _url in stock], ["Lots", "Boxes"])
+        self.assertTrue(stock[1][1].endswith("/inventory/item/?kind__exact=box"))

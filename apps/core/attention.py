@@ -217,19 +217,31 @@ def grouped(entries):
 _shortcuts = []
 
 
-def register_shortcut(title, url_name):
-    if (title, url_name) not in _shortcuts:
-        _shortcuts.append((title, url_name))
+def register_shortcut(title, url_name, group="", query=""):
+    """Add a link to the Shortcuts card.  group: a heading to list it
+    under ("" for the ungrouped list at the top); query: a query string
+    added to the URL, such as an admin list filter ("kind__exact=tea")."""
+    entry = (title, url_name, group, query)
+    if entry not in _shortcuts:
+        _shortcuts.append(entry)
 
 
 def shortcuts():
-    """[(title, url)] for the registered shortcuts."""
+    """[(title, url)] for all the registered shortcuts, grouped or not."""
+    return [link for _group, links in shortcut_groups() for link in links]
+
+
+def shortcut_groups():
+    """[(group, [(title, url)])]: the ungrouped shortcuts first under "",
+    then each group in the order its first shortcut was registered."""
     from django.urls import NoReverseMatch, reverse
 
-    links = []
-    for title, url_name in _shortcuts:
+    groups = {"": []}
+    for title, url_name, group, query in _shortcuts:
         try:
-            links.append((title, reverse(url_name)))
+            url = reverse(url_name)
         except NoReverseMatch:
             log.exception("Dashboard shortcut %r has no URL %r", title, url_name)
-    return links
+            continue
+        groups.setdefault(group, []).append((title, url + ("?" + query if query else "")))
+    return list(groups.items())

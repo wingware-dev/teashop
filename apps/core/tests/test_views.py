@@ -65,6 +65,19 @@ class OwnerDashboardTests(TestCase):
         self.assertContains(response, "ops.test_event")
         self.assertContains(response, "Backup restore test passed")
 
+    def test_dashboard_links_the_back_office_setup_pages_in_groups(self):
+        owner, device = make_owner()
+        login_verified(self.client, owner, device)
+        response = self.client.get(self.url)
+        for group in ("Catalog: teas and goods", "Stock: receiving, lots and suppliers",
+                      "Packaging and shipping supplies"):
+            self.assertContains(response, f'<h3 class="shortcut-group">{group}</h3>', html=True)
+        for name in ("catalog_product_changelist", "inventory_receipt_add", "inventory_supplier_changelist",
+                     "purchasing_stockcount_changelist", "fulfillment_boxsize_changelist",
+                     "fulfillment_scale_changelist"):
+            self.assertContains(response, f'href="{reverse("admin:" + name)}"')
+        self.assertContains(response, reverse("admin:inventory_item_changelist") + "?kind__exact=packaging")
+
     def test_logout_ends_session(self):
         owner, device = make_owner()
         login_verified(self.client, owner, device)
