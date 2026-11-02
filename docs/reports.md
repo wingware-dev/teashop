@@ -13,6 +13,7 @@ you get a reminder email at `OWNER_NOTIFY_EMAIL`:
 | Things that are broken | Emails not going out, payments that don't match, no scale | after 1 hour |
 | Failed jobs and backups | Background jobs that failed, worker stopped, backups, Wave posting | after 1 hour |
 | Orders | Orders to pack, late or due, back-orders | the 6pm order summary |
+| Posts to put up by hand | Approved social posts whose time has come (phase 10) | after 1 hour |
 | Posts and designs to approve | Page designs, mailings, social posts (phase 10) | after 3 days |
 | Purchase orders | Drafts to approve, late deliveries | the daily reminder |
 | Stock | Low stock, items at their reorder level, best-by dates, lots on hold | the daily reminder |

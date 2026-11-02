@@ -1,6 +1,6 @@
 """Marketing on the owner dashboard's "Needs your attention" queue: posts
 and articles to approve (kind "approvals"), posts whose time has come to
-put up by hand, and posts that failed (kind "problems")."""
+put up by hand (kind "posts"), and posts that failed (kind "problems")."""
 
 from datetime import timedelta
 
@@ -47,7 +47,7 @@ def attention_items():
         items.append(Attention(
             f"Time to post on {post.get_network_display()}", f"\"{_about(post)}\", approved for "
             f"{_when(post.scheduled_for)}.  Copy it, post it, then mark it posted.", post.get_absolute_url(), "urgent",
-            kind="approvals", key=f"marketing:due:{post.pk}", since=post.scheduled_for))
+            kind="posts", key=f"marketing:due:{post.pk}", since=post.scheduled_for))
     for post in Post.objects.filter(status=Post.Status.FAILED).order_by("scheduled_for"):
         items.append(Attention(
             f"A {post.get_network_display()} post failed", post.error or "See the post.", post.get_absolute_url(),

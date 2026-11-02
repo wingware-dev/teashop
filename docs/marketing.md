@@ -41,7 +41,8 @@ Dashboard → Shortcuts → "Marketing: ideas, posts and calendar"
 The dashboard's "Needs your attention" list has posts waiting for approval
 (kind "approvals"; urgent when one is meant to go out within a day),
 articles the assistant drafted, each post whose time has come to put up by
-hand, and failed posts (kind "problems").
+hand (kind "posts": a reminder email an hour after its time), and failed
+posts (kind "problems").
 
 ## The marketing agent
 

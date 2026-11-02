@@ -14,6 +14,7 @@ from django.utils import timezone
 from apps import jobs
 from apps.audit import acting_as_agent
 from apps.checkout.models import DiscountCode, Order
+from apps.core import attention
 from apps.core.testing import make_owner
 from apps.fulfillment.testing import paid_order, size
 from apps.marketing import alerts, publishers, services
@@ -83,7 +84,13 @@ class ApprovalTests(TestCase):
         self.post.refresh_from_db()
         self.assertEqual(self.post.status, Post.Status.DUE)
         item = next(i for i in alerts.attention_items() if i.key == f"marketing:due:{self.post.pk}")
-        self.assertEqual((item.kind, item.level), ("approvals", "urgent"))
+        self.assertEqual((item.kind, item.level), ("posts", "urgent"))
+        # Reminded an hour after its time, not after the approvals' 3 days.
+        with mock.patch.object(attention, "_providers", [lambda: [item]]):
+            [entry] = attention.queue(self.post.scheduled_for + timedelta(minutes=59))
+            self.assertFalse(entry.overdue)
+            [entry] = attention.queue(self.post.scheduled_for + timedelta(minutes=61))
+            self.assertTrue(entry.overdue)
         services.mark_posted(self.post, self.owner, "https://x.com/teashop/status/1")
         self.assertEqual(self.post.status, Post.Status.POSTED)
         self.assertFalse([i for i in alerts.attention_items() if i.key.startswith("marketing:due")])

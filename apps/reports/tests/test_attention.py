@@ -41,6 +41,7 @@ class DeadlineTests(TestCase):
     def test_the_users_starting_deadlines(self):
         self.assertEqual(attention.deadline_for("support").after, timedelta(0))
         self.assertEqual(attention.deadline_for("orders").at.hour, 18)
+        self.assertEqual(attention.deadline_for("posts").after, timedelta(hours=1))
         self.assertEqual(attention.deadline_for("unknown"), attention.deadline_for("other"))
         with override_settings(ATTENTION_DEADLINES={"refunds": "2h"}):
             self.assertEqual(attention.deadline_for("refunds").after, timedelta(hours=2))

@@ -10,7 +10,7 @@ A provider takes no arguments and returns a list of Attention items.  A
 provider that fails is logged and skipped, so one broken app cannot take
 the dashboard down.
 
-Each item has a kind (KINDS: support, refunds, orders, ...), and each kind
+Each item has a kind (KINDS: support, refunds, posts, orders, ...), and each kind
 a deadline: how long an item may wait before the owner is reminded by
 email (settings.ATTENTION_DEADLINES can change them).  An item is waiting
 since its ``since`` (when the provider knows, e.g. when a purchase order
@@ -78,6 +78,7 @@ KINDS = {
         Kind("jobs", "Failed jobs and backups", "1h"),
         # Fulfillment's 6pm order summary is the orders' reminder.
         Kind("orders", "Orders", "18:00", reminded_by="the 6pm order summary"),
+        Kind("posts", "Posts to put up by hand", "1h"),
         Kind("approvals", "Posts and designs to approve", "3d"),
         Kind("purchase_orders", "Purchase orders", "daily"),
         Kind("stock", "Stock", "daily"),
