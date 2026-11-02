@@ -16,10 +16,9 @@
         <a class="button secondary" href="{% url 'storefront:regions' %}">Explore by region</a>
       </div>
     </div>
-    <div class="hero-art">
-      {% motif "sprig" "a1" %}{% motif "blossom" "a2" %}{% motif "bee" "a3" %}{% motif "bird" "a4" %}{% motif "butterfly" "a5" %}
-    </div>
+    <div class="hero-art">{% include "storefront/_hero_scene.html" %}</div>
   </section>
+  <div class="vine-divider" data-creature="butterfly" aria-hidden="true"></div>
 
   {% if tea_categories %}
     <section aria-labelledby="kinds-title">
@@ -45,6 +44,7 @@
   {% endfor %}
 
   {% if featured %}
+    <div class="vine-divider" data-creature="bee" aria-hidden="true"></div>
     <section aria-labelledby="featured-title">
       <div class="section-head"><h2 id="featured-title">{% motif "blossom" %}Favourites</h2></div>
       <ul class="product-grid">
@@ -54,6 +54,7 @@
   {% endif %}
 
   {% if regions %}
+    <div class="vine-divider" data-creature="dragonfly" aria-hidden="true"></div>
     <section class="palette-cornflower" aria-labelledby="regions-title">
       <div class="section-head">
         <h2 id="regions-title">{% motif "bird" %}Where our teas grow</h2>
@@ -77,6 +78,7 @@
     </section>
   {% endif %}
 
+  <div class="vine-divider" data-creature="ladybird" aria-hidden="true"></div>
   <section class="palette-bark" aria-labelledby="goods-title">
     <div class="section-head">
       <h2 id="goods-title">{% motif "teapot" %}Teapots, accessories and shop goods</h2>

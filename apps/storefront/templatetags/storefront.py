@@ -31,6 +31,29 @@ def motif(name, css_class="", label=""):
     )
 
 
+# Each vine-frame ornament's viewBox in static/img/motifs.svg (#orn-<name>),
+# as static/js/vines.js has them: (x, y, width, height).
+ORNAMENT_BOXES = {
+    "leaf-a": (-1, -9, 32, 18), "leaf-b": (-1, -14, 33, 28), "leaf-c": (-1, -12, 28, 24),
+    "blossom": (-14, -14, 28, 28), "berries": (-4, -4, 13, 14), "bird": (-32, -34, 57, 36),
+    "butterfly": (-20, -22, 40, 40), "bee": (-12, -15, 29, 21), "dragonfly": (-27, -22, 39, 44),
+    "ladybird": (-7, -6, 16, 12), "snail": (-17, -21, 38, 22), "mushroom": (-11, -17, 22, 18),
+    "fern": (-12, -18, 24, 37),
+}
+
+
+@register.simple_tag
+def ornament(name, x=0, y=0, rotate=0, scale=1, css_class=""):
+    """A <use> of a vine-frame ornament, for placing inside an inline
+    <svg>: drawn around its origin, moved to (x, y), turned rotate degrees
+    and scaled.  css_class "lv1".."lv3" picks a leaf's green."""
+    bx, by, bw, bh = ORNAMENT_BOXES[name]
+    return format_html(
+        '<use href="{}#orn-{}" x="{}" y="{}" width="{}" height="{}" transform="translate({} {}) rotate({}) scale({})" class="{}"></use>',
+        static("img/motifs.svg"), name, bx, by, bw, bh, x, y, rotate, scale, css_class,
+    )
+
+
 @register.filter
 def money(value):
     """12.5 -> "$12.50"."""

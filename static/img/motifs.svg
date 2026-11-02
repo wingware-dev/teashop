@@ -93,4 +93,105 @@
   <path fill="none" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round" d="M19 41h26" style="stroke:var(--m4, #fff)"/>
   <g fill-opacity=".55" style="fill:var(--m4, #fff)"><circle cx="25" cy="33" r="2"/><circle cx="32" cy="31" r="2"/><circle cx="39" cy="33" r="2"/></g>
 </symbol>
+
+<!-- Ornament for the storefront's vine frame (static/js/vines.js): not
+     motifs for page designs.  Each is drawn around its own origin (a leaf's
+     stalk end, a bird's feet, an insect's middle) and its viewBox is its
+     extent in those units, so a <use> with x, y, width and height equal to
+     the viewBox draws it at the origin at 1:1.  Colours come from the orn
+     custom properties in site.css; a leaf's fill is the leaf property, set
+     on each leaf by its lv1, lv2 or lv3 class. -->
+<symbol id="orn-leaf-a" viewBox="-1 -9 32 18">
+  <path d="M0 0C7-7 19-8 30 0C19 8 7 7 0 0Z" style="fill:var(--leaf, #557a3a)"/>
+  <path d="M2 0Q15-1 27 0" fill="none" stroke-width=".8" stroke-opacity=".8" style="stroke:var(--orn-vein, #d9e3b8)"/>
+</symbol>
+<symbol id="orn-leaf-b" viewBox="-1 -14 33 28">
+  <path d="M0 0C3-9 13-13 19-8C23-12 31-7 28 0C31 7 23 12 19 8C13 13 3 9 0 0Z" style="fill:var(--leaf, #557a3a)"/>
+  <path d="M2 0H26M14 0L20-6M14 0L20 6" fill="none" stroke-width=".8" stroke-opacity=".8" style="stroke:var(--orn-vein, #d9e3b8)"/>
+</symbol>
+<symbol id="orn-leaf-c" viewBox="-1 -12 28 24">
+  <path d="M0 0C5-11 21-12 26 0C21 12 5 11 0 0Z" style="fill:var(--leaf, #557a3a)"/>
+  <path d="M2 0Q13 0 23 0M9 0L14-5M9 0L14 5M15 0L19-4M15 0L19 4" fill="none" stroke-width=".8" stroke-opacity=".8" style="stroke:var(--orn-vein, #d9e3b8)"/>
+</symbol>
+<symbol id="orn-blossom" viewBox="-14 -14 28 28">
+  <g stroke-width=".7" style="fill:var(--orn-petal, #f6e6e0);stroke:var(--orn-petal-edge, #c98d86)">
+    <path d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z"/>
+    <path d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z" transform="rotate(72)"/>
+    <path d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z" transform="rotate(144)"/>
+    <path d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z" transform="rotate(216)"/>
+    <path d="M0 0C-6-4-6-12 0-13C6-12 6-4 0 0Z" transform="rotate(288)"/>
+  </g>
+  <circle r="3.4" style="fill:var(--orn-gold, #c8962e)"/>
+  <g style="fill:var(--orn-ink, #231d14)"><circle cx="-1" cy="-1" r=".7"/><circle cx="1.3" cy=".6" r=".7"/></g>
+</symbol>
+<symbol id="orn-berries" viewBox="-4 -4 13 14">
+  <g style="fill:var(--orn-berry, #8c2f3c)"><circle r="3.2"/><circle cx="5.5" cy="2" r="3"/><circle cx="1.5" cy="6" r="3.1"/></g>
+  <g fill="#fff" fill-opacity=".55"><circle cx="-1" cy="-1" r=".9"/><circle cx="4.6" cy="1" r=".8"/><circle cx=".7" cy="5" r=".8"/></g>
+</symbol>
+<symbol id="orn-bird" viewBox="-32 -34 57 36">
+  <g style="fill:var(--orn-bird-back, #6b5a3a)">
+    <path d="M-13-11L-31-4L-29-9L-14-16Z"/>
+    <path d="M-15-12C-12-22 0-27 9-25C15-24 18-19 17-15C14-7 3-3-6-4C-11-5-14-8-15-12Z"/>
+    <circle cx="11" cy="-26" r="6.5"/>
+  </g>
+  <path d="M17-15C14-7 3-3-6-4C0-8 9-10 13-17Z" style="fill:var(--orn-bird-breast, #c56a3c)"/>
+  <path d="M16.5-28L23.5-26.3L16.5-24.6Z" style="fill:var(--orn-gold, #c8962e)"/>
+  <circle cx="13" cy="-27.5" r="1.4" style="fill:var(--orn-ink, #231d14)"/><circle cx="13.4" cy="-28" r=".5" fill="#fff" fill-opacity=".6"/>
+  <path d="M-12-13C-6-21 4-22 8-16C2-11-6-9-12-13Z" style="fill:var(--orn-bird-wing, #4f4430)"/>
+  <path d="M-7-15.5C-3-16 1-17 4-16.5M-9-13C-5-13.5-1-14 2-13.5M1-4L0 0M5-4.5L5 0M-2 0H3M3 0H8" fill="none" stroke-width=".9" stroke-linecap="round" style="stroke:var(--orn-ink, #231d14)"/>
+</symbol>
+<symbol id="orn-butterfly" viewBox="-20 -22 40 40">
+  <g stroke-width=".7" style="fill:var(--orn-wing-1, #e0a63a);stroke:var(--orn-ink, #231d14)">
+    <path d="M0-1C-5-15-19-21-19-9C-19-3-9 0 0-1Z"/><path d="M0 0C-9 2-16 10-11 15C-6 17-2 9 0 0Z"/>
+    <path d="M0-1C5-15 19-21 19-9C19-3 9 0 0-1Z"/><path d="M0 0C9 2 16 10 11 15C6 17 2 9 0 0Z"/>
+  </g>
+  <g style="fill:var(--orn-wing-2, #3f5d8a)"><circle cx="-12" cy="-10" r="3"/><circle cx="-8" cy="9" r="2"/><circle cx="12" cy="-10" r="3"/><circle cx="8" cy="9" r="2"/></g>
+  <ellipse rx="1.7" ry="9" cy="1" style="fill:var(--orn-ink, #231d14)"/>
+  <path d="M-3-3Q-9-8-15-9M3-3Q9-8 15-9M-1-8C-3-14-6-16-8-14M1-8C3-14 6-16 8-14" fill="none" stroke-width=".9" stroke-linecap="round" style="stroke:var(--orn-ink, #231d14)"/>
+</symbol>
+<symbol id="orn-bee" viewBox="-12 -15 29 21">
+  <g fill="#fff" fill-opacity=".6" stroke-width=".5" style="stroke:var(--orn-ink, #231d14)">
+    <ellipse cx="-2" cy="-7" rx="5" ry="7.5" transform="rotate(-20 -2 -7)"/><ellipse cx="3" cy="-6" rx="4" ry="6" transform="rotate(15 3 -6)"/>
+  </g>
+  <ellipse rx="8.5" ry="5.6" style="fill:var(--orn-gold, #c8962e)"/>
+  <g style="fill:var(--orn-ink, #231d14)">
+    <path d="M-3-5.3C-1.5-2-1.5 2-3 5.3L-5.4 4.6C-4 1.5-4-1.5-5.4-4.6ZM2-5.5C3.5-2 3.5 2 2 5.5L-.3 5.6C1.2 2 1.2-2-.3-5.6Z"/>
+    <circle cx="9.5" cy="-.5" r="3.6"/>
+  </g>
+  <path d="M11-3Q13-8 16-8M-8.5 0L-11 .5" fill="none" stroke-width=".9" stroke-linecap="round" style="stroke:var(--orn-ink, #231d14)"/>
+</symbol>
+<symbol id="orn-dragonfly" viewBox="-27 -22 39 44">
+  <g fill="#fff" fill-opacity=".6" stroke-width=".5" style="stroke:var(--orn-ink, #231d14)">
+    <ellipse cx="2" cy="-9" rx="4" ry="12" transform="rotate(12 2 -9)"/><ellipse cx="2" cy="9" rx="4" ry="12" transform="rotate(-12 2 9)"/>
+    <ellipse cx="-4" cy="-8" rx="3.4" ry="10" transform="rotate(-14 -4 -8)"/><ellipse cx="-4" cy="8" rx="3.4" ry="10" transform="rotate(14 -4 8)"/>
+  </g>
+  <g style="fill:var(--orn-wing-2, #3f5d8a)"><path d="M6 0C6-2-2-1.6-26-.8C-27 0-27 0-26 .8C-2 1.6 6 2 6 0Z"/><circle cx="8" r="3"/></g>
+</symbol>
+<symbol id="orn-ladybird" viewBox="-7 -6 16 12">
+  <ellipse cx="5" rx="3" ry="3.2" style="fill:var(--orn-ink, #231d14)"/>
+  <ellipse rx="6" ry="5.4" fill="#b8382c" stroke-width=".5" style="stroke:var(--orn-ink, #231d14)"/>
+  <path d="M5 0H-6" fill="none" stroke-width=".9" style="stroke:var(--orn-ink, #231d14)"/>
+  <g style="fill:var(--orn-ink, #231d14)"><circle cx="-2" cy="-2.4" r="1.2"/><circle cx="-2" cy="2.4" r="1.2"/><circle cx="2" cy="-3" r=".9"/><circle cx="2" cy="3" r=".9"/></g>
+</symbol>
+<symbol id="orn-snail" viewBox="-17 -21 38 22">
+  <path d="M-16 0C-16-3-6-4 8-4C12-9 15-12 16-10C17-8 14-4 14 0Z" fill="#b8a27a" stroke-width=".6" style="stroke:var(--orn-vine, #5b4a2c)"/>
+  <circle cx="-2" cy="-11" r="9" stroke-width=".8" style="fill:var(--orn-gold, #c8962e);stroke:var(--orn-vine, #5b4a2c)"/>
+  <path d="M14-9L17-16M15-9L20-14M-2-11a2 2 0 0 1 3 1a4 4 0 0 1-5 4a6 6 0 0 1-5-7a8 8 0 0 1 9-7" fill="none" stroke-width=".9" stroke-linecap="round" style="stroke:var(--orn-ink, #231d14)"/>
+</symbol>
+<symbol id="orn-mushroom" viewBox="-11 -17 22 18">
+  <path d="M-2.5 0L-2-9H2L2.5 0Z" style="fill:var(--orn-petal, #f6e6e0)"/>
+  <path d="M-10-8C-10-17 10-17 10-8Z" style="fill:var(--orn-berry, #8c2f3c)"/>
+  <g fill="#fff" fill-opacity=".6"><circle cx="-4" cy="-12" r="1.4"/><circle cx="3" cy="-13" r="1"/></g>
+</symbol>
+<symbol id="orn-fern" viewBox="-12 -18 24 37">
+  <path d="M0 18C-2 6 0-6 6-16" fill="none" stroke-width="1.6" stroke-linecap="round" style="stroke:var(--orn-vine-2, #7b8f4a)"/>
+  <g style="fill:var(--orn-leaf-2, #7f9f52)">
+    <path d="M-1 12C-4 8-9 7-12 9C-9 13-4 14-1 12Z"/><path d="M-1 12C2 8 7 7 11 8C8 12 3 14-1 12Z"/>
+    <path d="M2-4C-1-7-5-8-8-6C-5-3-1-2 2-4Z"/><path d="M2-4C4-8 8-9 10-8C8-4 5-3 2-4Z"/>
+  </g>
+  <g style="fill:var(--orn-leaf-1, #557a3a)">
+    <path d="M0 4C-3 0-8 0-11 2C-8 6-3 6 0 4Z"/><path d="M0 4C3 0 8-1 11 1C8 5 3 6 0 4Z"/>
+    <path d="M4-10C2-13-1-14-4-13C-2-10 1-9 4-10Z"/><path d="M4-10C6-13 8-14 10-13C8-10 6-9 4-10Z"/>
+  </g>
+</symbol>
 </svg>

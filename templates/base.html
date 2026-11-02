@@ -7,15 +7,23 @@
   <title>{% block title %}{{ shop_name }}{% endblock %}</title>
   {% block meta %}{% endblock %}
   {% if request.resolver_match.namespace != "storefront" or request.resolver_match.url_name|slice:":8" == "variant_" %}<meta name="robots" content="noindex">{% endif %}
+  {% if vine_frame %}
+    <link rel="preload" href="{% static 'fonts/federant-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{% static 'fonts/alegreya-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  {% endif %}
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <script src="{% static 'js/theme-init.js' %}"></script>
   <script src="{% static 'js/site.js' %}" defer></script>
+  {% if vine_frame %}<script src="{% static 'js/vines.js' %}" defer></script>{% endif %}
   {% analytics_script %}
   {% for data in structured_data %}{{ data|ld_json }}{% endfor %}
   {% block extra_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% if vine_frame %}shop {% endif %}{% block body_class %}{% endblock %}">
   <a class="skip-link" href="#main">Skip to main content</a>
+  {# Customer pages sit on a sheet framed with vines (static/js/vines.js draws them); owner pages keep the plain look. #}
+  <div class="page-sheet"{% if vine_frame %} data-vines="{% static 'img/motifs.svg' %}"{% endif %}>
+  <div class="sheet-inner">
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="{% url 'storefront:home' %}"{% if is_home %} aria-current="page"{% endif %}>
@@ -67,7 +75,7 @@
         </ul>
       </nav>
     {% endif %}
-    <div class="vine"></div>
+    {% if vine_frame %}<div class="vine-divider" data-creature="bird" aria-hidden="true"></div>{% else %}<div class="vine"></div>{% endif %}
   </header>
   {% if shop_visible and vacation_notice %}<p class="vacation-notice">{% motif "bird" %}<span>{{ vacation_notice }}</span></p>{% endif %}
   <main id="main" class="container {% block main_class %}{% endblock %}" tabindex="-1">
@@ -76,6 +84,7 @@
     {% endif %}
     {% block content %}{% endblock %}
   </main>
+  {% if vine_frame %}<div class="vine-ground" aria-hidden="true"></div>{% endif %}
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
@@ -118,5 +127,7 @@
       <p class="small muted">Prices in US dollars, the same for everyone.<br>© {% now "Y" %} {{ shop_name }}</p>
     </div>
   </footer>
+  </div>
+  </div>
 </body>
 </html>

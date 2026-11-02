@@ -119,10 +119,12 @@
     </section>
   </div>
 
+  <div class="vine-divider" data-creature="bird" aria-hidden="true"></div>
   {% if variant.story and layout != "story" %}<p class="story">{{ variant.story }}</p>{% endif %}
   {% if product.description %}<div class="prose">{{ product.description|paragraphs }}</div>{% endif %}
 
   {% if product.kind == "tea" %}
+    <div class="vine-divider" data-creature="butterfly" aria-hidden="true"></div>
     <div class="facts">
       <section class="fact" aria-labelledby="origin-title">
         <h2 id="origin-title">{% motif "bird" %}Origin</h2>

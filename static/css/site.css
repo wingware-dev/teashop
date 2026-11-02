@@ -16,8 +16,42 @@
    Motif colours: --m1 main, --m2 and --m5 flowers and beaks, --m3 stems
    and bodies, --m4 highlights (static/img/motifs.svg).
 
-   Type: system fonts only (fast, no font licences to track): a book serif
-   for headings and the system sans-serif for text. */
+   Type: on customer pages (body.shop), Federant for headings and Alegreya
+   for text, self-hosted from static/fonts/ (both SIL Open Font Licence;
+   the licences are kept beside the files).  The owner's back office keeps
+   system fonts: a book serif for headings and the system sans-serif.
+
+   Customer pages also wear the vine frame: the page sits on a sheet
+   (.page-sheet[data-vines]) whose gutters static/js/vines.js fills with
+   twining vines, leaves, flowers, birds and insects (static/img/motifs.svg,
+   orn-*), with leafy branches between page areas (.vine-divider) and grass
+   above the footer (.vine-ground).  Text always sits on the plain inner
+   panel, never on the ornament.  Ornament colours: --orn-* below. */
+
+@font-face {
+  font-family: "Federant";
+  src: url("../fonts/federant-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Alegreya";
+  src: url("../fonts/alegreya-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Alegreya";
+  src: url("../fonts/alegreya-italic-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 :root {
   --bg: #f7f2e8;
@@ -382,13 +416,8 @@ a.chip { min-height: 2rem; padding: 0.3rem 0.8rem; text-decoration: none; font-w
 .hero h1 { font-size: clamp(2.2rem, 1.5rem + 3vw, 3.6rem); }
 .hero .lede { font-size: 1.15rem; max-width: 34rem; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; }
-.hero-art { position: relative; aspect-ratio: 1 / 0.8; max-width: 26rem; width: 100%; justify-self: center; }
-.hero-art .motif { position: absolute; width: auto; height: auto; }
-.hero-art .a1 { left: 18%; top: 8%; width: 58%; aspect-ratio: 1; --m1: var(--c-moss); }
-.hero-art .a2 { left: 0; top: 46%; width: 34%; aspect-ratio: 1; --m1: var(--c-poppy); }
-.hero-art .a3 { right: 0; top: 0; width: 26%; aspect-ratio: 1; }
-.hero-art .a4 { right: 4%; bottom: 0; width: 40%; aspect-ratio: 1; --m1: var(--c-cornflower); }
-.hero-art .a5 { left: 36%; bottom: 2%; width: 22%; aspect-ratio: 1; --m1: var(--c-plum); }
+.hero-art { max-width: 26rem; width: 100%; justify-self: center; }
+.hero-scene { display: block; width: 100%; height: auto; }
 @media (min-width: 48rem) {
   .hero { grid-template-columns: 1.2fr 1fr; padding: 3rem 0 2rem; }
 }
@@ -436,7 +465,8 @@ a.chip { min-height: 2rem; padding: 0.3rem 0.8rem; text-decoration: none; font-w
 .product-card h3 a::after { content: ""; position: absolute; inset: 0; }
 .product-card h3 a:focus-visible { outline: none; }
 .product-card:has(h3 a:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
-.product-card .summary { margin: 0; color: var(--muted); font-size: 0.95rem; }
+/* Not the checkout's .summary box (below): plain text on the card. */
+.product-card .summary { margin: 0; padding: 0; border: none; border-radius: 0; background: none; color: var(--muted); font-size: 0.95rem; }
 .product-card .meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.25rem 0.75rem; margin-top: auto; padding-top: 0.4rem; }
 .price { font-weight: 700; }
 /* Phones: photo beside the text, so a list doesn't scroll on for ever. */
@@ -482,7 +512,7 @@ details.filters form { padding: 0 1rem 1rem; }
 
 .product-page { display: grid; gap: 1.5rem; }
 .product-head .headline { font-family: var(--font-display); font-size: 1.25rem; font-style: italic; color: var(--accent-ink); margin: 0 0 0.5rem; }
-.product-head .summary { font-size: 1.1rem; max-width: 40rem; }
+.product-head .summary { font-size: 1.1rem; max-width: 40rem; padding: 0; border: none; border-radius: 0; background: none; }
 .product-head .organic { margin: 0 0 0.5rem; }
 .product-head .organic .chip { font-weight: 700; }
 .fact .organic-note { margin: 0.6rem 0 0; }
@@ -671,6 +701,147 @@ table.processors th, table.processors td { vertical-align: top; }
   .product-card, .tile { transition: border-color 0.15s ease; }
 }
 
+/* -- Vine frame (customer pages) ----------------------------------------- */
+
+:root {
+  --paper: #e9dfc4;          /* around the sheet */
+  --sheet: #f6efdc;          /* the gutters the vines grow in */
+  --gutter: 1.6rem;
+  --orn-rule: #7d8a56;
+  --orn-vine: #5b4a2c;       --orn-vine-2: #7b8f4a;
+  --orn-leaf-1: #557a3a;     --orn-leaf-2: #7f9f52;     --orn-leaf-3: #3d5c30;   --orn-vein: #d9e3b8;
+  --orn-petal: #f6e6e0;      --orn-petal-edge: #c98d86; --orn-gold: #c8962e;     --orn-berry: #8c2f3c;
+  --orn-bird-back: #6b5a3a;  --orn-bird-breast: #c56a3c; --orn-bird-wing: #4f4430;
+  --orn-wing-1: #e0a63a;     --orn-wing-2: #3f5d8a;     --orn-ink: #231d14;      --orn-sky: #f1eedb;
+}
+:root[data-theme="dark"] {
+  --paper: #0d0b08;
+  --sheet: #1a1610;
+  --orn-rule: #6e7f52;
+  --orn-vine: #a8956d;       --orn-vine-2: #7d9566;
+  --orn-leaf-1: #5f8a52;     --orn-leaf-2: #86a868;     --orn-leaf-3: #46663c;   --orn-vein: #cfdcb6;
+  --orn-petal: #eadad3;      --orn-petal-edge: #b07a73; --orn-gold: #d0a440;     --orn-berry: #c4566a;
+  --orn-bird-back: #8a7656;  --orn-bird-breast: #d07a4c; --orn-bird-wing: #5f523c;
+  --orn-wing-1: #e0a63a;     --orn-wing-2: #7fa8ea;     --orn-ink: #1a140c;      --orn-sky: #1e2619;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d0b08;
+    --sheet: #1a1610;
+    --orn-rule: #6e7f52;
+    --orn-vine: #a8956d;       --orn-vine-2: #7d9566;
+    --orn-leaf-1: #5f8a52;     --orn-leaf-2: #86a868;     --orn-leaf-3: #46663c;   --orn-vein: #cfdcb6;
+    --orn-petal: #eadad3;      --orn-petal-edge: #b07a73; --orn-gold: #d0a440;     --orn-berry: #c4566a;
+    --orn-bird-back: #8a7656;  --orn-bird-breast: #d07a4c; --orn-bird-wing: #5f523c;
+    --orn-wing-1: #e0a63a;     --orn-wing-2: #7fa8ea;     --orn-ink: #1a140c;      --orn-sky: #1e2619;
+  }
+}
+@media (min-width: 40rem) { :root { --gutter: 3rem; } }
+@media (min-width: 64rem) { :root { --gutter: 5.75rem; } }
+@media (max-width: 22rem) { :root { --gutter: 1.1rem; } }
+
+body.shop {
+  --font-display: "Federant", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-text: "Alegreya", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  background: var(--paper);
+  font-size: 1.0625rem;
+}
+/* Federant has one weight: no faux bold. */
+body.shop :is(h1, h2, h3, h4, legend, .wordmark) { font-weight: 400; }
+body.shop .wordmark { font-size: clamp(2rem, 1.6rem + 2vw, 2.75rem); letter-spacing: 0.03em; color: var(--brand-ink); }
+body.shop .tagline { font-style: italic; text-transform: none; letter-spacing: 0; font-size: 0.95rem; }
+body.shop .main-nav a, body.shop .main-nav summary { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; }
+body.shop .main-nav > ul { justify-content: center; }
+
+.page-sheet[data-vines] {
+  position: relative;
+  max-width: calc(var(--page) + 2 * var(--gutter));
+  margin: 1.25rem auto;
+  padding: var(--gutter);
+  background: var(--sheet);
+  border-radius: 1.4rem;
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.06), 0 18px 40px rgb(40 30 10 / 0.16);
+}
+.page-sheet[data-vines] > .vine-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.page-sheet[data-vines] > .sheet-inner {
+  position: relative;
+  background: var(--bg);
+  border: 2px solid var(--orn-rule);
+  border-radius: 0.9rem;
+}
+.page-sheet[data-vines] > .sheet-inner::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--orn-rule);
+  border-radius: 0.6rem;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.page-sheet[data-vines] .site-header { background: transparent; border-bottom: none; }
+.page-sheet[data-vines] .site-footer { margin-top: 0; background: transparent; border-top: 1px solid var(--orn-rule); border-radius: 0 0 0.9rem 0.9rem; }
+@media (max-width: 39.99rem) {
+  .page-sheet[data-vines] { margin: 0.4rem; border-radius: 0.9rem; }
+  .page-sheet[data-vines] .container { padding: 1rem 0.9rem; }
+  .page-sheet[data-vines] .header-inner { padding: 0.75rem 0.9rem 0.25rem; }
+}
+
+/* A leafy branch between page areas; until it is drawn (or without JS),
+   the plain vine border. */
+.vine-divider { height: 64px; margin: 0.5rem 0; }
+.vine-divider:not(.drawn) {
+  height: 14px;
+  margin: 1.5rem 0;
+  background: var(--accent);
+  opacity: 0.55;
+  -webkit-mask: url("../img/vine.svg") repeat-x left center / 120px 14px;
+  mask: url("../img/vine.svg") repeat-x left center / 120px 14px;
+}
+.vine-divider svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.site-header .vine-divider { margin: 0 1rem; }
+.vine-ground { height: 70px; margin-top: 3rem; }
+.vine-ground svg { display: block; width: 100%; height: 100%; }
+@media (max-width: 39.99rem) {
+  .vine-divider { height: 48px; }
+}
+
+.orn-vine, .orn-vine-twin, .orn-tendril { fill: none; stroke-linecap: round; }
+.orn-vine { stroke: var(--orn-vine); }
+.orn-vine-twin, .orn-tendril { stroke: var(--orn-vine-2); }
+.orn-grass { fill: none; stroke: var(--orn-leaf-1); stroke-width: 1.4; stroke-linecap: round; }
+.lv1 { --leaf: var(--orn-leaf-1); }
+.lv2 { --leaf: var(--orn-leaf-2); }
+.lv3 { --leaf: var(--orn-leaf-3); }
+
+/* The home page's arched picture (storefront/_hero_scene.html). */
+.scene-sky { fill: var(--orn-sky); }
+.scene-sun { fill: var(--orn-gold); opacity: 0.28; }
+.scene-hill-far { fill: var(--orn-leaf-2); opacity: 0.8; }
+.scene-rows { fill: none; stroke: var(--orn-leaf-3); stroke-width: 1; }
+.scene-hill-near { fill: var(--orn-leaf-1); }
+.scene-steam { fill: none; stroke: var(--orn-bird-breast); stroke-width: 2.5; stroke-linecap: round; }
+.scene-saucer { fill: var(--c-moss); }
+.scene-cup { fill: var(--surface); stroke: var(--c-moss); stroke-width: 3; }
+.scene-handle { fill: none; stroke: var(--c-moss); stroke-width: 3; }
+.scene-branch, .scene-twig { fill: none; stroke: var(--orn-vine); stroke-linecap: round; }
+.scene-branch { stroke-width: 7; }
+.scene-twig { stroke-width: 3; }
+.scene-frame, .scene-frame-thin { fill: none; stroke: var(--orn-rule); }
+.scene-frame { stroke-width: 3; }
+.scene-frame-thin { stroke-width: 1; opacity: 0.6; }
+
+/* Arched cards, panels and pictures, like windows in a storybook. */
+body.shop .product-card { border-radius: 50% 50% var(--radius) var(--radius) / 6rem 6rem var(--radius) var(--radius); }
+body.shop .tile { border-radius: 50% 50% var(--radius) var(--radius) / 3rem 3rem var(--radius) var(--radius); align-items: center; text-align: center; padding-top: 1.25rem; }
+body.shop .fact { border-radius: 50% 50% var(--radius) var(--radius) / 3.5rem 3.5rem var(--radius) var(--radius); padding-top: 1.4rem; }
+body.shop .fact h2 { justify-content: center; text-align: center; }
+body.shop .product-wrap:not(.layout-wide) .gallery .main { border-radius: 50% 50% var(--radius) var(--radius) / 38% 38% var(--radius) var(--radius); border: 2px solid var(--orn-rule); }
+@media (max-width: 33.99rem) {
+  body.shop .product-card { border-radius: var(--radius); }
+  body.shop .product-card .media { border-radius: 50% 50% 0 0 / 2.5rem 2.5rem 0 0; margin: 0.4rem 0 0.4rem 0.4rem; }
+}
+
 @media print {
-  .site-header, .site-footer, .filters, .vine { display: none; }
+  .site-header, .site-footer, .filters, .vine, .vine-divider, .vine-ground, .vine-frame { display: none; }
+  .page-sheet[data-vines] { margin: 0; padding: 0; background: none; box-shadow: none; }
 }
