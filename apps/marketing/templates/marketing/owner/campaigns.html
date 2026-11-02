@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Campaigns · Marketing · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/marketing.css' %}">{% endblock %}
+{% block content %}
+<h1>Campaigns</h1>
+{% include "marketing/owner/_nav.html" %}
+<p class="small muted">A campaign's posts carry its name in their links, so the analytics show its visits, and its discount codes show the orders it brought.  Codes are public: the same price for everyone who uses one.</p>
+<section class="card" aria-labelledby="list-title">
+  <h2 id="list-title">All campaigns</h2>
+  {% if campaigns %}
+    <div class="table-scroll" role="region" aria-label="Campaigns" tabindex="0">
+      <table class="events">
+        <thead><tr><th scope="col">Campaign</th><th scope="col">Dates</th><th scope="col">Codes</th><th scope="col" class="num">Orders</th><th scope="col" class="num">Sales</th></tr></thead>
+        <tbody>
+          {% for campaign, results in campaigns %}
+            <tr><th scope="row"><a href="{{ campaign.get_absolute_url }}">{{ campaign.name }}</a></th><td>{{ campaign.starts_on|date:"M j"|default:"…" }} to {{ campaign.ends_on|date:"M j, Y"|default:"…" }}</td><td>{% for code in campaign.codes.all %}{{ code.code }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td><td class="num">{{ results.orders }}</td><td class="num">${{ results.revenue|floatformat:2 }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">None yet.</p>
+  {% endif %}
+</section>
+<section class="card" aria-labelledby="new-title">
+  <h2 id="new-title">New campaign</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "marketing/owner/_campaign_fields.html" %}
+    <div class="actions"><button type="submit">Save the campaign</button></div>
+  </form>
+</section>
+{% endblock %}

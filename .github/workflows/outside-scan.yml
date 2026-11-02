@@ -1,0 +1,45 @@
+# Outside vulnerability scan: OWASP ZAP's baseline scan of the live shop,
+# from GitHub's machines, the way an attacker's scanner sees it.  It is
+# passive (it reads pages and headers; it doesn't attack forms), so it is
+# safe against the live site.
+#
+# Off until the owner turns it on: repository variable OUTSIDE_SCAN=on, and
+# SITE_URL (https://<domain>, already set for deploys).  Then it runs on
+# the 1st of each month and from Actions > "Outside vulnerability scan" >
+# Run workflow.  Read the report (the job summary and the zap-report
+# artifact) for the quarterly review; docs/security/quarterly-review.md
+# says what to look for.
+name: Outside vulnerability scan
+
+on:
+  schedule:
+    - cron: "23 7 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    if: vars.OUTSIDE_SCAN == 'on' && vars.SITE_URL != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: ZAP baseline scan of ${{ vars.SITE_URL }}
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        # -I: warnings don't fail the job; the report is read by a person.
+        # The rules file marks alerts reviewed as not applying (see its notes).
+        run: |
+          mkdir -p zap && chmod 777 zap
+          cp deploy/ci/zap-rules.tsv zap/rules.tsv
+          docker run --rm -v "$PWD/zap:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t "$SITE_URL" -c rules.tsv -r report.html -w report.md -I
+          cat zap/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap/
+          if-no-files-found: ignore

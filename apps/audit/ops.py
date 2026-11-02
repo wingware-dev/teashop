@@ -5,6 +5,10 @@ The deploy scripts and the backup timers record each run's result with
 shows in the audit log and on the owner dashboard, not only in the
 server's journal.  Each is an audit event whose action is
 ``ops.<kind>_<outcome>``, e.g. ``ops.backup_failed``.
+
+Other apps add kinds of their own with register_kind() in their
+AppConfig.ready() (the ops agent's health checks and upkeep, apps/ops), so
+they show on the dashboard's Operations card and its attention list too.
 """
 
 from dataclasses import dataclass
@@ -42,12 +46,18 @@ KINDS = {
 }
 
 
+def register_kind(kind):
+    """Add an OpsKind from another app (call in AppConfig.ready())."""
+    KINDS[kind.name] = kind
+
+
 def action_for(kind, outcome):
     return f"ops.{kind}_{outcome}"
 
 
-def record_ops_event(kind, outcome, *, message="", commit="", details=None):
-    """Record one ops run's result as a system audit event and return it."""
+def record_ops_event(kind, outcome, *, message="", commit="", details=None, actor=None):
+    """Record one ops run's result as an audit event and return it: by the
+    kind's system actor, or by `actor` (an AI agent recording its own run)."""
     if kind not in KINDS:
         raise ValueError(f"Unknown ops event kind {kind!r}; known: {', '.join(KINDS)}")
     if outcome not in OUTCOMES:
@@ -57,7 +67,7 @@ def record_ops_event(kind, outcome, *, message="", commit="", details=None):
     if commit:
         changes["commit"] = commit
     message = message or f"{info.title} {outcome}"
-    with acting_as(Actor(type="system", label=info.actor_label)):
+    with acting_as(actor or Actor(type="system", label=info.actor_label)):
         return record(
             action_for(kind, outcome),
             message=message,

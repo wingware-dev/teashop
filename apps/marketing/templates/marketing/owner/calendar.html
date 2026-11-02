@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Calendar {{ first|date:"F Y" }} · Marketing · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/marketing.css' %}">{% endblock %}
+{% block content %}
+<h1>Marketing calendar: {{ first|date:"F Y" }}</h1>
+{% include "marketing/owner/_nav.html" %}
+<nav aria-label="Months" class="actions">
+  <a href="?month={{ previous|date:'Y-m' }}">← {{ previous|date:"F" }}</a>
+  <a href="{% url 'marketing:calendar' %}">This month</a>
+  <a href="?month={{ following|date:'Y-m' }}">{{ following|date:"F" }} →</a>
+</nav>
+<p class="small muted legend"><span class="tag draft">Waiting for approval</span> <span class="tag approved">Approved</span> <span class="tag due">Post it now</span> <span class="tag posted">Posted</span> <span class="tag failed">Failed</span> <span class="tag article">Tea notes article</span></p>
+{% if campaigns %}<p class="small">Campaigns this month: {% for campaign in campaigns %}<a href="{{ campaign.get_absolute_url }}">{{ campaign.name }}</a>{% if campaign.starts_on or campaign.ends_on %} ({{ campaign.starts_on|date:"M j"|default:"…" }} to {{ campaign.ends_on|date:"M j"|default:"…" }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+
+<ol class="month" aria-label="{{ first|date:'F Y' }}">
+  {% for week in weeks %}
+    {% for day, items in week %}
+      {% if day %}
+        <li class="day{% if day == today %} today{% endif %}{% if not items %} empty{% endif %}">
+          <h2 class="date"><span class="weekday">{{ day|date:"D" }}</span> {{ day|date:"j" }}{% if day == today %} <span class="visually-hidden">(today)</span>{% endif %}</h2>
+          {% if items %}
+            <ul class="plain-list">
+              {% for kind, item in items %}
+                {% if kind == "post" %}
+                  <li class="tag {{ item.status }}"><a href="{{ item.get_absolute_url }}">{{ item.scheduled_for|time:"g:i a" }} {{ item.get_network_display }}<span class="visually-hidden">, {{ item.get_status_display|lower }}</span></a></li>
+                {% else %}
+                  <li class="tag article"><a href="{% url 'marketing:article' item.pk %}">Article: {{ item.title|truncatechars:30 }}</a></li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </li>
+      {% else %}
+        <li class="day outside" aria-hidden="true"></li>
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+</ol>
+
+{% if unscheduled %}
+<section class="card" aria-labelledby="unscheduled-title">
+  <h2 id="unscheduled-title">Drafts without a time</h2>
+  <ul class="plain-list marketing-list">{% for post in unscheduled %}{% include "marketing/owner/_post_row.html" %}{% endfor %}</ul>
+</section>
+{% endif %}
+{% endblock %}

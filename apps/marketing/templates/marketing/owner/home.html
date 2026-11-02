@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static checkout %}
+{% block title %}Marketing · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/marketing.css' %}">{% endblock %}
+{% block content %}
+<h1>Marketing</h1>
+{% include "marketing/owner/_nav.html" %}
+<p class="small muted">The assistant drafts; you approve what goes out, where and when.  Nothing is posted, published or sent without your approval.{% if not agent_live %}  The assistant runs on its free stand-in, which writes plain drafts from the catalog (turn on the real one with AGENTS_LIVE=marketing-agent, docs/agents.md).{% endif %}</p>
+
+{% if due %}
+<section class="card attention" aria-labelledby="due-title">
+  <h2 id="due-title">To do now</h2>
+  <ul class="plain-list marketing-list">
+    {% for post in due %}
+      <li><a href="{{ post.get_absolute_url }}">{% if post.status == "failed" %}Failed: {% else %}Post it now: {% endif %}{{ post.get_network_display }}, {{ post.text|truncatechars:60 }}</a> <span class="small muted">{{ post.scheduled_for|date:"D M j, g:i a" }}</span>{% if post.error %}<br><span class="small">{{ post.error }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="card" aria-labelledby="drafts-title" id="drafts">
+  <h2 id="drafts-title">Posts waiting for your approval</h2>
+  {% if drafts %}
+    <ul class="plain-list marketing-list">{% for post in drafts %}{% include "marketing/owner/_post_row.html" %}{% endfor %}</ul>
+  {% else %}
+    <p class="muted">None.  Draft posts from an idea below.</p>
+  {% endif %}
+  <p><a class="button secondary" href="{% url 'marketing:post_new' %}">Write a post yourself</a></p>
+</section>
+
+<section class="card" aria-labelledby="ideas-title" id="ideas">
+  <h2 id="ideas-title">Idea backlog</h2>
+  {% if ideas %}
+    <ul class="plain-list marketing-list">
+      {% for idea in ideas %}
+        <li><a href="{{ idea.get_absolute_url }}">{{ idea.title }}</a> <span class="small muted">{{ idea.get_status_display }}{% if idea.from_agent %} · from the assistant{% endif %}{% if idea.campaign %} · {{ idea.campaign.name }}{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">The backlog is empty.</p>
+  {% endif %}
+  <form method="post" action="{% url 'marketing:suggest' %}">{% csrf_token %}<div class="actions"><button type="submit" class="secondary">Ask the assistant for ideas</button></div></form>
+  <h3>Add an idea</h3>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% field form.title %}
+    {% field form.notes %}
+    <div class="field-row">{% field form.product %}{% field form.campaign %}</div>
+    <div class="actions"><button type="submit">Add to the backlog</button></div>
+  </form>
+</section>
+
+<section class="card" aria-labelledby="upcoming-title">
+  <h2 id="upcoming-title">Scheduled, the next two weeks</h2>
+  {% if upcoming %}
+    <ul class="plain-list marketing-list">{% for post in upcoming %}{% include "marketing/owner/_post_row.html" %}{% endfor %}</ul>
+  {% else %}
+    <p class="muted">Nothing scheduled.</p>
+  {% endif %}
+  <p><a href="{% url 'marketing:calendar' %}">The calendar</a></p>
+</section>
+
+<section class="card" aria-labelledby="articles-title" id="articles">
+  <h2 id="articles-title">Tea notes articles not yet published</h2>
+  {% if articles %}
+    <ul class="plain-list marketing-list">
+      {% for article in articles %}
+        <li><a href="{% url 'marketing:article' article.pk %}">{{ article.title }}</a> <span class="small muted">{% if article.written_by != "owner" %}drafted by the assistant{% else %}yours{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">None.</p>
+  {% endif %}
+</section>
+
+<section class="card" aria-labelledby="networks-title">
+  <h2 id="networks-title">How each network is posted</h2>
+  <div class="table-scroll" role="region" aria-label="Networks" tabindex="0">
+    <table class="events">
+      <thead><tr><th scope="col">Network</th><th scope="col">Posting</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        {% for spec, live in network_status %}
+          <tr><th scope="row">{{ spec.label }}</th><td>{% if live %}Posts itself at its time{% else %}You post it: it comes to your dashboard at its time{% endif %}</td><td class="small">{% if spec.why_by_hand %}{{ spec.why_by_hand }}{% elif not live %}Can post itself once you connect it (MARKETING_POST_LIVE, docs/marketing.md).{% endif %} {{ spec.advice }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="small muted">Analytics: {% if analytics %}{{ analytics|capfirst }} on the catalog pages, without cookies{% if analytics_dashboard %} (<a href="{{ analytics_dashboard }}">open it</a>){% endif %}.{% else %}off (set ANALYTICS, docs/marketing.md).{% endif %}</p>
+</section>
+
+{% if posted %}
+<section class="card" aria-labelledby="posted-title">
+  <h2 id="posted-title">Recently posted</h2>
+  <ul class="plain-list marketing-list">
+    {% for post in posted %}
+      <li><a href="{{ post.get_absolute_url }}">{{ post.get_network_display }}: {{ post.text|truncatechars:60 }}</a> <span class="small muted">{{ post.posted_at|date:"M j" }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

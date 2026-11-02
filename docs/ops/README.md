@@ -11,6 +11,7 @@ visitor ─► Cloudflare ─► Caddy :443 ─► web (gunicorn :8000) ─► d
 ```
 
 Related: [backups.md](backups.md), [monitoring.md](monitoring.md),
+[ops-agent.md](ops-agent.md) (the agent that checks and updates the server),
 [../security/security-policy.md](../security/security-policy.md),
 [../security/breach-response.md](../security/breach-response.md).
 
@@ -139,6 +140,8 @@ enough.
 
 ## Server upkeep
 
+- **The ops agent** checks the server every hour and does the daily
+  upkeep; it proposes anything larger on owner/ops/ ([ops-agent.md](ops-agent.md)).
 - **Security updates install automatically** every day.  When one needs a
   reboot, the server reboots at 04:30 UTC; the containers come back on
   their own (about a minute of downtime).
@@ -173,7 +176,8 @@ are hard to undo; decide on them only once every subdomain serves HTTPS.
 | Protection | How |
 |---|---|
 | Automatic security updates | `unattended-upgrades`, reboot at 04:30 UTC when needed |
-| SSH | Keys only; no root login; only your admin account and `deploy`; 3 tries per connection |
+| SSH | Keys only; no root login; only your admin account, `deploy` and `teashop-ops`; 3 tries per connection |
+| Ops agent | `teashop-ops`: no sudo group, no Docker; its key runs only a few fixed commands (health, logs, security updates, log rotation), from the server itself ([ops-agent.md](ops-agent.md)) |
 | Brute-force blocking | fail2ban bans an address after 5 failed SSH logins in 10 minutes, for 1 hour, longer for repeat offenders; the app locks a username + address after 5 failed sign-ins for 1 hour |
 | Firewall | ufw: only 22 (rate-limited), 80 and 443 in |
 | Least privilege | The app runs as an unprivileged user in its container; the database has no open port |

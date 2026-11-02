@@ -1,0 +1,20 @@
+<article class="ops-proposal" id="proposal-{{ proposal.pk }}" aria-labelledby="proposal-{{ proposal.pk }}-title">
+  <h3 id="proposal-{{ proposal.pk }}-title">{{ proposal.title }}</h3>
+  <p class="small muted">Proposed by the {{ proposal.proposed_by }} on {{ proposal.created_at|date:"M j, Y" }} · risk: {{ proposal.get_risk_display|lower }}{% if proposal.status == "approved" %} · approved {{ proposal.decided_at|date:"M j" }}{% endif %}</p>
+  {% if proposal.after_reading_logs %}<p class="notice" role="note"><span>The agent had read the server's logs, which strangers can write into, before proposing this.  Check that each command does what the step says.</span></p>{% endif %}
+  <p>{{ proposal.reason|linebreaksbr }}</p>
+  <pre class="ops-steps">{{ proposal.steps }}</pre>
+  {% if proposal.note %}<p class="small"><strong>Your note:</strong> {{ proposal.note }}</p>{% endif %}
+  <form method="post" action="{% url 'ops:decide' proposal.pk %}">
+    {% csrf_token %}
+    <p><label for="note-{{ proposal.pk }}">Note (optional)</label><br><input type="text" id="note-{{ proposal.pk }}" name="note" maxlength="2000" class="ops-note"></p>
+    <div class="actions">
+      {% if proposal.status == "open" %}
+        <button type="submit" name="action" value="approve">Approve</button>
+        <button type="submit" name="action" value="decline" class="secondary">Decline</button>
+      {% else %}
+        <button type="submit" name="action" value="done">Mark done</button>
+      {% endif %}
+    </div>
+  </form>
+</article>

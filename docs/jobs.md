@@ -19,7 +19,10 @@ email (`apps/emaillist/jobs.py`, `sending.py`), the owner's daily and
 overdue reminders, the nightly summary for Wave (`apps/reports/jobs.py`),
 reading Stripe's fee for each payment (`apps/checkout/jobs.py`), the
 support agent's run for each customer message, reading the support inbox
-and support replies by email (`apps/support/jobs.py`, `emails.py`) and a
+and support replies by email (`apps/support/jobs.py`, `emails.py`), the
+marketing posting sweep, each live post, the marketing agent's drafting
+runs and weekly ideas (`apps/marketing/jobs.py`), the ops agent's hourly
+server health check and daily upkeep (`apps/ops/jobs.py`) and a
 nightly purge of old job rows.
 
 ## Declaring and queueing a job

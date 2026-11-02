@@ -12,6 +12,8 @@
 # 4. Lets GitHub Actions deploy with its key, limited to "deploy <commit>".
 # 5. Installs the backup and restore-test timers (other daily jobs run in
 #    the worker service of compose.yaml, which deploy.sh starts).
+# 6. Sets up (or updates) the ops agent's limited account from this
+#    checkout (ops/install-ops-account.sh) and turns its checks on in .env.
 set -euo pipefail
 
 APP_DIR=/srv/teashop
@@ -29,7 +31,7 @@ while [ $# -gt 0 ]; do
         --repo) shift; REPO=${1:-} ;;
         --domain) shift; DOMAIN=${1:-} ;;
         --ci-key-file) shift; CI_KEYFILE=${1:-} ;;
-        -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
         *) die "unknown argument: $1" ;;
     esac
     shift
@@ -102,6 +104,17 @@ install -m 644 "$APP_DIR"/deploy/server/systemd/teashop-*.service "$APP_DIR"/dep
 systemctl daemon-reload
 systemctl enable --now teashop-backup.timer teashop-restore-test.timer
 systemctl list-timers 'teashop-*' --no-pager
+
+step "Ops agent account (docs/ops/ops-agent.md)"
+# Installs the agent's commands from this checkout, so re-running this
+# script after a deploy brings them up to date.
+"$APP_DIR/deploy/server/ops/install-ops-account.sh"
+if ! grep -q '^OPS_SERVER=.' "$APP_DIR/.env"; then
+    sed -i '/^OPS_SERVER=/d' "$APP_DIR/.env"
+    echo "OPS_SERVER=ssh" >> "$APP_DIR/.env"
+    echo "    Turned the ops agent's server checks on (OPS_SERVER=ssh in .env); they"
+    echo "    start with the next deploy."
+fi
 
 step "Done"
 cat <<EOF

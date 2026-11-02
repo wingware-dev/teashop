@@ -130,6 +130,29 @@ services:
       SUPPORT_IMAP_USER: ${SUPPORT_IMAP_USER:-}
       SUPPORT_IMAP_PASSWORD: ${SUPPORT_IMAP_PASSWORD:-}
       SUPPORT_IMAP_FOLDER: ${SUPPORT_IMAP_FOLDER:-}
+      # Marketing (docs/marketing.md).
+      MARKETING_POST_LIVE: ${MARKETING_POST_LIVE:-}
+      BLUESKY_HANDLE: ${BLUESKY_HANDLE:-}
+      BLUESKY_APP_PASSWORD: ${BLUESKY_APP_PASSWORD:-}
+      META_PAGE_ID: ${META_PAGE_ID:-}
+      META_PAGE_TOKEN: ${META_PAGE_TOKEN:-}
+      META_INSTAGRAM_ID: ${META_INSTAGRAM_ID:-}
+      META_GRAPH_VERSION: ${META_GRAPH_VERSION:-}
+      PINTEREST_TOKEN: ${PINTEREST_TOKEN:-}
+      PINTEREST_BOARD_ID: ${PINTEREST_BOARD_ID:-}
+      MARKETING_POST_AT: ${MARKETING_POST_AT:-}
+      MARKETING_WEEKLY_IDEAS: ${MARKETING_WEEKLY_IDEAS:-}
+      ANALYTICS: ${ANALYTICS:-}
+      ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
+      ANALYTICS_SITE_ID: ${ANALYTICS_SITE_ID:-}
+      ANALYTICS_DASHBOARD_URL: ${ANALYTICS_DASHBOARD_URL:-}
+      # The ops agent (docs/ops/ops-agent.md).  Only the worker reaches
+      # the server, with the key mounted below.
+      OPS_SERVER: ${OPS_SERVER:-}
+      OPS_SSH_HOST: ${OPS_SSH_HOST:-}
+      OPS_SSH_USER: ${OPS_SSH_USER:-}
+      OPS_HEALTH_EVERY_MINUTES: ${OPS_HEALTH_EVERY_MINUTES:-60}
+      OPS_UPKEEP_AT: ${OPS_UPKEEP_AT:-}
     volumes:
       - media:/app/var/media
     logging: *logging
@@ -147,6 +170,12 @@ services:
     environment: *app-environment
     volumes:
       - media:/app/var/media
+      # The ops agent's SSH key and the server's host key, written by
+      # deploy/server/ops/install-ops-account.sh.
+      - ${OPS_AGENT_DIR:-/etc/teashop/ops-agent}:/run/ops-agent:ro
+    # The server itself, for the ops agent's SSH checks.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     # The worker touches this file every few seconds while it runs.
     healthcheck:
       test: ["CMD", "python", "-c", "import os, sys, time; sys.exit(0 if time.time() - os.path.getmtime('/tmp/teashop-worker.heartbeat') < 300 else 1)"]

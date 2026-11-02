@@ -2,7 +2,9 @@
 # Python packages are pinned in requirements.lock, requirements-ui.lock and
 # requirements-ci.lock (uv pip compile), which Dependabot does not maintain;
 # CI's weekly pip-audit run flags vulnerable versions instead, and
-# docs/ops/README.md says how to upgrade them.
+# docs/ops/README.md says how to upgrade them.  Dependabot *alerts* still
+# read the locks through GitHub's dependency graph: turn them on under
+# Settings > Code security (docs/security/security-policy.md).
 version: 2
 updates:
   - package-ecosystem: github-actions

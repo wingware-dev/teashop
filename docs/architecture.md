@@ -19,6 +19,8 @@ be built side by side with few conflicts:
 | `emaillist` | 8 | The marketing email list: opt-in with confirmation, consent records, per-subscriber frequency limits, mailings you approve; see `docs/emaillist.md` |
 | `agents` | 9 | What every AI agent shares: the AI client and its stand-ins, the monthly spending cap, the "AI assistant" label, untrusted-input handling, output checks, the audited tool loop; see `docs/agents.md` |
 | `support` | 9 | Customer support: the chat, the support inbox, the support agent with watch mode and escalations; see `docs/support.md` |
+| `ops` | 11 | The ops and security agent: hourly server health checks, daily upkeep through the limited `teashop-ops` server account (`deploy/server/ops/`), proposals for the owner, the quarterly security review; see `docs/ops/ops-agent.md` |
+| `marketing` | 10 | The idea backlog, the marketing agent's drafts (posts, tea notes articles, list emails), the approval and scheduling calendar, posting, campaigns and their codes, analytics; see `docs/marketing.md` |
 
 Names for later phases are suggestions; pick what fits.  To add an app:
 

@@ -1,0 +1,5 @@
+# ZAP baseline scan rules (.github/workflows/outside-scan.yml): one line per
+# rule as <id><TAB><WARN|IGNORE|FAIL><TAB><reason>.  Rules not listed keep
+# their default (WARN).  Add an IGNORE line only for an alert you reviewed
+# and found not to apply, with the reason, during the quarterly review.
+10096	WARN	Timestamp disclosure: usually harmless (dates in pages); check new ones

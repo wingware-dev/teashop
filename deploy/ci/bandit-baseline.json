@@ -1,0 +1,144 @@
+{
+ "results": [
+  {
+   "filename": "apps/agents/untrusted.py",
+   "test_id": "B613",
+   "test_name": "trojansource",
+   "issue_severity": "HIGH",
+   "issue_confidence": "MEDIUM",
+   "issue_text": "A Python source file contains bidirectional control characters ('\\u202a').",
+   "code": "34 # used to hide text from the person reading.\n35 _INVISIBLE = re.compile(\"[\u00ad\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u206f\ufeff\ufff9-\ufffb]\")\n36 _CONTROL = re.compile(r\"[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]\")\n",
+   "line_number": 35,
+   "line_range": [
+    35
+   ],
+   "col_offset": 32,
+   "end_col_offset": 0,
+   "issue_cwe": {
+    "id": 838,
+    "link": "https://cwe.mitre.org/data/definitions/838.html"
+   },
+   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b613_trojansource.html"
+  },
+  {
+   "filename": "apps/storefront/templatetags/storefront.py",
+   "test_id": "B703",
+   "test_name": "django_mark_safe",
+   "issue_severity": "MEDIUM",
+   "issue_confidence": "HIGH",
+   "issue_text": "Potential XSS on mark_safe function.",
+   "code": "50     text = json.dumps(data, ensure_ascii=False, separators=(\",\", \":\")).translate(_JSON_ESCAPES)\n51     return mark_safe(f'<script type=\"application/ld+json\">{text}</script>')\n52 \n",
+   "line_number": 51,
+   "line_range": [
+    51
+   ],
+   "col_offset": 11,
+   "end_col_offset": 75,
+   "issue_cwe": {
+    "id": 80,
+    "link": "https://cwe.mitre.org/data/definitions/80.html"
+   },
+   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b703_django_mark_safe.html"
+  },
+  {
+   "filename": "apps/storefront/templatetags/storefront.py",
+   "test_id": "B308",
+   "test_name": "blacklist",
+   "issue_severity": "MEDIUM",
+   "issue_confidence": "HIGH",
+   "issue_text": "Use of mark_safe() may expose cross-site scripting vulnerabilities and should be reviewed.",
+   "code": "50     text = json.dumps(data, ensure_ascii=False, separators=(\",\", \":\")).translate(_JSON_ESCAPES)\n51     return mark_safe(f'<script type=\"application/ld+json\">{text}</script>')\n52 \n",
+   "line_number": 51,
+   "line_range": [
+    51
+   ],
+   "col_offset": 11,
+   "end_col_offset": 75,
+   "issue_cwe": {
+    "id": 79,
+    "link": "https://cwe.mitre.org/data/definitions/79.html"
+   },
+   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b308-mark-safe"
+  },
+  {
+   "filename": "apps/storefront/templatetags/storefront.py",
+   "test_id": "B308",
+   "test_name": "blacklist",
+   "issue_severity": "MEDIUM",
+   "issue_confidence": "HIGH",
+   "issue_text": "Use of mark_safe() may expose cross-site scripting vulnerabilities and should be reviewed.",
+   "code": "69         else:\n70             lines = format_html_join(mark_safe(\"<br>\"), \"{}\", ((line,) for line in block.split(\"\\n\")))\n71             parts.append(format_html(\"<p>{}</p>\", lines))\n",
+   "line_number": 70,
+   "line_range": [
+    70
+   ],
+   "col_offset": 37,
+   "end_col_offset": 54,
+   "issue_cwe": {
+    "id": 79,
+    "link": "https://cwe.mitre.org/data/definitions/79.html"
+   },
+   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b308-mark-safe"
+  },
+  {
+   "filename": "apps/storefront/templatetags/storefront.py",
+   "test_id": "B703",
+   "test_name": "django_mark_safe",
+   "issue_severity": "MEDIUM",
+   "issue_confidence": "HIGH",
+   "issue_text": "Potential XSS on mark_safe function.",
+   "code": "71             parts.append(format_html(\"<p>{}</p>\", lines))\n72     return mark_safe(\"\\n\".join(parts))\n73 \n",
+   "line_number": 72,
+   "line_range": [
+    72
+   ],
+   "col_offset": 11,
+   "end_col_offset": 38,
+   "issue_cwe": {
+    "id": 80,
+    "link": "https://cwe.mitre.org/data/definitions/80.html"
+   },
+   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b703_django_mark_safe.html"
+  },
+  {
+   "filename": "apps/storefront/templatetags/storefront.py",
+   "test_id": "B308",
+   "test_name": "blacklist",
+   "issue_severity": "MEDIUM",
+   "issue_confidence": "HIGH",
+   "issue_text": "Use of mark_safe() may expose cross-site scripting vulnerabilities and should be reviewed.",
+   "code": "71             parts.append(format_html(\"<p>{}</p>\", lines))\n72     return mark_safe(\"\\n\".join(parts))\n73 \n",
+   "line_number": 72,
+   "line_range": [
+    72
+   ],
+   "col_offset": 11,
+   "end_col_offset": 38,
+   "issue_cwe": {
+    "id": 79,
+    "link": "https://cwe.mitre.org/data/definitions/79.html"
+   },
+   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b308-mark-safe"
+  },
+  {
+   "filename": "config/settings.py",
+   "test_id": "B108",
+   "test_name": "hardcoded_tmp_directory",
+   "issue_severity": "MEDIUM",
+   "issue_confidence": "MEDIUM",
+   "issue_text": "Probable insecure usage of temp file/directory.",
+   "code": "443 # The worker touches this file each round; its healthcheck reads it.\n444 JOBS_HEARTBEAT_FILE = env_str(\"JOBS_HEARTBEAT_FILE\", \"/tmp/teashop-worker.heartbeat\")\n445 \n",
+   "line_number": 444,
+   "line_range": [
+    444
+   ],
+   "col_offset": 53,
+   "end_col_offset": 84,
+   "issue_cwe": {
+    "id": 377,
+    "link": "https://cwe.mitre.org/data/definitions/377.html"
+   },
+   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b108_hardcoded_tmp_directory.html"
+  }
+ ]
+}

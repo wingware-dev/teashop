@@ -7,8 +7,9 @@
 # What it does (docs/ops/README.md explains each):
 #   - installs all updates, then turns on automatic security updates with
 #     automatic reboots at 04:30 server time (UTC) when one is needed
-#   - creates your admin account (sudo, SSH key only) and a "deploy" account
-#   - SSH: keys only, no root login, no passwords, only those two accounts
+#   - creates your admin account (sudo, SSH key only), a "deploy" account
+#     and "teashop-ops", the ops agent's limited account (ops/install-ops-account.sh)
+#   - SSH: keys only, no root login, no passwords, only those three accounts
 #   - firewall (ufw): only SSH (rate-limited), HTTP and HTTPS in
 #   - fail2ban: bans addresses that keep failing SSH logins
 #   - Docker from Docker's own repository, with log rotation for containers
@@ -36,7 +37,7 @@ while [ $# -gt 0 ]; do
         --admin) shift; ADMIN=${1:-} ;;
         --admin-key-file) shift; KEYFILE=${1:-} ;;
         --skip-docker) SKIP_DOCKER=1 ;;
-        -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,25p' "$0"; exit 0 ;;
         *) die "unknown argument: $1" ;;
     esac
     shift
@@ -44,7 +45,8 @@ done
 
 [ "$(id -u)" = 0 ] || die "run as root (sudo $0 ...)"
 [[ "$ADMIN" =~ ^[a-z][a-z0-9_-]{1,30}$ ]] || die "--admin <name> is required (lowercase letters, digits, - and _)"
-[ "$ADMIN" != deploy ] && [ "$ADMIN" != root ] || die "--admin must not be 'deploy' or 'root'"
+[ "$ADMIN" != deploy ] && [ "$ADMIN" != root ] && [ "$ADMIN" != teashop-ops ] \
+    || die "--admin must not be 'deploy', 'root' or 'teashop-ops'"
 [ -z "$KEYFILE" ] || [ -s "$KEYFILE" ] || die "key file $KEYFILE is missing or empty"
 
 . /etc/os-release
@@ -102,6 +104,9 @@ fi
 install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
 install -d -m 755 -o deploy -g deploy "$APP_DIR"
 
+step "Ops agent account (limited: a few fixed commands, see docs/ops/ops-agent.md)"
+"$(dirname "$0")/ops/install-ops-account.sh"
+
 step "SSH: keys only, no root login"
 cat > /etc/ssh/sshd_config.d/10-teashop-hardening.conf <<EOF
 # Written by teashop deploy/server/harden.sh.  The first value sshd reads
@@ -119,7 +124,7 @@ AllowAgentForwarding no
 AllowTcpForwarding no
 ClientAliveInterval 300
 ClientAliveCountMax 2
-AllowUsers $ADMIN deploy
+AllowUsers $ADMIN deploy teashop-ops
 EOF
 mkdir -p /run/sshd
 [ -f /etc/ssh/ssh_host_ed25519_key ] || ssh-keygen -A

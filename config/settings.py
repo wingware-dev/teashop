@@ -102,6 +102,8 @@ LOCAL_APPS = [
     "apps.reports",
     "apps.agents",
     "apps.support",
+    "apps.marketing",
+    "apps.ops",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -290,6 +292,9 @@ AUDIT_EXCLUDED_MODELS = {
     # The job queue's bookkeeping; what jobs do is recorded as usual.
     "jobs.job",
     "jobs.schedule",
+    # Hourly server readings; the ops agent records "ops.*" events for
+    # what matters (apps/ops).
+    "ops.serverreport",
     # The dashboard queue's clock; reminders sent are recorded as emails.
     "core.attentionrecord",
     # Recorded as "agents.ai_call" with its cost.
@@ -606,6 +611,58 @@ SUPPORT_READY_RATE = float(env_str("SUPPORT_READY_RATE") or "0.9")
 # the agent (floods and mail loops cost nothing).
 SUPPORT_CHAT_RATE_LIMIT = env_int("SUPPORT_CHAT_RATE_LIMIT", 30)
 SUPPORT_AGENT_RUNS_PER_DAY = env_int("SUPPORT_AGENT_RUNS_PER_DAY", 15)
+
+# --- Marketing (apps/marketing, docs/marketing.md) ----------------------------
+# Networks posted through their APIs (comma-separated: bluesky, facebook,
+# instagram, pinterest), each with its credentials below; every other post
+# comes to you to put up by hand at its time.  A startup check refuses
+# unknown networks and missing credentials.
+MARKETING_POST_LIVE = env_list("MARKETING_POST_LIVE")
+BLUESKY_HANDLE = env_str("BLUESKY_HANDLE")
+BLUESKY_APP_PASSWORD = env_str("BLUESKY_APP_PASSWORD")
+BLUESKY_SERVICE = env_str("BLUESKY_SERVICE") or "https://bsky.social"
+META_PAGE_ID = env_str("META_PAGE_ID")
+META_PAGE_TOKEN = env_str("META_PAGE_TOKEN")
+META_INSTAGRAM_ID = env_str("META_INSTAGRAM_ID")
+META_GRAPH_VERSION = env_str("META_GRAPH_VERSION") or "v23.0"
+PINTEREST_TOKEN = env_str("PINTEREST_TOKEN")
+PINTEREST_BOARD_ID = env_str("PINTEREST_BOARD_ID")
+# A new post's default local time; how often due posts are looked for; and
+# how late a live post may still go out before it is held back as stale.
+MARKETING_POST_AT = env_str("MARKETING_POST_AT") or "09:30"
+MARKETING_SWEEP_MINUTES = env_int("MARKETING_SWEEP_MINUTES", 5)
+MARKETING_POST_GRACE_HOURS = env_int("MARKETING_POST_GRACE_HOURS", 6)
+# The marketing agent suggests ideas once a week when the backlog is short.
+MARKETING_WEEKLY_IDEAS = env_bool("MARKETING_WEEKLY_IDEAS", True)
+# Privacy-respecting analytics on the catalog pages: "" (none),
+# "plausible" or "umami" (self-hosted), with the script's URL and the
+# site's id (Plausible: the domain; Umami: the website id).  No cookies.
+ANALYTICS = env_str("ANALYTICS")
+if ANALYTICS not in ("", "plausible", "umami"):
+    raise ImproperlyConfigured("ANALYTICS must be empty, 'plausible' or 'umami'")
+ANALYTICS_SCRIPT_URL = env_str("ANALYTICS_SCRIPT_URL") or (
+    "https://plausible.io/js/script.js" if ANALYTICS == "plausible" else "")
+ANALYTICS_SITE_ID = env_str("ANALYTICS_SITE_ID")
+ANALYTICS_DASHBOARD_URL = env_str("ANALYTICS_DASHBOARD_URL")
+if ANALYTICS and not (ANALYTICS_SCRIPT_URL.startswith("https://") and ANALYTICS_SITE_ID):
+    raise ImproperlyConfigured("ANALYTICS needs ANALYTICS_SCRIPT_URL (https://...) and ANALYTICS_SITE_ID")
+if ANALYTICS:
+    _analytics_origin = "/".join(ANALYTICS_SCRIPT_URL.split("/")[:3])
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["script-src"].append(_analytics_origin)
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"].append(_analytics_origin)
+
+# --- Ops agent (apps/ops, docs/ops/ops-agent.md) -------------------------------
+# How the agent reaches the server: "" (off: a laptop), "ssh" (the job
+# worker connects to the server's limited teashop-ops account with the key
+# in OPS_SSH_DIR) or "demo" (made-up readings, to see the pages).
+OPS_SERVER = env_str("OPS_SERVER")
+if OPS_SERVER not in ("", "ssh", "demo"):
+    raise ImproperlyConfigured("OPS_SERVER must be empty, 'ssh' or 'demo'")
+OPS_SSH_HOST = env_str("OPS_SSH_HOST") or "host.docker.internal"
+OPS_SSH_USER = env_str("OPS_SSH_USER") or "teashop-ops"
+OPS_SSH_DIR = env_str("OPS_SSH_DIR") or "/run/ops-agent"
+OPS_HEALTH_EVERY_MINUTES = env_int("OPS_HEALTH_EVERY_MINUTES", 60)
+OPS_UPKEEP_AT = env_str("OPS_UPKEEP_AT") or "05:30"
 
 # --- Logging: everything to stdout, Docker rotates the files ----------------
 LOG_LEVEL = env_str("DJANGO_LOG_LEVEL", "INFO")

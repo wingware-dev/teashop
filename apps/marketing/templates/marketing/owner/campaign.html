@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ campaign.name }} · Campaigns · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/marketing.css' %}">{% endblock %}
+{% block content %}
+<h1>{{ campaign.name }}</h1>
+{% include "marketing/owner/_nav.html" %}
+<section class="card" aria-labelledby="results-title">
+  <h2 id="results-title">What it brought</h2>
+  <p>Paid orders with its codes: <strong>{{ results.orders }}</strong>, worth <strong>${{ results.revenue|floatformat:2 }}</strong> (discounts given: ${{ results.discount|floatformat:2 }}).</p>
+  <p class="small muted">Visits from its posts: in the analytics, filter by campaign <code>{{ campaign.slug }}</code> (the links' utm_campaign){% if analytics_dashboard %}: <a href="{{ analytics_dashboard }}">open the analytics</a>{% endif %}.</p>
+</section>
+<section class="card" aria-labelledby="posts-title">
+  <h2 id="posts-title">Its posts and ideas</h2>
+  {% if posts or ideas %}
+    <ul class="plain-list marketing-list">
+      {% for post in posts %}{% include "marketing/owner/_post_row.html" %}{% endfor %}
+      {% for idea in ideas %}<li><a href="{{ idea.get_absolute_url }}">Idea: {{ idea.title }}</a> <span class="small muted">{{ idea.get_status_display }}</span></li>{% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">None yet: give an idea this campaign, then draft its posts.</p>
+  {% endif %}
+</section>
+<section class="card" aria-labelledby="edit-title">
+  <h2 id="edit-title">Edit</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "marketing/owner/_campaign_fields.html" %}
+    <div class="actions"><button type="submit">Save</button></div>
+  </form>
+</section>
+{% endblock %}

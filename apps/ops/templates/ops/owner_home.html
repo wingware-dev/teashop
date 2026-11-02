@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Server health and security · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+{% block content %}
+<h1>Server health and security</h1>
+<p><a href="{% url 'core:owner_dashboard' %}">Dashboard</a> · <a href="{% url 'ops:review' %}">Quarterly security review</a> · <a href="{% url 'agents:owner_home' %}">AI spending and agent actions</a></p>
+{% if not server_on %}
+  <p class="notice" role="note"><span>Server checks are off on this computer.  On the server, install-app.sh turns them on (OPS_SERVER=ssh); OPS_SERVER=demo shows made-up readings (docs/ops/ops-agent.md).</span></p>
+{% elif demo %}
+  <p class="notice" role="note"><span>Demo mode: these readings are made up (OPS_SERVER=demo).</span></p>
+{% endif %}
+
+<section class="card" aria-labelledby="health-title">
+  <h2 id="health-title">Health</h2>
+  {% if health %}
+    <p>Last reading {{ health.created_at|date:"M j, g:i a" }}: <strong{% if not health.ok %} class="status-failed"{% endif %}>{{ health.summary }}</strong></p>
+    {% if health.findings %}
+      <ul class="plain-list ops-findings">
+        {% for finding in health.findings %}
+          <li class="ops-finding ops-{{ finding.level }}"><span class="ops-level">{% if finding.level == "urgent" %}Urgent{% elif finding.level == "warning" %}Look at it{% else %}For information{% endif %}</span> <strong>{{ finding.title }}</strong>{% if finding.detail %}<br><span class="small">{{ finding.detail }}</span>{% endif %}{% if finding.fix %}<br><span class="small muted">The agent takes care of this in its daily upkeep.</span>{% elif finding.proposal %}<br><span class="small muted">The agent proposes a change for you (below).</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% if health.ok %}
+      <div class="table-scroll" role="region" aria-label="Readings" tabindex="0">
+        <table class="events">
+          <tbody>
+            <tr><th scope="row">System</th><td>{{ reading.os.name }} on {{ reading.hostname }}, up {% widthratio reading.uptime_seconds 86400 1 %} days</td></tr>
+            <tr><th scope="row">Disk</th><td>{% for disk in reading.disks %}{{ disk.mount }}: {{ disk.used_percent }}% full, {{ disk.free_gb }} GB free{% if not forloop.last %}; {% endif %}{% endfor %}</td></tr>
+            <tr><th scope="row">Memory</th><td>{{ reading.memory.available_mb }} MB free of {{ reading.memory.total_mb }} MB; swap {{ reading.memory.swap_used_mb }} MB used</td></tr>
+            <tr><th scope="row">Load</th><td>{{ reading.load|join:", " }} ({{ reading.cpus }} processors)</td></tr>
+            <tr><th scope="row">Updates waiting</th><td>{{ reading.updates.security }} security, {{ reading.updates.pending }} in all</td></tr>
+            <tr><th scope="row">Restart needed</th><td>{% if reading.reboot_required %}Yes, for {{ reading.reboot_required.packages|join:", "|default:"an update" }}{% else %}No{% endif %}</td></tr>
+            <tr><th scope="row">Containers</th><td>{% for container in reading.containers %}{{ container.name }}: {{ container.status }}{% if not forloop.last %}; {% endif %}{% empty %}Not read{% endfor %}</td></tr>
+            <tr><th scope="row">Blocked addresses</th><td>{{ reading.fail2ban.banned_now|default:0 }} now, {{ reading.fail2ban.banned_total|default:0 }} since the last restart</td></tr>
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  {% else %}
+    <p class="muted">No reading yet.  The agent reads the server every hour.</p>
+  {% endif %}
+  {% if server_on %}
+    <form method="post" action="{% url 'ops:check_now' %}" class="actions">{% csrf_token %}<button type="submit" class="secondary">Check now</button></form>
+  {% endif %}
+</section>
+
+<section class="card" aria-labelledby="proposals-title">
+  <h2 id="proposals-title">Changes the agent proposes</h2>
+  <p class="small muted">The agent may only install security updates and rotate logs.  Anything larger it proposes here, with the steps; approve it and carry it out (or ask someone you trust to), or decline it.  Read each command before running it.</p>
+  {% for proposal in open_proposals %}
+    {% include "ops/_proposal.html" %}
+  {% empty %}
+    <p class="muted">Nothing waiting for your approval.</p>
+  {% endfor %}
+  {% if approved_proposals %}
+    <h3>Approved, to carry out</h3>
+    {% for proposal in approved_proposals %}{% include "ops/_proposal.html" %}{% endfor %}
+  {% endif %}
+  {% if past_proposals %}
+    <h3>Earlier</h3>
+    <ul class="plain-list">
+      {% for proposal in past_proposals %}
+        <li>{{ proposal.title }} <span class="small muted">{{ proposal.get_status_display }}{% if proposal.decided_at %}, {{ proposal.decided_at|date:"M j, Y" }}{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</section>
+
+<section class="card" aria-labelledby="upkeep-title">
+  <h2 id="upkeep-title">Daily upkeep</h2>
+  {% if upkeep %}
+    <ul class="plain-list ops-upkeep">
+      {% for report in upkeep %}
+        <li><strong>{{ report.created_at|date:"D M j" }}</strong>{% if not report.ok %} <span class="status-failed">Had a problem</span>{% endif %}: {{ report.summary }}{% if report.actions %}<ul class="small">{% for action in report.actions %}<li>{% if not action.ok %}<span class="status-failed">Failed:</span> {% endif %}{{ action.detail }}</li>{% endfor %}</ul>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No upkeep run yet.  The agent runs it every morning.</p>
+  {% endif %}
+</section>
+
+<section class="card" aria-labelledby="review-title">
+  <h2 id="review-title">Quarterly security review</h2>
+  {% if review %}
+    <p>The {{ quarter }} review was done on {{ review.completed_at|date:"M j, Y" }}.</p>
+  {% else %}
+    <p>The {{ quarter }} review is {% if review_due %}<strong>due</strong>{% else %}not done yet{% endif %}.  <a href="{% url 'ops:review' %}">Open the checklist</a>.</p>
+  {% endif %}
+  <p class="small muted">Every change to the code also gets an automatic security review in GitHub Actions, and dependency alerts come from pip-audit and Dependabot (docs/security/security-policy.md).</p>
+</section>
+{% endblock %}

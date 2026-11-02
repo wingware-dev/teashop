@@ -17,6 +17,8 @@ urlpatterns = [
     path("owner/purchasing/", include("apps.purchasing.urls")),
     path("owner/reports/", include("apps.reports.urls")),
     path("owner/agents/", include("apps.agents.urls")),
+    # The ops agent: server health, proposals, the quarterly review.
+    path("owner/ops/", include("apps.ops.urls")),
     path("", include("apps.core.urls")),
     # Packing and shipping (owner/fulfillment/...), and customers' answers
     # to delay notices.
@@ -27,6 +29,8 @@ urlpatterns = [
     # Customer support: the chat (help/chat/...) and the owner's inbox
     # (owner/support/...).
     path("", include("apps.support.urls")),
+    # Marketing: ideas, posts, the calendar and campaigns (owner/marketing/...).
+    path("owner/marketing/", include("apps.marketing.urls")),
     # Cart, checkout, orders, subscriptions and customer accounts.
     path("", include("apps.checkout.urls")),
     # The shop: the home page, catalog pages, robots.txt and sitemap.xml.

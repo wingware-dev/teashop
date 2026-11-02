@@ -1,0 +1,10 @@
+{% load checkout %}
+{% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+<div class="field-row">{% field form.name %}{% field form.slug %}</div>
+{% field form.description %}
+<div class="field-row">{% field form.starts_on %}{% field form.ends_on %}</div>
+<fieldset class="codes">
+  <legend>Its discount codes</legend>
+  <p class="small muted">{{ form.codes.help_text }}  Make codes in admin → Discount codes.</p>
+  {% for choice in form.codes %}<div class="field check">{{ choice.tag }}<label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label></div>{% empty %}<p class="muted">No discount codes yet.</p>{% endfor %}
+</fieldset>

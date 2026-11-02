@@ -1,0 +1,59 @@
+/* The owner's marketing pages: lists, the post preview and the calendar. */
+
+.marketing-list li { padding: 0.4rem 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.marketing-list li:last-child { border-bottom: 0; }
+.card.attention { border-left: 4px solid var(--c-poppy); }
+.idea-notes { border-left: 4px solid var(--c-buttercup); padding-left: 0.75rem; }
+
+.post-preview { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.post-preview img { max-width: min(240px, 100%); height: auto; border-radius: var(--radius); }
+.post-preview > div { flex: 1 1 16rem; min-width: 0; }
+.post-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-text);
+  margin: 0 0 0.5rem;
+  padding: 0.75rem;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+}
+/* site.css styles text inputs but not these; match them on these pages. */
+input[type="datetime-local"], input[type="date"], input[type="url"] {
+  font: inherit; width: 100%; min-height: 2.75rem; padding: 0.45rem 0.7rem; border: 1px solid var(--muted);
+  border-radius: 0.45rem; background: var(--surface); color: var(--text);
+}
+.warnings { color: var(--text); border-left: 4px solid var(--c-buttercup); padding-left: 1.5rem; }
+
+fieldset.networks, fieldset.codes { border: 1px solid var(--border); border-radius: var(--radius); margin: 0 0 1rem;
+  display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+fieldset.networks .field, fieldset.codes .field { margin: 0; }
+fieldset.codes > p { flex-basis: 100%; margin: 0 0 0.25rem; }
+
+/* Status tags: a coloured edge and a tint, with the words for screen readers. */
+.tag { display: inline-block; padding: 0.1rem 0.4rem; border-left: 4px solid var(--border);
+  background: var(--surface-2); border-radius: 0.25rem; font-size: 0.85rem; color: var(--text); }
+.tag a { color: var(--text); }
+.tag.draft { border-color: var(--c-buttercup); background: var(--c-buttercup-tint); }
+.tag.approved { border-color: var(--c-cornflower); background: var(--c-cornflower-tint); }
+.tag.due, .tag.failed { border-color: var(--c-poppy); background: var(--c-poppy-tint); }
+.tag.posted { border-color: var(--c-moss); background: var(--c-moss-tint); }
+.tag.article { border-color: var(--c-plum); background: var(--c-plum-tint); }
+.tag.rejected { text-decoration: line-through; }
+.legend .tag { margin: 0 0.25rem 0.25rem 0; }
+
+.month { list-style: none; margin: 1rem 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px; }
+.month .day { min-height: 6.5rem; background: var(--surface); border: 1px solid var(--border); padding: 0.25rem;
+  min-width: 0; }
+.month .day.outside { background: transparent; border-color: transparent; }
+.month .day.today { outline: 3px solid var(--brand); outline-offset: -3px; }
+.month .date { font-size: 0.9rem; margin: 0 0 0.25rem; font-family: var(--font-text); }
+.month .weekday { color: var(--muted); font-weight: 400; }
+.month .tag { display: block; margin-bottom: 2px; overflow-wrap: anywhere; }
+
+/* On narrow screens the month is a list of the days that have something. */
+@media (max-width: 48rem) {
+  .month { grid-template-columns: 1fr; }
+  .month .day { min-height: 0; }
+  .month .day.empty, .month .day.outside { display: none; }
+}

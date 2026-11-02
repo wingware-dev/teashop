@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load checkout %}
+{% block title %}Write a post · Marketing · {{ shop_name }}{% endblock %}
+{% block content %}
+<h1>Write a post</h1>
+{% include "marketing/owner/_nav.html" %}
+{% if idea %}<p>For the idea <a href="{{ idea.get_absolute_url }}">{{ idea.title }}</a>.</p>{% endif %}
+<p class="small muted">Saving keeps it a draft: you see what goes out and the checks, then approve it.</p>
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+  <div class="field-row">{% field form.network %}{% field form.scheduled_for %}</div>
+  {% field form.text %}
+  {% field form.title %}
+  {% field form.link %}
+  <div class="field-row">{% field form.photo %}{% field form.product %}{% field form.campaign %}</div>
+  {% field form.gift %}
+  <div class="actions"><button type="submit">Save as a draft</button></div>
+</form>
+{% endblock %}

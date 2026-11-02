@@ -1,6 +1,6 @@
 # AI agents: the shared parts (`apps/agents`)
 
-Every AI agent in the shop (support now; marketing and ops next) builds on
+Every AI agent in the shop (support, marketing, ops) builds on
 `apps/agents`, which holds what they share.  Each agent's own code lives in
 its own app (`apps/support` for the support agent, see `docs/support.md`).
 

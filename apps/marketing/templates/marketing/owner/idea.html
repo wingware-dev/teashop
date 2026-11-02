@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static checkout %}
+{% block title %}{{ idea.title }} · Marketing · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/marketing.css' %}">{% endblock %}
+{% block content %}
+<h1>{{ idea.title }}</h1>
+{% include "marketing/owner/_nav.html" %}
+<p>{{ idea.get_status_display }} · {% if idea.from_agent %}suggested by the assistant{% else %}your idea{% endif %} · {{ idea.created_at|date:"M j, Y" }}</p>
+{% if idea.notes %}<p class="idea-notes">{{ idea.notes|linebreaksbr }}</p>{% endif %}
+
+<section class="card" aria-labelledby="ask-title">
+  <h2 id="ask-title">Ask the assistant for drafts</h2>
+  {% if idea.agent_note %}<p class="notice" role="note"><span>Last time: {{ idea.agent_note }}</span></p>{% endif %}
+  <form method="post" action="{% url 'marketing:idea_draft' idea.pk %}" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="task" value="posts">
+    <fieldset class="networks">
+      <legend>Posts for</legend>
+      {% for choice in draft_form.networks %}<div class="field check">{{ choice.tag }}<label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label></div>{% endfor %}
+    </fieldset>
+    <div class="field-row">{% field draft_form.campaign %}{% field draft_form.when %}</div>
+    <div class="actions"><button type="submit">Draft posts</button></div>
+  </form>
+  <div class="actions">
+    <form method="post" action="{% url 'marketing:idea_draft' idea.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="task" value="article"><button type="submit" class="secondary">Draft a tea notes article</button></form>
+    <form method="post" action="{% url 'marketing:idea_draft' idea.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="task" value="mailing"><button type="submit" class="secondary">Draft an email for the list</button></form>
+    <a href="{% url 'marketing:post_new' %}?idea={{ idea.pk }}">Write a post yourself</a>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="drafted-title" id="drafted">
+  <h2 id="drafted-title">Made from it</h2>
+  {% if posts or articles or mailings %}
+    <ul class="plain-list marketing-list">
+      {% for post in posts %}<li><a href="{{ post.get_absolute_url }}">{{ post.get_network_display }} post</a> <span class="small muted">{{ post.get_status_display }}{% if post.scheduled_for %}, {{ post.scheduled_for|date:"D M j, g:i a" }}{% endif %}</span></li>{% endfor %}
+      {% for article in articles %}<li><a href="{% url 'marketing:article' article.pk %}">Article: {{ article.title }}</a> <span class="small muted">{% if article.is_published %}published{% else %}not published{% endif %}</span></li>{% endfor %}
+      {% for mailing in mailings %}<li><a href="{% url 'emaillist:mailing' mailing.pk %}">Email: {{ mailing.subject }}</a> <span class="small muted">{{ mailing.get_status_display }}</span></li>{% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Nothing yet.</p>
+  {% endif %}
+</section>
+
+<section class="card" aria-labelledby="edit-title">
+  <h2 id="edit-title">Edit the idea</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% field form.title %}
+    {% field form.notes %}
+    <div class="field-row">{% field form.product %}{% field form.campaign %}</div>
+    <div class="actions">
+      <button type="submit" name="action" value="save">Save</button>
+      {% if idea.status == "new" or idea.status == "drafted" %}
+        <button type="submit" name="action" value="done" class="secondary">Mark done</button>
+        <button type="submit" name="action" value="dismissed" class="secondary">Dismiss</button>
+      {% else %}
+        <button type="submit" name="action" value="new" class="secondary">Back to the backlog</button>
+      {% endif %}
+    </div>
+  </form>
+</section>
+{% endblock %}

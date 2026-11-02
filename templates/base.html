@@ -1,4 +1,4 @@
-{% load static storefront %}<!DOCTYPE html>
+{% load static storefront marketing %}<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <script src="{% static 'js/theme-init.js' %}"></script>
   <script src="{% static 'js/site.js' %}" defer></script>
+  {% analytics_script %}
   {% for data in structured_data %}{{ data|ld_json }}{% endfor %}
   {% block extra_head %}{% endblock %}
 </head>

@@ -12,6 +12,12 @@ RUN groupadd --system --gid 10001 teashop \
 
 WORKDIR /app
 
+# The ops agent's checks (apps/ops) reach the server over SSH, with a key
+# limited to a few fixed commands (deploy/server/ops/).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssh-client \
+    && rm -rf /var/lib/apt/lists/*
+
 # Exact, hash-checked versions so every deploy installs the same packages.
 COPY requirements.lock .
 RUN pip install --require-hashes -r requirements.lock

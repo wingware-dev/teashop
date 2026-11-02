@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load checkout %}
+{% block title %}{{ article.title }} · Tea notes · {{ shop_name }}{% endblock %}
+{% block content %}
+<h1>{{ article.title }}</h1>
+{% include "marketing/owner/_nav.html" %}
+<p>{% if article.is_published %}Published, in Tea notes from {{ article.published_on|date:"F j, Y" }}{% if article.published_on <= today %} (<a href="{{ article.get_absolute_url }}">see it in the shop</a>){% endif %}{% else %}Not published{% endif %} · {% if article.written_by == "owner" %}yours{% else %}drafted by the assistant{% endif %} · <a href="{% url 'admin:storefront_article_change' article.pk %}">Edit it in the admin</a></p>
+
+<section class="card" aria-labelledby="preview-title">
+  <h2 id="preview-title">As readers see it</h2>
+  <p class="lede"><em>{{ article.summary }}</em></p>
+  <div class="prose">
+    {% for text, heading in paragraphs %}{% if heading %}<h3>{{ text }}</h3>{% else %}<p>{{ text|linebreaksbr }}</p>{% endif %}{% endfor %}
+  </div>
+</section>
+
+<section class="card" aria-labelledby="publish-title">
+  <h2 id="publish-title">{% if article.is_published %}Take it down{% else %}Publish{% endif %}</h2>
+  {% if article.is_published %}
+    <form method="post">{% csrf_token %}<div class="actions"><button type="submit" name="action" value="unpublish" class="secondary">Take it out of Tea notes</button></div></form>
+  {% elif problems %}
+    <ul class="problems">{% for problem in problems %}<li>{{ problem }}</li>{% endfor %}</ul>
+    <p class="small muted">Fix these in the admin, then publish it here.</p>
+  {% else %}
+    <p class="small muted">Check every fact against your own knowledge of the tea: the assistant works only from the catalog, but it can still get things wrong.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% field form.day %}
+      <div class="actions"><button type="submit" name="action" value="publish">Publish</button></div>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

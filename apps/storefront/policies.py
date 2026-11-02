@@ -52,6 +52,10 @@ PROCESSORS = [
     ("Backblaze (encrypted backups)",
      "An encrypted copy of the shop's records, which Backblaze cannot read.",
      "To recover from a failure."),
+    ("Plausible or Umami (visit counts, when turned on)",
+     "The pages of the shop's catalog you visit, the site that sent you there and your browser and country, "
+     "without cookies.  Your IP address is used only to count unique visits for a day and is not kept.",
+     "To see which pages and posts bring visitors."),
     ("Sentry (error reports, when turned on)",
      "Technical details of an error on the site; we set it not to collect personal details.",
      "To find and fix faults."),

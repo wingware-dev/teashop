@@ -1,0 +1,1 @@
+<li><a href="{{ post.get_absolute_url }}">{{ post.get_network_display }}: {{ post.text|truncatechars:70 }}</a> <span class="small muted">{% if post.scheduled_for %}{{ post.scheduled_for|date:"D M j, g:i a" }}{% else %}no time yet{% endif %}{% if post.from_agent %} · from the assistant{% endif %}{% if post.campaign %} · {{ post.campaign.name }}{% endif %}</span></li>

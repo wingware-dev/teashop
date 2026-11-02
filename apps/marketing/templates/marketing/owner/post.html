@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static checkout %}
+{% block title %}{{ post.get_network_display }} post · Marketing · {{ shop_name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/marketing.css' %}">{% endblock %}
+{% block content %}
+<h1>{{ post.get_network_display }} post</h1>
+{% include "marketing/owner/_nav.html" %}
+<p><strong>{{ post.get_status_display }}</strong>{% if post.scheduled_for %} · {{ post.scheduled_for|date:"l F j, g:i a" }}{% endif %} · {% if post.from_agent %}drafted by the assistant{% if post.edited_by_owner %}, edited by you{% endif %}{% else %}yours{% endif %}{% if post.campaign %} · campaign <a href="{{ post.campaign.get_absolute_url }}">{{ post.campaign.name }}</a>{% endif %}{% if post.idea %} · idea <a href="{{ post.idea.get_absolute_url }}">{{ post.idea.title }}</a>{% endif %}</p>
+{% if post.error %}<p class="notice" role="note"><span>{{ post.error }}</span></p>{% endif %}
+
+<section class="card" aria-labelledby="preview-title">
+  <h2 id="preview-title">What goes out</h2>
+  <div class="post-preview">
+    {% if post.photo %}<img src="{{ post.photo.small_url }}" alt="{{ post.photo.alt_text }}" width="240">{% endif %}
+    <div>
+      {% if post.title %}<p><strong>{{ post.title }}</strong></p>{% endif %}
+      <div class="table-scroll" role="region" aria-label="Post text" tabindex="0"><pre class="post-text" id="post-text">{{ final_text }}</pre></div>
+      {% if post.link and not spec.link_in_text and post.network != "instagram" %}<p class="small">Links to: {{ post.tracked_link }}</p>{% endif %}
+      <p class="small muted">{{ length }} of {{ spec.max_chars }} characters.  {{ spec.advice }}</p>
+    </div>
+  </div>
+  {% if problems %}
+    <h3>Fix before approving</h3>
+    <ul class="problems">{% for problem in problems %}<li>{{ problem }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if warnings %}
+    <h3>Check</h3>
+    <ul class="warnings">{% for warning in warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if post.status == "draft" %}
+    <form method="post">{% csrf_token %}
+      <div class="actions">
+        {% if not problems %}<button type="submit" name="action" value="approve">Approve: {{ post.get_network_display }}, {{ post.scheduled_for|date:"D M j, g:i a" }}</button>{% endif %}
+        <button type="submit" name="action" value="reject" class="secondary">Reject</button>
+      </div>
+    </form>
+    <p class="small muted">{% if post.is_live %}Once approved it posts itself at its time.{% else %}{{ spec.why_by_hand|default:"This network isn't connected, so you post it yourself." }}  At its time it comes to your dashboard with the text ready to copy.{% endif %}</p>
+  {% elif post.status == "approved" %}
+    <form method="post">{% csrf_token %}<div class="actions"><button type="submit" name="action" value="withdraw" class="secondary">Take it off the schedule</button>{% if not post.is_live %}<span class="small muted">Or post it early and mark it posted below.</span>{% endif %}</div></form>
+  {% endif %}
+
+  {% if post.status == "due" or post.status == "failed" or post.status == "approved" and not post.is_live %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="field">
+        <label for="posted-url">The post's address, once it is up (optional)</label>
+        <input type="url" name="url" id="posted-url" placeholder="https://...">
+      </div>
+      <div class="actions">
+        <button type="submit" name="action" value="posted">I posted it</button>
+        {% if post.status == "failed" and post.is_live %}<button type="submit" name="action" value="retry" class="secondary">Try again now</button>{% endif %}
+        {% if post.status != "approved" %}<button type="submit" name="action" value="withdraw" class="secondary">Back to a draft</button>{% endif %}
+      </div>
+    </form>
+  {% endif %}
+  {% if post.status == "posted" %}<p>Posted {{ post.posted_at|date:"M j, g:i a" }}{% if post.external_url %}: <a href="{{ post.external_url }}">see it on {{ post.get_network_display }}</a>{% endif %}.</p>{% endif %}
+</section>
+
+{% if form %}
+<section class="card" aria-labelledby="edit-title">
+  <h2 id="edit-title">Edit</h2>
+  {% if post.status == "approved" %}<p class="small muted">Saving a change takes it off the schedule until you approve it again.</p>{% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+    <div class="field-row">{% field form.network %}{% field form.scheduled_for %}</div>
+    {% field form.text %}
+    {% field form.title %}
+    {% field form.link %}
+    <div class="field-row">{% field form.photo %}{% field form.product %}{% field form.campaign %}</div>
+    {% field form.gift %}
+    <div class="actions"><button type="submit" name="action" value="save">Save</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

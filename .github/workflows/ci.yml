@@ -61,6 +61,49 @@ jobs:
         # The locks are fully resolved and hashed, so no throwaway venv is needed.
         run: pip-audit --strict --no-deps --disable-pip -r requirements.lock -r requirements-ui.lock -r requirements-ci.lock
       - name: Shell scripts
-        run: shellcheck --severity=warning deploy/*.sh deploy/backup/*.sh deploy/server/*.sh
+        run: shellcheck --severity=warning deploy/*.sh deploy/backup/*.sh deploy/server/*.sh deploy/server/ops/*.sh
       - name: Docker image builds
         run: docker build --build-arg GIT_SHA=${GITHUB_SHA::12} -t teashop-web:ci .
+
+  # The automatic security review of every change (docs/security/security-policy.md):
+  # static checks always; the AI review only when the owner turns it on.
+  security:
+    name: Security review
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.lock
+            requirements-ci.lock
+      - name: Install dependencies
+        run: pip install --require-hashes -r requirements.lock -r requirements-ci.lock
+      - name: Python code (bandit)
+        # Fails on new medium or high findings.  The reviewed findings in the
+        # baseline are false positives; regenerate it only after reviewing a
+        # new one (docs/security/security-policy.md).
+        run: bandit -q -r apps config -x '*/tests/*,*/migrations/*' -ll -b deploy/ci/bandit-baseline.json
+      - name: Django's production security checks
+        env:
+          DJANGO_ENV: production
+          DATABASE_URL: sqlite:////tmp/check.sqlite3
+          DJANGO_ALLOWED_HOSTS: shop.example.com
+        run: DJANGO_SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(50))") python manage.py check --deploy --tag security --fail-level WARNING
+      - name: AI security review
+        # Costs money per change, so off until the owner sets the repository
+        # variable AI_SECURITY_REVIEW=on and the secret ANTHROPIC_API_KEY.
+        if: vars.AI_SECURITY_REVIEW == 'on' && github.event_name != 'schedule'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AI_REVIEW_MODEL: ${{ vars.AI_REVIEW_MODEL }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || [ "$BASE" = 0000000000000000000000000000000000000000 ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            BASE=$(git rev-parse HEAD~1)
+          fi
+          python deploy/ci/ai_security_review.py --base "$BASE" --head "$GITHUB_SHA" ${{ vars.AI_REVIEW_FAIL_ON && format('--fail-on {0}', vars.AI_REVIEW_FAIL_ON) || '' }}
