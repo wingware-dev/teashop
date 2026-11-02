@@ -3,11 +3,12 @@ WCAG 2.2 AA checks, screenshots (see apps.core.uitesting).  The flow test
 packs an allergen tea and a plain one at phone size, prints, and buys the
 label, as the owner does at the bench."""
 
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.core.uitesting import BrowserTestCase
 from apps.fulfillment import services
@@ -19,13 +20,13 @@ def sample_orders():
     scale = shop()
     assam, vanilla, teapot = size("assam-second-flush"), size("vanilla-almond-black"), size("glass-teapot")
     earl_grey = size("earl-grey-cornflower", 100)
-    late = paid_order([(assam, 2), (teapot, 1)], name="Grace Hopper", ship_by=date.today() - timedelta(days=1))
-    allergen = paid_order([(vanilla, 1), (earl_grey, 1)], name="Ada Lovelace", ship_by=date.today())
+    late = paid_order([(assam, 2), (teapot, 1)], name="Grace Hopper", ship_by=timezone.localdate() - timedelta(days=1))
+    allergen = paid_order([(vanilla, 1), (earl_grey, 1)], name="Ada Lovelace", ship_by=timezone.localdate())
     paid_order([(earl_grey, 2)], name="Katherine Johnson", email="kj@example.com",
-               ship_by=date.today() + timedelta(days=3), service="USPS Priority Mail")
-    backordered = paid_order([(assam, 1)], name="Dorothy Vaughan", ship_by=date.today() + timedelta(days=2))
-    services.backorder(services.parcels(backordered)[0], date.today() + timedelta(days=6), "Assam on its way")
-    shipped = paid_order([(assam, 1)], name="Mary Jackson", ship_by=date.today() + timedelta(days=1))
+               ship_by=timezone.localdate() + timedelta(days=3), service="USPS Priority Mail")
+    backordered = paid_order([(assam, 1)], name="Dorothy Vaughan", ship_by=timezone.localdate() + timedelta(days=2))
+    services.backorder(services.parcels(backordered)[0], timezone.localdate() + timedelta(days=6), "Assam on its way")
+    shipped = paid_order([(assam, 1)], name="Mary Jackson", ship_by=timezone.localdate() + timedelta(days=1))
     parcel = services.parcels(shipped)[0]
     services.pack_package(parcel, shipped.lines.get(), measured_grams=Decimal("50.4"), scale=scale)
     services.buy_label(parcel, weight_grams=160, service=shipped.shipping_service,
@@ -68,7 +69,7 @@ class FulfillmentUITests(BrowserTestCase):
 
     def test_customer_delay_answer(self):
         orders = sample_orders()
-        notice = services.send_delay_notice(orders["late"], date.today() + timedelta(days=40),
+        notice = services.send_delay_notice(orders["late"], timezone.localdate() + timedelta(days=40),
                                             "Our Assam is on its way from the importer.")
         self.check_page(reverse("fulfillment:delay_answer", args=[orders["late"].token, notice.pk]),
                         "fulfillment-delay-answer")

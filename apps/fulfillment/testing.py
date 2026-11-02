@@ -2,7 +2,7 @@
 demo catalog (with stock), boxes, a sealed scale and paid orders."""
 
 import tempfile
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.utils import timezone
@@ -54,7 +54,8 @@ def shop():
         filler_quantity=2))
     scale = Scale.objects.get_or_create(serial_number="SN-4471", defaults=dict(
         name="Bench scale", make_model="Ohaus Ranger 3000", ntep_certificate="13-123", registration="ALB-0042",
-        sealed_on=date.today() - timedelta(days=60), inspection_due=date.today() + timedelta(days=300)))[0]
+        sealed_on=timezone.localdate() - timedelta(days=60),
+        inspection_due=timezone.localdate() + timedelta(days=300)))[0]
     return scale
 
 
@@ -72,7 +73,7 @@ def paid_order(lines, *, email="ada@example.com", name="Ada Lovelace", ship_by=N
     order = Order(email=email, status=Order.Status.PAID, subtotal=subtotal, shipping_service=service,
                   shipping_amount=shipping, shipping_cost=shipping, total=subtotal + shipping,
                   amount_received=subtotal + shipping, payment_provider="fake", paid_at=timezone.now(),
-                  ship_by=ship_by or (date.today() + timedelta(days=3)), address_verified=True,
+                  ship_by=ship_by or (timezone.localdate() + timedelta(days=3)), address_verified=True,
                   ship_name=name, ship_street1="12 Main St", ship_city="Albany", ship_state="NY", ship_zip="12207")
     order.save()
     order.payment_id = f"fake_pi_{order.number}"

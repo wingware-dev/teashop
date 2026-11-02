@@ -1,7 +1,7 @@
 """The fulfillment pages through the test client: the owner packs, labels
 and ships; the customer answers a delay notice."""
 
-from datetime import date, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.core import mail
@@ -30,9 +30,9 @@ class OwnerPagesTests(FulfillmentTestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_queue_lists_orders_soonest_first_allergens_last(self):
-        late = paid_order([(self.assam, 1)], ship_by=date.today() - timedelta(days=1))
-        allergen = paid_order([(self.vanilla, 1)], ship_by=date.today() + timedelta(days=2))
-        plain = paid_order([(self.assam, 1)], ship_by=date.today() + timedelta(days=2))
+        late = paid_order([(self.assam, 1)], ship_by=timezone.localdate() - timedelta(days=1))
+        allergen = paid_order([(self.vanilla, 1)], ship_by=timezone.localdate() + timedelta(days=2))
+        plain = paid_order([(self.assam, 1)], ship_by=timezone.localdate() + timedelta(days=2))
         page = self.client.get(reverse("fulfillment:queue"))
         self.assertEqual([row["order"] for row in page.context["rows"]], [late, plain, allergen])
         self.assertContains(page, "past the promised ship date")
@@ -40,7 +40,7 @@ class OwnerPagesTests(FulfillmentTestCase):
 
     def test_back_ordered_orders_have_their_own_tab(self):
         waiting = paid_order([(self.assam, 1)])
-        services.backorder(services.parcels(waiting)[0], date.today() + timedelta(days=5), "Restocking")
+        services.backorder(services.parcels(waiting)[0], timezone.localdate() + timedelta(days=5), "Restocking")
         to_pack = self.client.get(reverse("fulfillment:queue"))
         self.assertNotIn(waiting, [row["order"] for row in to_pack.context["rows"]])
         backordered = self.client.get(reverse("fulfillment:queue") + "?show=backordered")
@@ -121,7 +121,7 @@ class OwnerPagesTests(FulfillmentTestCase):
         order = paid_order([(self.assam, 1)])
         url = reverse("fulfillment:order", args=[order.number])
         self.client.post(reverse("fulfillment:delay_notice", args=[order.number]), {
-            "delay-new_ship_by": (date.today() + timedelta(days=9)).isoformat(), "delay-reason": "Restocking"})
+            "delay-new_ship_by": (timezone.localdate() + timedelta(days=9)).isoformat(), "delay-reason": "Restocking"})
         self.assertTrue(order.delay_notices.exists())
         self.client.post(reverse("fulfillment:refund", args=[order.number]), {
             "refund-amount": "2.00", "refund-reason": "Late"})
@@ -190,7 +190,7 @@ class OwnerPagesTests(FulfillmentTestCase):
 class DelayAnswerPageTests(FulfillmentTestCase):
     def test_customer_cancels_from_the_link(self):
         order = paid_order([(self.assam, 1)])
-        notice = services.send_delay_notice(order, date.today() + timedelta(days=50), "A long wait")
+        notice = services.send_delay_notice(order, timezone.localdate() + timedelta(days=50), "A long wait")
         url = reverse("fulfillment:delay_answer", args=[order.token, notice.pk])
         page = self.client.get(url)
         self.assertContains(page, "we will cancel the order and refund you in full")
@@ -200,6 +200,6 @@ class DelayAnswerPageTests(FulfillmentTestCase):
 
     def test_wrong_token(self):
         order = paid_order([(self.assam, 1)])
-        notice = services.send_delay_notice(order, date.today() + timedelta(days=5), "Short")
+        notice = services.send_delay_notice(order, timezone.localdate() + timedelta(days=5), "Short")
         self.assertEqual(self.client.get(reverse("fulfillment:delay_answer", args=["nope", notice.pk])).status_code,
                          404)

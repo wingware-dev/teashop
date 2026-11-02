@@ -2,7 +2,7 @@
 pickups, with the stand-in carrier and payments."""
 
 import importlib
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 from unittest import mock
 
@@ -373,8 +373,9 @@ class ReshipAndAddressTests(FulfillmentTestCase):
 
 class DelayNoticeTests(FulfillmentTestCase):
     def test_short_delay_silence_is_consent(self):
-        order = paid_order([(self.assam, 1)], ship_by=date.today() + timedelta(days=1))
-        notice = services.send_delay_notice(order, date.today() + timedelta(days=10), "Waiting for the importer")
+        order = paid_order([(self.assam, 1)], ship_by=timezone.localdate() + timedelta(days=1))
+        notice = services.send_delay_notice(order, timezone.localdate() + timedelta(days=10),
+                                            "Waiting for the importer")
         order.refresh_from_db()
         notice.refresh_from_db()  # the email job set sent_at
         self.assertFalse(notice.needs_consent)
@@ -384,11 +385,11 @@ class DelayNoticeTests(FulfillmentTestCase):
         self.assertIn(f"/orders/{order.token}/delay/{notice.pk}/", mail.outbox[-1].body)
 
     def test_long_or_second_delay_needs_consent(self):
-        order = paid_order([(self.assam, 1)], ship_by=date.today() + timedelta(days=1))
-        notice = services.send_delay_notice(order, date.today() + timedelta(days=45), "A long wait")
+        order = paid_order([(self.assam, 1)], ship_by=timezone.localdate() + timedelta(days=1))
+        notice = services.send_delay_notice(order, timezone.localdate() + timedelta(days=45), "A long wait")
         self.assertTrue(notice.needs_consent)
         order.refresh_from_db()
-        self.assertEqual(order.ship_by, date.today() + timedelta(days=1))  # not moved until they agree
+        self.assertEqual(order.ship_by, timezone.localdate() + timedelta(days=1))  # not moved until they agree
         services.answer_delay(notice, wait=True)
         order.refresh_from_db()
         self.assertEqual(order.ship_by, notice.new_ship_by)
@@ -397,7 +398,7 @@ class DelayNoticeTests(FulfillmentTestCase):
 
     def test_customer_cancels_for_a_full_refund(self):
         order = paid_order([(self.assam, 1)])
-        notice = services.send_delay_notice(order, date.today() + timedelta(days=12), "Out of stock")
+        notice = services.send_delay_notice(order, timezone.localdate() + timedelta(days=12), "Out of stock")
         services.answer_delay(notice, wait=False)
         order.refresh_from_db()
         notice.refresh_from_db()
@@ -407,14 +408,14 @@ class DelayNoticeTests(FulfillmentTestCase):
 
     def test_no_answer_in_time_is_flagged(self):
         order = paid_order([(self.assam, 1)])
-        notice = services.send_delay_notice(order, date.today() + timedelta(days=60), "A long wait")
+        notice = services.send_delay_notice(order, timezone.localdate() + timedelta(days=60), "A long wait")
         self.assertEqual(list(services.consent_overdue(notice.answer_by + timedelta(days=1))), [notice])
         self.assertEqual(list(services.consent_overdue(notice.answer_by)), [])
 
 
 class SummaryTests(FulfillmentTestCase):
     def test_daily_summary_lists_new_and_late_orders_once(self):
-        late = paid_order([(self.assam, 1)], ship_by=date.today() - timedelta(days=1))
+        late = paid_order([(self.assam, 1)], ship_by=timezone.localdate() - timedelta(days=1))
         new = paid_order([(self.teapot, 1)])
         sent = summary.send()
         self.assertEqual({o.pk for o in sent.new_orders}, {late.pk, new.pk})
