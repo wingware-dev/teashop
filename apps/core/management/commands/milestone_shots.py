@@ -4,7 +4,9 @@
 
 runs the browser tests (tag "ui", see apps.core.uitesting) with their
 screenshots going to doc/shots/<date>-<name>/ instead of var/shots/.  The
-tests must pass; if any fail, nothing is left in the folder.
+tests must pass; if any fail, nothing is left in the folder.  The shots
+are then compressed losslessly with oxipng (requirements-ui.txt), since
+they are kept in version control.
 """
 
 import datetime
@@ -15,6 +17,22 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.core.uitesting import MILESTONE_ENV, MILESTONE_NAME_RE, shots_dir
+
+try:
+    import oxipng
+except ImportError:  # requirements-ui.txt not installed; handle() says so
+    oxipng = None
+
+
+def optimize_pngs(paths):
+    """Recompress PNG files in place, losslessly (same pixels), and drop
+    metadata that does not affect how they look.  Returns the bytes saved."""
+    saved = 0
+    for path in paths:
+        before = path.stat().st_size
+        oxipng.optimize(path, level=2, strip=oxipng.StripChunks.safe())
+        saved += before - path.stat().st_size
+    return saved
 
 
 class Command(BaseCommand):
@@ -33,6 +51,8 @@ class Command(BaseCommand):
         milestone = f"{date}-{name}"
         if not MILESTONE_NAME_RE.match(milestone):
             raise CommandError("Use lowercase letters, digits, '.', '_' and '-' in the name")
+        if oxipng is None:
+            raise CommandError("Needs oxipng to compress the shots: pip install -r requirements-ui.txt")
         old_env = os.environ.get(MILESTONE_ENV)
         os.environ[MILESTONE_ENV] = milestone
         try:
@@ -55,4 +75,9 @@ class Command(BaseCommand):
         shots = sorted(directory.glob("*.png")) if directory.exists() else []
         if not shots:
             raise CommandError("The browser tests saved no screenshots (is Playwright installed?)")
-        self.stdout.write(self.style.SUCCESS(f"{len(shots)} screenshots in {directory.relative_to(directory.parents[2])}"))
+        saved = optimize_pngs(shots)
+        size = sum(shot.stat().st_size for shot in shots)
+        self.stdout.write(self.style.SUCCESS(
+            f"{len(shots)} screenshots ({size / 1e6:.1f} MB, {saved / 1e6:.1f} MB saved by oxipng) "
+            f"in {directory.relative_to(directory.parents[2])}"
+        ))

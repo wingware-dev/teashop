@@ -3,7 +3,12 @@
 A record of how the site looked at each stage of development.  Each
 folder is one milestone, named `<date>-<milestone>`, and holds a
 full-page screenshot of every page the browser tests visit, named
-`<page>-<phone|desktop>-<light|dark>.png`.
+`<page>-<phone|desktop>-<light|dark>.png`.  Shots are one pixel per CSS
+pixel (phone 390 wide, desktop 1280) and compressed losslessly with
+oxipng, so the folder stays small.  The phase 1 and phase 3 milestones
+predate both: their phone shots are at 2x (780 wide) and none of their
+shots are recompressed, since rewriting them would only add to the
+repository's history.
 
 Record a milestone (all browser tests must pass, including the WCAG 2.2
 AA checks) with:

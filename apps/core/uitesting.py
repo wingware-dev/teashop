@@ -28,8 +28,9 @@ Example::
             self.check_current(page, "cart-after-add")
 
 Screenshots go to ``var/shots/`` (not kept in version control), named
-``<name>-<viewport>-<theme>.png``.  To record a milestone in ``doc/shots/``
-run ``python manage.py milestone_shots <milestone-name>``.
+``<name>-<viewport>-<theme>.png``, at one pixel per CSS pixel.  To record
+a milestone in ``doc/shots/`` (losslessly compressed with oxipng) run
+``python manage.py milestone_shots <milestone-name>``.
 
 Needs ``pip install -r requirements-ui.txt`` and ``playwright install
 chromium``; without them the tests are skipped with that advice.  All
@@ -293,7 +294,9 @@ class BrowserTestCase(StaticLiveServerTestCase):
         directory = shots_dir()
         directory.mkdir(parents=True, exist_ok=True)
         path = directory / f"{filename}.png"
-        page.screenshot(path=str(path), full_page=True, animations="disabled", caret="hide")
+        # scale="css": one image pixel per CSS pixel, so phone shots are
+        # 390 wide although the phone renders at 2x; a quarter the size.
+        page.screenshot(path=str(path), full_page=True, animations="disabled", caret="hide", scale="css")
         return path
 
     @staticmethod

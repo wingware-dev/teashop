@@ -5,3 +5,5 @@
 playwright>=1.55,<2
 # Bundles axe-core, which checks pages against WCAG 2.2 A/AA.
 axe-playwright-python>=0.1.8,<0.2
+# Lossless PNG compression of milestone screenshots (manage.py milestone_shots).
+pyoxipng>=9.1,<10
