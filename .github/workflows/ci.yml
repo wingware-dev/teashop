@@ -61,7 +61,7 @@ jobs:
         # The locks are fully resolved and hashed, so no throwaway venv is needed.
         run: pip-audit --strict --no-deps --disable-pip -r requirements.lock -r requirements-ui.lock -r requirements-ci.lock
       - name: Shell scripts
-        run: shellcheck --severity=warning deploy/*.sh deploy/backup/*.sh deploy/server/*.sh deploy/server/ops/*.sh
+        run: shellcheck --severity=warning deploy/*.sh deploy/backup/*.sh deploy/server/*.sh deploy/server/ops/*.sh deploy/ci/*.sh
       - name: Docker image builds
         run: docker build --build-arg GIT_SHA=${GITHUB_SHA::12} -t teashop-web:ci .
 

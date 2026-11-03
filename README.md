@@ -274,6 +274,20 @@ Development uses SQLite in `var/`; set `DATABASE_URL` to use PostgreSQL.
 
 Run the tests with Wing's Testing tool or `python manage.py test apps`.
 
+CI runs them on PostgreSQL, which catches things SQLite lets through
+(row locks across outer joins, the audit log's append-only trigger).
+Before pushing, run them the same way, with Docker:
+
+```sh
+deploy/ci/test-on-postgres.sh              # the whole suite, on postgres:17
+deploy/ci/test-on-postgres.sh apps.jobs    # or any manage.py test arguments
+```
+
+It starts a throwaway database and removes it afterwards.
+`deploy/ci/test-on-postgres.sh start` leaves one running and prints its
+`DATABASE_URL`, for running tests from Wing's Testing tool against it;
+`deploy/ci/test-on-postgres.sh stop` removes it.
+
 The browser tests (tagged `ui`) open each page in headless Chromium at
 phone and desktop widths, in the light and dark themes, check it against
 WCAG 2.2 AA with axe-core, and save screenshots to `var/shots/`.  They
