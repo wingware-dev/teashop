@@ -80,9 +80,11 @@ class CheckHealthTests(TestCase):
 
     def test_unchanged_reading_recorded_again_after_a_day(self):
         agent.check_health(FakeServer())
-        AuditEvent.objects.filter(action="ops.health_check_succeeded").update(
-            timestamp=timezone.now() - timedelta(hours=25))
-        agent.check_health(FakeServer())
+        # Audit events are append-only (a trigger on PostgreSQL); move the
+        # agent's clock instead of the row.
+        later = timezone.now() + timedelta(hours=25)
+        with mock.patch("apps.ops.agent.timezone", mock.Mock(now=mock.Mock(return_value=later))):
+            agent.check_health(FakeServer())
         self.assertEqual(AuditEvent.objects.filter(action="ops.health_check_succeeded").count(), 2)
 
     def test_unreachable_server_fails_the_check(self):

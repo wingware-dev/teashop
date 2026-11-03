@@ -183,7 +183,9 @@ RETRY_EVERY = timedelta(minutes=10)
 def publish(post_id, now=None):
     """Post one approved, due post through its network's API (the job)."""
     now = now or timezone.now()
-    post = Post.objects.select_for_update().filter(pk=post_id).select_related("photo", "campaign").first()
+    # Lock only the post: PostgreSQL refuses FOR UPDATE on the nullable side
+    # of the outer joins to photo and campaign.
+    post = Post.objects.select_for_update(of=("self",)).filter(pk=post_id).select_related("photo", "campaign").first()
     if post is None or post.status != Post.Status.APPROVED or not post.scheduled_for or post.scheduled_for > now:
         return  # withdrawn, edited, already posted, or not yet: nothing to do
     if not post.is_live:

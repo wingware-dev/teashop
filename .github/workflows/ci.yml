@@ -31,8 +31,8 @@ jobs:
     env:
       DATABASE_URL: postgres://teashop:teashop@localhost:5432/teashop
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
@@ -52,7 +52,7 @@ jobs:
         run: python manage.py test apps
       - name: Keep the browser tests' screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots
           path: var/shots/
@@ -71,10 +71,10 @@ jobs:
     name: Security review
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip

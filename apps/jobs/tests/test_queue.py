@@ -349,7 +349,10 @@ class WorkerTests(QueueTestCase):
         with tempfile.TemporaryDirectory() as tmp:
             heartbeat = Path(tmp) / "heartbeat"
             worker = Worker(poll_seconds=0, heartbeat_file=heartbeat)
-            with self.assertLogs("apps.jobs.worker", level="INFO"):
+            # close_old_connections() would close PostgreSQL's connection
+            # inside the test's transaction (SQLite's in-memory one is kept).
+            with self.assertLogs("apps.jobs.worker", level="INFO"), \
+                    mock.patch("apps.jobs.worker.close_old_connections"):
                 worker.run(once=True)
             self.assertTrue(heartbeat.exists())
         self.assertEqual(calls, [(1, ""), (2, "")])
